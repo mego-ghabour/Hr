@@ -26,14 +26,14 @@ class RoleAndPermissionSeeder extends Seeder
         ];
         
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Create roles
-        $admin = Role::create(['name' => 'admin']);
+        $admin = Role::firstOrCreate(['name' => 'admin']);
         $admin->givePermissionTo(Permission::all());
         
-        $manager = Role::create(['name' => 'manager']);
+        $manager = Role::firstOrCreate(['name' => 'manager']);
         $manager->givePermissionTo([
             'view_talent', 'view_any_talent', 'create_talent', 'update_talent', 'delete_talent',
             'view_department', 'view_any_department', 'view_location', 'view_any_location',
@@ -42,7 +42,7 @@ class RoleAndPermissionSeeder extends Seeder
             'manage_follow_ups', 'manage_reviews', 'manage_documents', 'manage_notes',
         ]);
         
-        $recruiter = Role::create(['name' => 'recruiter']);
+        $recruiter = Role::firstOrCreate(['name' => 'recruiter']);
         $recruiter->givePermissionTo([
             'view_talent', 'view_any_talent', 'create_talent', 'update_talent',
             'view_department', 'view_any_department', 'view_location', 'view_any_location',
