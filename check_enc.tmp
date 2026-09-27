@@ -1,0 +1,7 @@
+s TalentResource extends Resource
+{
+    protected static ?string $model = Talent::class;
+
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
+
+    protected static strin

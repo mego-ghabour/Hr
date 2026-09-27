@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Policies;
+
+use Spatie\Permission\Models\Role;
+use App\Models\User;
+
+class RolePolicy
+{
+    public function viewAny(User $user): bool
+    {
+        return $user->hasPermissionTo('view_roles');
+    }
+
+    public function view(User $user, Role $model): bool
+    {
+        return $user->hasPermissionTo('view_roles');
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->hasPermissionTo('manage_roles');
+    }
+
+    public function update(User $user, Role $model): bool
+    {
+        return $user->hasPermissionTo('manage_roles');
+    }
+
+    public function delete(User $user, Role $model): bool
+    {
+        return $user->hasPermissionTo('manage_roles');
+    }
+}
