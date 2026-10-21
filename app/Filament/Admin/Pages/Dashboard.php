@@ -41,7 +41,7 @@ class Dashboard extends BaseDashboard
     {
         return [
             \Filament\Pages\Dashboard\Actions\FilterAction::make()
-                ->name('تصفية البيانات')
+                ->label('تصفية البيانات')
                 ->icon('heroicon-o-funnel')
                 ->form([
                     DatePicker::make('startDate')

@@ -8,6 +8,7 @@ use Filament\Widgets\Widget;
 
 class ContractExpiryWidget extends Widget
 {
+    protected static bool $isLazy = false;
     protected static ?int $sort = 4;
     protected int | string | array $columnSpan = 'full';
     protected string $view = 'filament.admin.widgets.contract-expiry-widget';

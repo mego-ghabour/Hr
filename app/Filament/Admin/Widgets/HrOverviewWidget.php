@@ -23,6 +23,7 @@ class HrOverviewWidget extends Widget implements HasActions, HasForms
         InteractsWithForms::__get insteadof InteractsWithPageFilters;
     }
 
+    protected static bool $isLazy = false;
     protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 'full';
     protected string $view = 'filament.admin.widgets.hr-overview-widget';

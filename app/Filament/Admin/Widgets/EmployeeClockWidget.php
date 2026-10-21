@@ -11,7 +11,7 @@ use Filament\Notifications\Notification;
 
 class EmployeeClockWidget extends Widget
 {
-    use \Filament\Widgets\Concerns\InteractsWithPageFilters;
+    protected static bool $isLazy = false;
 
     protected static ?int $sort = 2;
     protected int | string | array $columnSpan = 'full';

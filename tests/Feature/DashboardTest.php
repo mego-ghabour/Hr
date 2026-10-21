@@ -41,4 +41,34 @@ class DashboardTest extends TestCase
             $this->assertTrue($posAnnounce < $posClock, 'Announcements must appear BEFORE the clock terminal');
         }
     }
+
+    public function test_admin_dashboard_renders_with_filters_without_type_error(): void
+    {
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $user = User::factory()->create([
+            'email' => 'admin_filters@test.com',
+        ]);
+        $user->assignRole($role);
+
+        $filterKey = md5(\App\Filament\Admin\Pages\Dashboard::class) . '_filters';
+
+        $response = $this->actingAs($user)
+            ->withSession([
+                $filterKey => [
+                    'startDate' => '2026-01-01',
+                    'endDate' => '2026-12-31',
+                    'department_id' => null,
+                ],
+            ])
+            ->get('/admin');
+
+        $response->assertStatus(200);
+    }
+
+    public function test_loading_section_component_safely_handles_array_props(): void
+    {
+        $view = $this->blade('<x-filament::loading-section :page-filters="[\'startDate\' => \'2026-01-01\']" :column-span="[\'default\' => 1]" />');
+        $this->assertStringContainsString('fi-loading-section', (string) $view);
+    }
 }
+

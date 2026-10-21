@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CompanyAnnouncementsWidget extends Widget
 {
+    protected static bool $isLazy = false;
     protected static ?int $sort = 1;
     protected int | string | array $columnSpan = 'full';
     protected string $view = 'filament.admin.widgets.company-announcements-widget';
