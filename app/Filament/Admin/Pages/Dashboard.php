@@ -8,53 +8,70 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
+use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
 
 class Dashboard extends BaseDashboard
 {
-    use HasFiltersForm;
+    use HasFiltersAction;
 
-    public function filtersForm(Schema $schema): Schema
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
     {
-        return $schema
-            ->components([
-                DatePicker::make('startDate')
-                    ->label('من تاريخ')
-                    ->native(false)
-                    ->displayFormat('d/m/Y')
-                    ->closeOnDateSelection(),
-                DatePicker::make('endDate')
-                    ->label('إلى تاريخ')
-                    ->native(false)
-                    ->displayFormat('d/m/Y')
-                    ->closeOnDateSelection(),
-                \Filament\Forms\Components\Select::make('department_id')
-                    ->label('تصفية بالقسم')
-                    ->options(\App\Models\Department::pluck('name', 'id'))
-                    ->searchable()
-                    ->preload(),
-            ]);
+        return 'نظرة عامة';
     }
+
+    public function getSubheading(): string|\Illuminate\Contracts\Support\Htmlable|null
+    {
+        return 'نظام الموارد البشرية - لوحة المدير العام';
+    }
+
+
 
     public function getColumns(): int | array
     {
         return [
             'sm'  => 1,
             'md'  => 2,
-            'lg'  => 3,
-            'xl'  => 3,
-            '2xl' => 3,
+            'lg'  => 2,
+            'xl'  => 2,
+            '2xl' => 2,
         ];
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('new_candidate')
-                ->label('إضافة مرشح جديد')
-                ->icon('heroicon-o-user-plus')
-                ->color('primary')
-                ->url(route('filament.admin.resources.talent.create')),
+            \Filament\Pages\Dashboard\Actions\FilterAction::make()
+                ->name('تصفية البيانات')
+                ->icon('heroicon-o-funnel')
+                ->form([
+                    DatePicker::make('startDate')
+                        ->label('من تاريخ')
+                        ->native(false)
+                        ->displayFormat('d/m/Y')
+                        ->closeOnDateSelection(),
+                    DatePicker::make('endDate')
+                        ->label('إلى تاريخ')
+                        ->native(false)
+                        ->displayFormat('d/m/Y')
+                        ->closeOnDateSelection(),
+                    \Filament\Forms\Components\Select::make('department_id')
+                        ->label('تصفية بالقسم')
+                        ->options(\App\Models\Department::pluck('name', 'id'))
+                        ->searchable()
+                        ->preload(),
+                ]),
+        ];
+    }
+
+    public function getWidgets(): array
+    {
+        return [
+            \App\Filament\Admin\Widgets\CompanyAnnouncementsWidget::class,
+            \App\Filament\Admin\Widgets\EmployeeClockWidget::class,
+            \App\Filament\Admin\Widgets\HrOverviewWidget::class,
+            \App\Filament\Admin\Widgets\ContractExpiryWidget::class,
+            \App\Filament\Admin\Widgets\DepartmentTalentsChartWidget::class,
+            \App\Filament\Admin\Widgets\SourcePerformanceChartWidget::class,
         ];
     }
 }

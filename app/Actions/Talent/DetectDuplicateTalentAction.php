@@ -17,9 +17,31 @@ class DetectDuplicateTalentAction
 
         $query = Talent::query()
             ->where('id', '!=', $talent->id)
-            ->whereNull('deleted_at'); // assuming soft deletes
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($talent) {
+                $hasCondition = false;
+                if (!empty($talent->email)) {
+                    $q->orWhere('email', $talent->email);
+                    $domain = explode('@', $talent->email)[1] ?? null;
+                    if ($domain) {
+                        $q->orWhere('email', 'LIKE', '%@' . $domain);
+                    }
+                    $hasCondition = true;
+                }
+                if (!empty($talent->phone)) {
+                    $q->orWhere('phone', $talent->phone);
+                    $hasCondition = true;
+                }
+                if (!empty($talent->full_name)) {
+                    $q->orWhere('full_name', $talent->full_name);
+                    $hasCondition = true;
+                }
+                if (!$hasCondition) {
+                    $q->whereRaw('1 = 0');
+                }
+            });
 
-        $potentialMatches = $query->get();
+        $potentialMatches = $query->limit(50)->get();
 
         foreach ($potentialMatches as $match) {
             $confidence = 0;

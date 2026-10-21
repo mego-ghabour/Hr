@@ -11,7 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(
+            \Filament\Auth\Http\Responses\Contracts\LoginResponse::class,
+            \App\Http\Responses\FilamentLoginResponse::class
+        );
     }
 
     /**
@@ -30,10 +33,44 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Duplicate::class, \App\Policies\DuplicatePolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Talent::class, \App\Policies\TalentPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\UserPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Employee::class, \App\Policies\EmployeePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Attendance::class, \App\Policies\AttendancePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Leave::class, \App\Policies\LeavePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\LeaveType::class, \App\Policies\LeaveTypePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Excuse::class, \App\Policies\ExcusePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\JobPosting::class, \App\Policies\JobPostingPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Announcement::class, \App\Policies\AnnouncementPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Payroll::class, \App\Policies\PayrollPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\Spatie\Activitylog\Models\Activity::class, \App\Policies\ActivityPolicy::class);
 
-        // إعطاء صلاحيات كاملة للـ Super Admin
+        // إعطاء صلاحيات كاملة للـ Super Admin والـ admin لمنع أي تعليق في الصلاحيات
         \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
-            return $user->hasRole('Super Admin') ? true : null;
+            return ($user->hasRole(['Super Admin', 'admin', 'المدير العام', 'مسؤول النظام'])) ? true : null;
+        });
+
+        // مزامنة التوقيت والعملة الافتراضية مع إعدادات النظام ديناميكياً
+        try {
+            $timezone = \App\Models\Setting::timezone();
+            if (!empty($timezone)) {
+                date_default_timezone_set($timezone);
+                config(['app.timezone' => $timezone]);
+            }
+        } catch (\Throwable) {
+            // تجاهل الخطأ في حالة عدم اكتمال تثبيت قاعدة البيانات
+        }
+
+        \Illuminate\Support\Facades\View::composer('*', function ($view) {
+            try {
+                $view->with('currentCurrency', \App\Models\Setting::currency());
+                $view->with('currentCurrencySymbol', \App\Models\Setting::currencySymbol());
+                $view->with('currentTimezone', \App\Models\Setting::timezone());
+                $view->with('currentDateFormat', \App\Models\Setting::dateFormat());
+            } catch (\Throwable) {
+                $view->with('currentCurrency', 'EGP');
+                $view->with('currentCurrencySymbol', 'ج.م');
+                $view->with('currentTimezone', 'Africa/Cairo');
+                $view->with('currentDateFormat', 'Y-m-d');
+            }
         });
     }
 }

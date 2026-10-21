@@ -3,11 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TalentApplicationReceived extends Notification implements ShouldQueue
+class TalentApplicationReceived extends Notification
 {
     use Queueable;
 
@@ -36,13 +35,27 @@ class TalentApplicationReceived extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject('استلام طلب التوظيف بنجاح - ' . \App\Models\Setting::get('brand_name', 'نظام إدارة المرشحين'))
-            ->greeting('أهلاً ' . $this->talent->full_name . '،')
-            ->line('نود إعلامك بأننا قد استلمنا طلب التوظيف الخاص بك بنجاح، وقمنا بإضافة سيرتك الذاتية إلى قاعدة بياناتنا.')
-            ->line('سيقوم فريق الموارد البشرية بمراجعة ملفك والتواصل معك في حال توافقت مهاراتك مع متطلبات الوظيفة.')
-            ->line('نتمنى لك التوفيق!')
-            ->salutation('فريق التوظيف');
+        $brand = \App\Models\Setting::get('brand_name', config('app.name', 'نظام إدارة الموارد البشرية'));
+        $name = $this->talent->full_name;
+
+        $defaultSubject = 'استلام طلب التوظيف بنجاح - {brand}';
+        $defaultBody = "أهلاً {name}،\n\nنود إعلامك بأننا قد استلمنا طلب التوظيف الخاص بك بنجاح، وقمنا بإضافة سيرتك الذاتية إلى قاعدة بياناتنا.\n\nسيقوم فريق الموارد البشرية بمراجعة ملفك والتواصل معك في حال توافقت مهاراتك مع متطلبات الوظيفة.\n\nنتمنى لك التوفيق!\nفريق التوظيف";
+
+        $rawSubject = \App\Models\Setting::get('email_template_application_received_subject', $defaultSubject);
+        $rawBody = \App\Models\Setting::get('email_template_application_received_body', $defaultBody);
+
+        $subject = str_replace(['{name}', '{brand}'], [$name, $brand], $rawSubject);
+        $body = str_replace(['{name}', '{brand}'], [$name, $brand], $rawBody);
+
+        $mail = (new MailMessage)->subject($subject);
+        $lines = explode("\n", $body);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line !== '') {
+                $mail->line($line);
+            }
+        }
+        return $mail;
     }
 
     /**

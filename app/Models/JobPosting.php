@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobPosting extends Model
 {
@@ -36,5 +38,10 @@ class JobPosting extends Model
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function talents(): HasMany
+    {
+        return $this->hasMany(Talent::class, 'job_posting_id');
     }
 }

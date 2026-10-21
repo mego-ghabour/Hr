@@ -14,7 +14,8 @@ class DepartmentTalentsChartWidget extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasPermissionTo('view_any_talent');
+        $user = auth()->user();
+        return $user && ($user->hasRole(['Super Admin', 'admin']) || $user->can('view_any_talent'));
     }
     use InteractsWithPageFilters;
 
@@ -22,11 +23,11 @@ class DepartmentTalentsChartWidget extends ChartWidget
     protected ?string $heading = 'توزيع المرشحين حسب الأقسام';
     protected ?string $description = 'عدد المرشحين المسجلين في كل قسم';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 5;
 
-    protected int | string | array $columnSpan = 2;
+    protected int | string | array $columnSpan = 1;
 
-    protected ?string $maxHeight = '320px';
+    protected ?string $maxHeight = '300px';
 
     protected function getData(): array
     {

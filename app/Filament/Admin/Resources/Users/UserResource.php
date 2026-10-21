@@ -38,7 +38,9 @@ class UserResource extends Resource
         return 'المستخدمين';
     }
 
-    protected static \UnitEnum|string|null $navigationGroup = 'إدارة النظام';
+    protected static \UnitEnum|string|null $navigationGroup = 'إدارة النظام والصلاحيات';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

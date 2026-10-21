@@ -33,7 +33,23 @@ class JobPostingResource extends Resource
     
     public static function getNavigationGroup(): ?string
     {
-        return 'التوظيف';
+        return 'إدارة التوظيف واستقطاب المواهب';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::where('is_active', true)->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'info';
     }
 
     public static function form(Schema $schema): Schema
@@ -70,13 +86,13 @@ class JobPostingResource extends Resource
                             ->schema([
                                 \Filament\Forms\Components\ColorPicker::make('brand_color')
                                     ->label('اللون الأساسي لنموذج التقديم (Primary Color)')
-                                    ->helperText('اتركه فارغاً لاستخدام اللون الافتراضي')
+                                    ->helperText('اتركه فارغاً لاستخدام اللون الافتراضي للشركة (#0d9488)')
                                     ->nullable(),
                                 \Filament\Forms\Components\ToggleButtons::make('form_layout')
-                                    ->label('شكل نموذج التقديم (Layout)')
+                                    ->label('شكل وتصميم نموذج التقديم (Layout)')
                                     ->options([
-                                        'single_page' => 'صفحة واحدة طويلة',
-                                        'wizard' => 'نظام الخطوات المتعددة (Wizard)'
+                                        'single_page' => 'صفحة واحدة طويلة (Single Page)',
+                                        'wizard' => 'نظام الخطوات المتعددة (Interactive Wizard)'
                                     ])
                                     ->icons([
                                         'single_page' => 'heroicon-m-document',
@@ -87,6 +103,7 @@ class JobPostingResource extends Resource
                                         'wizard' => 'success',
                                     ])
                                     ->default('single_page')
+                                    ->helperText('عند اختيار (Wizard)، سيتم تقسيم صفحة التقديم الخارجية تلقائياً إلى خطوات تفاعلية متسلسلة (بيانات شخصية -> خبرات -> أسئلة ومرفقات -> مراجعة وتأكيد) مع شريط تقدم وتحقق فوري.')
                                     ->inline(),
                                 \Filament\Forms\Components\RichEditor::make('success_message')
                                     ->label('رسالة النجاح المخصصة (تظهر بعد التقديم)')
@@ -273,6 +290,12 @@ class JobPostingResource extends Resource
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('النشاط')
                     ->boolean(),
+                Tables\Columns\TextColumn::make('talents_count')
+                    ->counts('talents')
+                    ->label('عدد المتقدمين')
+                    ->badge()
+                    ->color('primary')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime()
@@ -280,9 +303,34 @@ class JobPostingResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('department_id')
+                    ->label('القسم')
+                    ->relationship('department', 'name'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('حالة الوظيفة')
+                    ->trueLabel('نشطة ومتاحة للتقديم')
+                    ->falseLabel('مغلقة'),
             ])
             ->actions([
+                \Filament\Actions\Action::make('view_applicants')
+                    ->label('المتقدمين')
+                    ->icon('heroicon-o-users')
+                    ->color('primary')
+                    ->url(fn (\App\Models\JobPosting $record): string => url('/admin/talent?tableFilters[job_posting_id][value]=' . $record->id)),
+                \Filament\Actions\Action::make('copy_link')
+                    ->label('نسخ الرابط')
+                    ->icon('heroicon-o-clipboard-document')
+                    ->color('gray')
+                    ->action(function (\App\Models\JobPosting $record) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('رابط التقديم للوظيفة')
+                            ->body(url('/jobs/' . $record->id . '/apply'))
+                            ->info()
+                            ->send();
+                    })
+                    ->extraAttributes(fn (\App\Models\JobPosting $record) => [
+                        'x-on:click' => new \Illuminate\Support\HtmlString('window.navigator.clipboard.writeText("' . url('/jobs/' . $record->id . '/apply') . '"); $tooltip("تم نسخ رابط التقديم بنجاح!");'),
+                    ]),
                 \Filament\Actions\Action::make('preview')
                     ->label('معاينة')
                     ->icon('heroicon-o-eye')
@@ -308,6 +356,13 @@ class JobPostingResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['department', 'location'])
+            ->withCount('talents');
     }
 
     public static function getPages(): array

@@ -89,6 +89,18 @@ class Talent extends Model
         });
     }
 
+    public function getFirstNameAttribute(): string
+    {
+        $parts = explode(' ', trim($this->full_name ?? ''), 2);
+        return $parts[0] ?? '';
+    }
+
+    public function getLastNameAttribute(): string
+    {
+        $parts = explode(' ', trim($this->full_name ?? ''), 2);
+        return $parts[1] ?? '';
+    }
+
     public function getProfileAgeAttribute(): int
     {
         if (!$this->date_added) {

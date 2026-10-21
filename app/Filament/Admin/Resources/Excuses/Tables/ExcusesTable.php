@@ -72,6 +72,12 @@ class ExcusesTable
             ])
             ->defaultSort('date', 'desc')
             ->filters([
+                SelectFilter::make('employee_id')
+                    ->label('الموظف')
+                    ->relationship('employee', 'first_name')
+                    ->getOptionLabelFromRecordUsing(fn ($r) => $r ? "{$r->first_name} {$r->last_name}" : '')
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('status')
                     ->label('تصفية بالحالة')
                     ->options([
@@ -81,6 +87,36 @@ class ExcusesTable
                     ]),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('approve')
+                    ->label('موافقة')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('الموافقة على إذن الاستئذان')
+                    ->modalDescription(fn ($record) => 'هل أنت متأكد من الموافقة على إذن استئذان ' . ($record->employee?->first_name ?? '') . '؟')
+                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->action(function ($record) {
+                        $record->update(['status' => 'approved']);
+                        \Filament\Notifications\Notification::make()->title('تمت الموافقة على الإذن بنجاح')->success()->send();
+                    }),
+                \Filament\Actions\Action::make('reject')
+                    ->label('رفض')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->form([
+                        \Filament\Forms\Components\Textarea::make('admin_notes')
+                            ->label('سبب الرفض')
+                            ->placeholder('اكتب سبب رفض الإذن...')
+                            ->required(),
+                    ])
+                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->action(function (array $data, $record) {
+                        $record->update([
+                            'status' => 'rejected',
+                            'admin_notes' => $data['admin_notes'] ?? null,
+                        ]);
+                        \Filament\Notifications\Notification::make()->title('تم رفض إذن الاستئذان')->warning()->send();
+                    }),
                 ViewAction::make(),
                 EditAction::make(),
             ])

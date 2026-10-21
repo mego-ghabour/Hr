@@ -20,9 +20,16 @@ class LeaveTypeResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'شؤون العاملين';
+        return 'شؤون العاملين والموظفين';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 6;
     }
 
     public static function getModelLabel(): string

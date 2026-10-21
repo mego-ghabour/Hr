@@ -73,4 +73,42 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Talent::class, 'created_by');
     }
+
+    public function employee(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم يمتلك أي دور إداري أو قيادي
+     */
+    public function isAdministrative(): bool
+    {
+        return $this->hasAnyRole([
+            'المدير العام',
+            'مسؤول النظام',
+            'Super Admin',
+            'admin',
+            'مدير الموارد البشرية',
+            'HR Manager',
+            'مدير قسم',
+            'Department Manager',
+            'مسؤول التوظيف',
+            'Recruiter',
+            'مسؤول المقابلات',
+            'Interviewer',
+        ]);
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم موظفاً عادياً مخصصاً لبوابة الخدمة الذاتية (ESS)
+     */
+    public function isPortalOnlyEmployee(): bool
+    {
+        if ($this->isAdministrative()) {
+            return false;
+        }
+
+        return $this->hasRole(['موظف', 'Employee', 'employee']) || $this->employee !== null;
+    }
 }

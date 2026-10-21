@@ -13,16 +13,17 @@ class SourcePerformanceChartWidget extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasPermissionTo('view_any_talent');
+        $user = auth()->user();
+        return $user && ($user->hasRole(['Super Admin', 'admin']) || $user->can('view_any_talent'));
     }
 
     use InteractsWithPageFilters;
 
     protected ?string $heading = 'أداء مصادر التوظيف';
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 6;
     protected static bool $isLazy = false;
-    protected int | string | array $columnSpan = 2;
-    protected ?string $maxHeight = '320px';
+    protected int | string | array $columnSpan = 1;
+    protected ?string $maxHeight = '300px';
 
     protected function getData(): array
     {
@@ -50,7 +51,7 @@ class SourcePerformanceChartWidget extends ChartWidget
                 [
                     'label' => 'عدد المتقدمين',
                     'data' => $sources->pluck('talents_count')->toArray(),
-                    'backgroundColor' => '#3b82f6', // blue-500
+                    'backgroundColor' => ['#0d9488', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'], 'borderWidth' => 0,
                     'borderRadius' => 4,
                 ],
             ],
@@ -60,14 +61,14 @@ class SourcePerformanceChartWidget extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar';
+        return 'doughnut';
     }
 
     protected function getOptions(): array
     {
         return [
             'plugins' => [
-                'legend' => ['display' => false],
+                'legend' => ['display' => true, 'position' => 'bottom'],
             ],
             'scales' => [
                 'y' => [
@@ -81,3 +82,4 @@ class SourcePerformanceChartWidget extends ChartWidget
         ];
     }
 }
+

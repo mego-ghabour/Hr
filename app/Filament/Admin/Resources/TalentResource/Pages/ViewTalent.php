@@ -20,9 +20,28 @@ class ViewTalent extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            CommunicationActions::makeWhatsAppAction(),
-            CommunicationActions::makeEmailAction(),
-            Actions\EditAction::make(),
+            \App\Filament\Actions\TalentActions::makeHireAsEmployeeAction()
+                ->label('تعيين كموظف')
+                ->icon('heroicon-m-user-plus')
+                ->color('success'),
+
+            CommunicationActions::makeWhatsAppAction()
+                ->label('واتساب')
+                ->icon('heroicon-m-chat-bubble-left-right')
+                ->color('success')
+                ->outlined(),
+
+            CommunicationActions::makeEmailAction()
+                ->label('إرسال إيميل')
+                ->icon('heroicon-m-envelope')
+                ->color('info')
+                ->outlined(),
+
+            Actions\EditAction::make()
+                ->label('تعديل البيانات')
+                ->icon('heroicon-m-pencil-square')
+                ->color('gray')
+                ->outlined(),
         ];
     }
 
@@ -128,7 +147,7 @@ class ViewTalent extends ViewRecord
                                             ->placeholder('غير محدد'),
                                         TextEntry::make('expected_salary')
                                             ->label('الراتب المتوقع')
-                                            ->money('EGP')
+                                            ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? number_format((float) $state, 2) . ' ' . \App\Models\Setting::currencySymbol() : 'غير محدد')
                                             ->icon('heroicon-o-banknotes')
                                             ->placeholder('غير محدد'),
                                         TextEntry::make('work_preference')

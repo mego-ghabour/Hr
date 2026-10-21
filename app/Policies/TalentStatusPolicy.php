@@ -9,26 +9,26 @@ class TalentStatusPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_any_status');
+        return $user->can('view_any_status');
     }
 
     public function view(User $user, TalentStatus $model): bool
     {
-        return $user->hasPermissionTo('view_status');
+        return $user->can('view_status');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_status');
+        return $user->can('create_status');
     }
 
     public function update(User $user, TalentStatus $model): bool
     {
-        return $user->hasPermissionTo('update_status');
+        return $user->can('update_status');
     }
 
     public function delete(User $user, TalentStatus $model): bool
     {
-        return $user->hasPermissionTo('delete_status');
+        return $user->can('delete_status');
     }
 }

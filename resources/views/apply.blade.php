@@ -151,7 +151,7 @@
 
                         <!-- الراتب المتوقع -->
                         <div>
-                            <label for="expected_salary" class="block text-sm font-semibold text-gray-700 mb-2">الراتب المتوقع (بالجنيه/الشهري)</label>
+                            <label for="expected_salary" class="block text-sm font-semibold text-gray-700 mb-2">الراتب المتوقع شهرياً ({{ \App\Models\Setting::currencySymbol() }})</label>
                             <input type="number" name="expected_salary" id="expected_salary" value="{{ old('expected_salary') }}" min="0"
                                 class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                                 placeholder="مثال: 25000">

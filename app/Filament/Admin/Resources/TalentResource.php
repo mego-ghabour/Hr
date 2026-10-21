@@ -37,11 +37,22 @@ class TalentResource extends Resource
 {
     protected static ?string $model = Talent::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'إدارة المرشحين';
+    protected static string|\UnitEnum|null $navigationGroup = 'إدارة التوظيف واستقطاب المواهب';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
@@ -157,7 +168,7 @@ class TalentResource extends Resource
                         TextInput::make('expected_salary')
                             ->label('الراتب المتوقع (بالشهر)')
                             ->numeric()
-                            ->prefix('ج.م')
+                            ->prefix(fn () => \App\Models\Setting::currencySymbol())
                             ->helperText('اكتب الراتب شهرياً'),
                         Select::make('seniority_level')
                             ->label('مستوى الخبرة')
@@ -352,7 +363,7 @@ class TalentResource extends Resource
                     ->toggleable(),
                 TextColumn::make('expected_salary')
                     ->label('الراتب المتوقع')
-                    ->money('EGP')
+                    ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? number_format((float) $state, 2) . ' ' . \App\Models\Setting::currencySymbol() : '-')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('date_added')
@@ -448,6 +459,7 @@ class TalentResource extends Resource
                     ->label('المحذوفين'),
             ])
             ->actions([
+                \App\Filament\Actions\TalentActions::makeHireAsEmployeeAction(),
                 CommunicationActions::makeWhatsAppAction(),
                 CommunicationActions::makeEmailAction(),
                 ViewAction::make()->slideOver(),
@@ -458,6 +470,67 @@ class TalentResource extends Resource
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('change_status')
+                        ->label('تغيير الحالة للمحددين')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->form([
+                            \Filament\Forms\Components\Select::make('status_id')
+                                ->label('الحالة الجديدة')
+                                ->options(\App\Models\TalentStatus::pluck('name', 'id'))
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
+                            $records->each->update(['status_id' => $data['status_id']]);
+                            \Filament\Notifications\Notification::make()
+                                ->title('تم تحديث حالة المرشحين المحددين بنجاح')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    \Filament\Actions\BulkAction::make('export_selected')
+                        ->label('تصدير المحددين كـ CSV')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            return response()->streamDownload(function () use ($records) {
+                                $handle = fopen('php://output', 'w');
+                                fputs($handle, "\xEF\xBB\xBF");
+                                fputcsv($handle, [
+                                    'المعرف',
+                                    'الاسم الكامل',
+                                    'البريد الإلكتروني',
+                                    'الهاتف',
+                                    'الوظيفة المتقدم لها',
+                                    'القسم',
+                                    'الراتب المتوقع',
+                                    'سنوات الخبرة',
+                                    'المستوى المهني',
+                                    'طريقة العمل',
+                                    'الحالة',
+                                    'تاريخ الإضافة'
+                                ]);
+                                foreach ($records as $t) {
+                                    fputcsv($handle, [
+                                        $t->talent_id,
+                                        $t->full_name,
+                                        $t->email,
+                                        $t->phone,
+                                        $t->jobPosting?->title ?? '-',
+                                        $t->department?->name ?? '-',
+                                        $t->expected_salary ?? '-',
+                                        $t->years_of_experience ?? '-',
+                                        $t->seniority_level?->value ?? '-',
+                                        $t->work_preference?->value ?? '-',
+                                        $t->status?->name ?? '-',
+                                        $t->date_added?->format('Y-m-d') ?? $t->created_at->format('Y-m-d'),
+                                    ]);
+                                }
+                                fclose($handle);
+                            }, 'talents-selected-' . date('Y-m-d') . '.csv');
+                        }),
+
                     DeleteBulkAction::make(),
                 ]),
             ]);
@@ -487,7 +560,7 @@ class TalentResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['department', 'status', 'assignedRecruiter'])
+            ->with(['department', 'location', 'source', 'status', 'tags', 'assignedRecruiter'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

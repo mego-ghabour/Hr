@@ -9,26 +9,26 @@ class SourcePolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_any_source');
+        return $user->can('view_any_source');
     }
 
     public function view(User $user, Source $model): bool
     {
-        return $user->hasPermissionTo('view_source');
+        return $user->can('view_source');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_source');
+        return $user->can('create_source');
     }
 
     public function update(User $user, Source $model): bool
     {
-        return $user->hasPermissionTo('update_source');
+        return $user->can('update_source');
     }
 
     public function delete(User $user, Source $model): bool
     {
-        return $user->hasPermissionTo('delete_source');
+        return $user->can('delete_source');
     }
 }

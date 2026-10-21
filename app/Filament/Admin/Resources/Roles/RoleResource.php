@@ -39,7 +39,9 @@ class RoleResource extends Resource
         return 'الأدوار والصلاحيات';
     }
 
-    protected static \UnitEnum|string|null $navigationGroup = 'إدارة النظام';
+    protected static \UnitEnum|string|null $navigationGroup = 'إدارة النظام والصلاحيات';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Schema $schema): Schema
     {

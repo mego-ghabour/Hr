@@ -25,7 +25,7 @@ class ExcuseForm
                             Select::make('employee_id')
                                 ->label('الموظف')
                                 ->relationship('employee', 'first_name')
-                                ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name}")
+                                ->getOptionLabelFromRecordUsing(fn ($record) => $record ? "{$record->first_name} {$record->last_name}" : '')
                                 ->searchable(['first_name', 'last_name'])
                                 ->preload()
                                 ->required(),

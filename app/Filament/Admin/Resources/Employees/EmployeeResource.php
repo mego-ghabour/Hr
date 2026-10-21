@@ -44,7 +44,23 @@ class EmployeeResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'شؤون العاملين';
+        return 'شؤون العاملين والموظفين';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::where('status', 'active')->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'success';
     }
 
     public static function getModelLabel(): string
@@ -71,6 +87,7 @@ class EmployeeResource extends Resource
     {
         return [
             \App\Filament\Admin\Resources\Employees\RelationManagers\LeaveBalancesRelationManager::class,
+            \App\Filament\Admin\Resources\Employees\RelationManagers\PayrollsRelationManager::class,
             \App\Filament\Admin\Resources\Employees\RelationManagers\DocumentsRelationManager::class,
         ];
     }
@@ -82,6 +99,15 @@ class EmployeeResource extends Resource
             'create' => CreateEmployee::route('/create'),
             'edit' => EditEmployee::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['department', 'user', 'manager'])
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

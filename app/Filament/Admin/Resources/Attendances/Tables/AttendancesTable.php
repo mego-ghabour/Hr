@@ -51,6 +51,27 @@ class AttendancesTable
                     ->sortable()
                     ->icon('heroicon-m-arrow-left-on-rectangle')
                     ->color('danger'),
+
+                TextColumn::make('total_hours')
+                    ->label('ساعات العمل')
+                    ->badge()
+                    ->color('gray')
+                    ->placeholder('-')
+                    ->icon('heroicon-m-clock'),
+
+                TextColumn::make('is_remote')
+                    ->label('نوع البصمة / الموقع')
+                    ->badge()
+                    ->state(function ($record) {
+                        if ($record->is_remote) {
+                            return 'عن بُعد 🏠';
+                        }
+                        if (!is_null($record->distance_meters)) {
+                            return 'مقر العمل (' . round($record->distance_meters) . ' م) 📍';
+                        }
+                        return 'مباشر';
+                    })
+                    ->color(fn ($record) => $record->is_remote ? 'info' : (!is_null($record->distance_meters) ? 'success' : 'gray')),
                 
                 TextColumn::make('status')
                     ->label('الحالة')
@@ -71,6 +92,12 @@ class AttendancesTable
             ])
             ->defaultSort('date', 'desc')
             ->filters([
+                SelectFilter::make('employee_id')
+                    ->label('الموظف')
+                    ->relationship('employee', 'first_name')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record ? "{$record->first_name} {$record->last_name}" : '')
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('status')
                     ->label('تصفية بالحالة')
                     ->options([
@@ -79,6 +106,16 @@ class AttendancesTable
                         'late' => 'متأخر',
                         'half_day' => 'نصف يوم',
                     ]),
+                Filter::make('date_range')
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('from')->label('من تاريخ'),
+                        \Filament\Forms\Components\DatePicker::make('until')->label('إلى تاريخ'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn ($q, $date) => $q->whereDate('date', '>=', $date))
+                            ->when($data['until'], fn ($q, $date) => $q->whereDate('date', '<=', $date));
+                    }),
             ])
             ->recordActions([
                 ViewAction::make(),

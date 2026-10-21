@@ -5,7 +5,7 @@ namespace App\Filament\Admin\Resources\Employees\Schemas;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
+use Filament\Schemas\Components\Grid;
 
 class EmployeeForm
 {
@@ -85,7 +85,7 @@ class EmployeeForm
                                 TextInput::make('salary')
                                     ->label('الراتب الأساسي')
                                     ->numeric()
-                                    ->prefix('$'),
+                                    ->prefix(fn () => \App\Models\Setting::currencySymbol()),
                                 DatePicker::make('hire_date')
                                     ->label('تاريخ التعيين'),
                                 DatePicker::make('contract_end_date')
@@ -141,6 +141,11 @@ class EmployeeForm
                                     ])
                                     ->default('active')
                                     ->required(),
+                                \Filament\Forms\Components\Toggle::make('is_remote')
+                                    ->label('موظف يعمل عن بُعد (Remote Employee)')
+                                    ->helperText('الموظف المعفى من الحضور الميداني يمكنه تسجيل البصمة من أي مكان دون اشتراط نطاق الـ GPS.')
+                                    ->default(false)
+                                    ->columnSpanFull(),
                             ]),
                         ]),
                 ])

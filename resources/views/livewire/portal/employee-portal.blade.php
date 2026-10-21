@@ -1,0 +1,1308 @@
+<div class="min-h-screen bg-slate-50 flex flex-col" x-data="{ 
+    currentTime: '',
+    isLocating: false,
+    updateClock() {
+        const now = new Date();
+        this.currentTime = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    },
+    triggerClock(action, isGpsRequired, isRemote) {
+        if (isGpsRequired && !isRemote) {
+            if (!navigator.geolocation) {
+                alert('عذراً، متصفحك أو جهازك لا يدعم تحديد الموقع الجغرافي (GPS).');
+                return;
+            }
+            this.isLocating = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    this.isLocating = false;
+                    if (action === 'in') {
+                        $wire.clockIn(pos.coords.latitude, pos.coords.longitude);
+                    } else {
+                        $wire.clockOut(pos.coords.latitude, pos.coords.longitude);
+                    }
+                },
+                (err) => {
+                    this.isLocating = false;
+                    let msg = 'تعذر تحديد موقعك الجغرافي. يرجى تفعيل إذن الوصول للموقع (GPS) على جهازك للمتابعة.';
+                    if (err.code === 1) {
+                        msg = 'تم رفض إذن الوصول للموقع الجغرافي. يتطلب النظام التحقق من تواجدك داخل نطاق مقر الشركة.';
+                    } else if (err.code === 2) {
+                        msg = 'إشارة الموقع الجغرافي غير متوفرة حالياً. يرجى التأكد من تشغيل الـ GPS.';
+                    } else if (err.code === 3) {
+                        msg = 'استغرق تحديد الموقع وقتاً طويلاً. يرجى المحاولة مرة أخرى.';
+                    }
+                    alert(msg);
+                },
+                { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+            );
+        } else {
+            // Remote employee or GPS disabled globally: grab coordinates optionally without blocking
+            if (navigator.geolocation) {
+                this.isLocating = true;
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        this.isLocating = false;
+                        if (action === 'in') {
+                            $wire.clockIn(pos.coords.latitude, pos.coords.longitude);
+                        } else {
+                            $wire.clockOut(pos.coords.latitude, pos.coords.longitude);
+                        }
+                    },
+                    (err) => {
+                        this.isLocating = false;
+                        if (action === 'in') {
+                            $wire.clockIn(null, null);
+                        } else {
+                            $wire.clockOut(null, null);
+                        }
+                    },
+                    { timeout: 3000 }
+                );
+            } else {
+                if (action === 'in') {
+                    $wire.clockIn(null, null);
+                } else {
+                    $wire.clockOut(null, null);
+                }
+            }
+        }
+    }
+}" x-init="updateClock(); setInterval(() => updateClock(), 1000)">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 sm:h-20">
+                
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3">
+                    @if($logo)
+                        <img src="{{ str_starts_with($logo, 'http') || str_starts_with($logo, '/') ? $logo : \Illuminate\Support\Facades\Storage::disk('public')->url($logo) }}" 
+                             alt="{{ $brandName }}" 
+                             class="h-9 sm:h-11 w-auto object-contain">
+                    @else
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-indigo-500/20">
+                            {{ mb_substr($brandName, 0, 1) }}
+                        </div>
+                    @endif
+                    <div>
+                        <span class="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                            {{ $brandName }}
+                        </span>
+                        <span class="text-[11px] font-bold text-brand-600 uppercase tracking-wider block">
+                            بوابة الخدمة الذاتية (ESS)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Clock & Live Date (Hidden on mobile) -->
+                <div class="hidden md:flex items-center gap-4 bg-slate-100/80 px-4 py-2 rounded-2xl border border-slate-200/60">
+                    <div class="flex items-center gap-2 text-slate-700 text-xs font-bold">
+                        <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>{{ \Carbon\Carbon::now()->locale('ar')->translatedFormat('l، d F Y') }}</span>
+                    </div>
+                    <span class="text-slate-300">|</span>
+                    <div class="flex items-center gap-1.5 text-brand-700 text-xs font-black font-mono" dir="ltr">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span x-text="currentTime"></span>
+                    </div>
+                </div>
+
+                <!-- User Profile & Actions -->
+                <div class="flex items-center gap-2 sm:gap-4">
+                    
+                    <!-- Admin Employee Preview Switcher (if admin) -->
+                    @if($allEmployees->isNotEmpty())
+                        <div class="hidden lg:flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl text-xs text-amber-900">
+                            <span class="font-bold">معاينة موظف:</span>
+                            <select wire:model.live="previewEmployeeId" class="bg-transparent font-medium border-none p-0 text-xs focus:ring-0 cursor-pointer">
+                                @foreach($allEmployees as $empOption)
+                                    <option value="{{ $empOption->id }}">{{ $empOption->full_name }} ({{ $empOption->job_title }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+
+                    <!-- Admin Panel Link -->
+                    @if($user && ($user->isAdministrative() || $user->can('view_any_employee')))
+                        <a href="/admin" 
+                           class="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-brand-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors border border-slate-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span>لوحة الإدارة</span>
+                        </a>
+                    @endif
+
+                    <!-- Employee Avatar & Name -->
+                    @if($employee)
+                        <div class="flex items-center gap-2 pl-2">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 text-white font-black text-sm flex items-center justify-center ring-2 ring-brand-100 shadow-sm overflow-hidden">
+                                @if($employee->avatar_url)
+                                    <img src="{{ str_starts_with($employee->avatar_url, 'http') || str_starts_with($employee->avatar_url, '/') ? $employee->avatar_url : \Illuminate\Support\Facades\Storage::disk('public')->url($employee->avatar_url) }}" 
+                                         alt="{{ $employee->full_name }}" 
+                                         class="w-full h-full object-cover">
+                                @else
+                                    {{ mb_substr($employee->first_name, 0, 1) }}
+                                @endif
+                            </div>
+                            <div class="text-right hidden sm:block">
+                                <span class="text-xs sm:text-sm font-black text-slate-800 block leading-tight">
+                                    {{ $employee->full_name }}
+                                </span>
+                                <span class="text-[11px] font-medium text-slate-500 block">
+                                    {{ $employee->job_title ?? 'موظف' }}
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Logout Form -->
+                    <form action="{{ route('portal.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" 
+                                title="تسجيل الخروج"
+                                class="p-2 sm:px-3 sm:py-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-100 hidden sm:block">
+            <nav class="flex items-center gap-1 sm:gap-2 py-2 overflow-x-auto scrollbar-none">
+                <button wire:click="setTab('overview')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'overview' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>الرئيسية</span>
+                </button>
+
+                <button wire:click="setTab('attendance')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'attendance' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>البصمة والحضور</span>
+                </button>
+
+                <button wire:click="setTab('leaves')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'leaves' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>الإجازات والأرصدة</span>
+                </button>
+
+                <button wire:click="setTab('excuses')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'excuses' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span>الاستئذانات</span>
+                </button>
+
+                <button wire:click="setTab('payrolls')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'payrolls' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span>الرواتب ومفردات الراتب</span>
+                </button>
+
+                <button wire:click="setTab('profile')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'profile' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span>ملفي الوظيفي</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Notification Toast -->
+    @if($flashMessage)
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+            <div class="p-4 rounded-2xl flex items-center justify-between shadow-lg border transition-all animate-bounce-once {{ $flashType === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : ($flashType === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-rose-50 border-rose-200 text-rose-900') }}">
+                <div class="flex items-center gap-3">
+                    @if($flashType === 'success')
+                        <span class="p-2 rounded-xl bg-emerald-500 text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        </span>
+                    @elseif($flashType === 'warning')
+                        <span class="p-2 rounded-xl bg-amber-500 text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </span>
+                    @else
+                        <span class="p-2 rounded-xl bg-rose-500 text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </span>
+                    @endif
+                    <span class="text-sm font-bold">{{ $flashMessage }}</span>
+                </div>
+                <button wire:click="clearNotification" class="text-slate-400 hover:text-slate-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 sm:pb-8">
+
+        @if(!$employee)
+            <!-- Unlinked Account Warning -->
+            <div class="bg-white rounded-3xl p-8 sm:p-12 text-center shadow-sm border border-slate-200">
+                <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">حسابك غير مرتبط بملف موظف</h2>
+                <p class="text-slate-500 max-w-md mx-auto text-sm mb-6">
+                    يبدو أن هذا الحساب لا يملك ملف موظف نشط في النظام. إذا كنت مديراً أو مسؤولاً يمكنك ربط الحساب من قسم الموظفين في لوحة الإدارة.
+                </p>
+                <a href="/admin" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-xl font-bold text-sm hover:bg-brand-700 transition-colors">
+                    <span>الانتقال إلى لوحة تحكم المسؤول</span>
+                </a>
+            </div>
+        @else
+
+            <!-- TAB 1: OVERVIEW -->
+            @if($activeTab === 'overview')
+                <div class="space-y-6">
+                    
+                    <!-- Welcome Hero & Quick Clock -->
+                    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute -left-10 -top-10 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                            <div>
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-200 text-xs font-semibold backdrop-blur-sm mb-3">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span>{{ \Carbon\Carbon::now()->locale('ar')->translatedFormat('l، d F Y') }}</span>
+                                </div>
+                                <h1 class="text-2xl sm:text-3xl font-black tracking-tight">
+                                    أهلاً بك، {{ $employee->first_name }} 👋
+                                </h1>
+                                <p class="text-slate-300 text-sm mt-1">
+                                    {{ $employee->job_title ?? 'موظف' }} • {{ $employee->department->name ?? 'الإدارة العامة' }}
+                                </p>
+                            </div>
+
+                            <!-- Live Quick Clock Card -->
+                            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-white/10 flex flex-col sm:flex-row items-center gap-4">
+                                <div class="text-center sm:text-right">
+                                    <span class="text-xs text-indigo-200 block font-bold mb-0.5">البصمة الذكية اليوم</span>
+                                    <div class="text-xl sm:text-2xl font-black font-mono tracking-wider text-white" dir="ltr" x-text="currentTime"></div>
+                                    @if($todayAttendance && $todayAttendance->check_in_time)
+                                        <span class="text-[11px] text-emerald-300 font-bold block mt-1">
+                                            حضور: {{ \Carbon\Carbon::parse($todayAttendance->check_in_time)->format('h:i A') }}
+                                            @if($todayAttendance->check_out_time)
+                                                • انصراف: {{ \Carbon\Carbon::parse($todayAttendance->check_out_time)->format('h:i A') }}
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="text-[11px] text-slate-300 block mt-1">لم تسجل الحضور اليوم بعد</span>
+                                    @endif
+
+                                    <!-- Geofence & Location Status Badge -->
+                                    <div class="mt-2 flex items-center justify-center sm:justify-start gap-1">
+                                        @if($isGpsRequired && !$isRemoteEmployee)
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-200 bg-white/10 px-2 py-0.5 rounded-md">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                مقر العمل (نطاق {{ $companyRadius }} م)
+                                            </span>
+                                        @elseif($isRemoteEmployee)
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-200 bg-sky-500/20 px-2 py-0.5 rounded-md border border-sky-400/30">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                                بصمة عن بُعد (من أي مكان)
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-300 bg-white/10 px-2 py-0.5 rounded-md">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                                تسجيل متاح من أي مكان
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Action Button -->
+                                <div>
+                                    @if(!$todayAttendance)
+                                        <button type="button"
+                                                @click="triggerClock('in', {{ $isGpsRequired ? 'true' : 'false' }}, {{ $isRemoteEmployee ? 'true' : 'false' }})" 
+                                                :disabled="isLocating"
+                                                wire:loading.attr="disabled"
+                                                class="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-sm rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait">
+                                            <template x-if="!isLocating">
+                                                <span class="flex items-center gap-2">
+                                                    <svg wire:loading.remove wire:target="clockIn" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                                                    <span wire:loading.remove wire:target="clockIn">تسجيل حضور الآن</span>
+                                                    <span wire:loading wire:target="clockIn">جارِ التسجيل...</span>
+                                                </span>
+                                            </template>
+                                            <template x-if="isLocating">
+                                                <span class="flex items-center gap-2">
+                                                    <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                                    <span>جارِ تحديد الـ GPS...</span>
+                                                </span>
+                                            </template>
+                                        </button>
+                                    @elseif(!$todayAttendance->check_out_time)
+                                        <button type="button"
+                                                @click="triggerClock('out', {{ $isGpsRequired ? 'true' : 'false' }}, {{ $isRemoteEmployee ? 'true' : 'false' }})" 
+                                                :disabled="isLocating"
+                                                wire:loading.attr="disabled"
+                                                class="px-6 py-3.5 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 active:scale-95 text-white font-black text-sm rounded-xl shadow-lg shadow-rose-500/30 transition-all flex items-center gap-2 animate-pulse disabled:opacity-60 disabled:cursor-wait">
+                                            <template x-if="!isLocating">
+                                                <span class="flex items-center gap-2">
+                                                    <svg wire:loading.remove wire:target="clockOut" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                                    <span wire:loading.remove wire:target="clockOut">تسجيل انصراف الآن</span>
+                                                    <span wire:loading wire:target="clockOut">جارِ التسجيل...</span>
+                                                </span>
+                                            </template>
+                                            <template x-if="isLocating">
+                                                <span class="flex items-center gap-2">
+                                                    <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                                    <span>جارِ تحديد الـ GPS...</span>
+                                                </span>
+                                            </template>
+                                        </button>
+                                    @else
+                                        <div class="px-5 py-2.5 bg-white/20 rounded-xl text-xs font-bold text-emerald-200 border border-emerald-400/30 flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                            <span>تمت البصمة لليوم ({{ $workedHoursText }})</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 Quick KPI Cards -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <!-- Card 1: Attendance this month -->
+                        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-500 block">الحضور هذا الشهر</span>
+                                <span class="text-xl sm:text-2xl font-black text-slate-900 block mt-0.5">{{ $presentDaysCount }} يوم</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Remaining Leaves -->
+                        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-500 block">رصيد الإجازات السنوية</span>
+                                @php
+                                    $annual = collect($leaveBalancesData)->first();
+                                @endphp
+                                <span class="text-xl sm:text-2xl font-black text-slate-900 block mt-0.5">
+                                    {{ $annual['remaining'] ?? 0 }} يوم
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Salary -->
+                        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-500 block">الراتب الأساسي</span>
+                                <span class="text-lg sm:text-2xl font-black text-slate-900 block mt-0.5">
+                                    {{ number_format($employee->salary ?? 0, 0) }} {{ $currency }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Excuses -->
+                        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-500 block">الاستئذانات المعتمدة</span>
+                                <span class="text-xl sm:text-2xl font-black text-slate-900 block mt-0.5">{{ $approvedExcusesCount }} طلب</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Announcements & Quick Shortcuts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Announcements Column -->
+                        <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="p-2 rounded-xl bg-brand-50 text-brand-600">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+                                    </span>
+                                    <h2 class="text-base font-black text-slate-900">التعاميم والقرارات الإدارية</h2>
+                                </div>
+                                <span class="text-xs font-bold text-slate-400">آخر المستجدات</span>
+                            </div>
+
+                            @if($announcements->isEmpty())
+                                <div class="p-8 text-center text-slate-400 text-sm">
+                                    لا توجد تعاميم إدارية نشطة حالياً.
+                                </div>
+                            @else
+                                <div class="space-y-3">
+                                    @foreach($announcements as $announce)
+                                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                                            <div class="p-2 rounded-xl {{ $announce->type === 'urgent' ? 'bg-rose-100 text-rose-600' : ($announce->type === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-brand-100 text-brand-600') }} flex-shrink-0 mt-0.5">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <h3 class="text-sm font-bold text-slate-900">{{ $announce->title }}</h3>
+                                                    <span class="text-[11px] text-slate-400">{{ $announce->created_at->diffForHumans() }}</span>
+                                                </div>
+                                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $announce->content }}</p>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Quick Shortcuts Box -->
+                        <div class="bg-gradient-to-br from-brand-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-indigo-200 block mb-1">الخدمات السريعة</span>
+                                <h3 class="text-lg font-black mb-3">ماذا تريد أن تفعل اليوم؟</h3>
+                                <p class="text-indigo-100 text-xs leading-relaxed mb-6">
+                                    يمكنك تقديم طلباتك ومتابعتها مباشرة بدون مراجعة قسم الموارد البشرية يدوياً.
+                                </p>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <button wire:click="setTab('leaves')" class="w-full py-3 px-4 bg-white/10 hover:bg-white/20 active:bg-white/25 rounded-2xl text-xs font-bold backdrop-blur-sm transition-all flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                        <span>تقديم طلب إجازة جديدة</span>
+                                    </div>
+                                    <span>←</span>
+                                </button>
+
+                                <button wire:click="setTab('excuses')" class="w-full py-3 px-4 bg-white/10 hover:bg-white/20 active:bg-white/25 rounded-2xl text-xs font-bold backdrop-blur-sm transition-all flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" /></svg>
+                                        <span>طلب إذن واستئذان ساعي</span>
+                                    </div>
+                                    <span>←</span>
+                                </button>
+
+                                <button wire:click="setTab('payrolls')" class="w-full py-3 px-4 bg-white/10 hover:bg-white/20 active:bg-white/25 rounded-2xl text-xs font-bold backdrop-blur-sm transition-all flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        <span>استعراض مسير ومفردات الراتب</span>
+                                    </div>
+                                    <span>←</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- TAB 2: ATTENDANCE & CLOCK TERMINAL -->
+            @if($activeTab === 'attendance')
+                <div class="space-y-6">
+                    
+                    <!-- Main Interactive Clock Card -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 text-center">
+                        <div class="max-w-md mx-auto">
+                            <!-- Geofence & Mode Badge -->
+                            <div class="mb-4">
+                                @if($isGpsRequired && !$isRemoteEmployee)
+                                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <span>بصمة جغرافية ملزمة (مقر الشركة - نطاق {{ $companyRadius }} م)</span>
+                                    </span>
+                                @elseif($isRemoteEmployee)
+                                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                                        <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                        <span>نظام العمل عن بُعد مفعّل لحسابك (تسجيل من أي مكان)</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                        جهاز البصمة الإلكترونية المباشر
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="text-4xl sm:text-6xl font-black font-mono tracking-widest text-slate-900 my-4" dir="ltr" x-text="currentTime"></div>
+                            
+                            <p class="text-xs sm:text-sm text-slate-500 font-bold mb-8">
+                                {{ \Carbon\Carbon::now()->locale('ar')->translatedFormat('l، d F Y') }}
+                            </p>
+
+                            <!-- Big Action Button -->
+                            <div class="mb-6">
+                                @if(!$todayAttendance)
+                                    <button type="button"
+                                            @click="triggerClock('in', {{ $isGpsRequired ? 'true' : 'false' }}, {{ $isRemoteEmployee ? 'true' : 'false' }})" 
+                                            :disabled="isLocating"
+                                            wire:loading.attr="disabled"
+                                            class="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-lg rounded-2xl shadow-xl shadow-emerald-500/25 transition-all transform active:scale-95 flex items-center justify-center gap-3 mx-auto disabled:opacity-60 disabled:cursor-wait">
+                                        <template x-if="!isLocating">
+                                            <span class="flex items-center gap-3">
+                                                <svg wire:loading.remove wire:target="clockIn" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                                                <span wire:loading.remove wire:target="clockIn">تسجيل حضور الآن</span>
+                                                <span wire:loading wire:target="clockIn">جارِ تسجيل البصمة...</span>
+                                            </span>
+                                        </template>
+                                        <template x-if="isLocating">
+                                            <span class="flex items-center gap-3">
+                                                <svg class="animate-spin w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                                <span>جارِ تحديد الموقع الجغرافي (GPS)...</span>
+                                            </span>
+                                        </template>
+                                    </button>
+                                @elseif(!$todayAttendance->check_out_time)
+                                    <button type="button"
+                                            @click="triggerClock('out', {{ $isGpsRequired ? 'true' : 'false' }}, {{ $isRemoteEmployee ? 'true' : 'false' }})" 
+                                            :disabled="isLocating"
+                                            wire:loading.attr="disabled"
+                                            class="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-black text-lg rounded-2xl shadow-xl shadow-rose-500/25 transition-all transform active:scale-95 flex items-center justify-center gap-3 mx-auto animate-pulse disabled:opacity-60 disabled:cursor-wait">
+                                        <template x-if="!isLocating">
+                                            <span class="flex items-center gap-3">
+                                                <svg wire:loading.remove wire:target="clockOut" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                                <span wire:loading.remove wire:target="clockOut">تسجيل انصراف الآن</span>
+                                                <span wire:loading wire:target="clockOut">جارِ توثيق الانصراف...</span>
+                                            </span>
+                                        </template>
+                                        <template x-if="isLocating">
+                                            <span class="flex items-center gap-3">
+                                                <svg class="animate-spin w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                                <span>جارِ تحديد الموقع الجغرافي (GPS)...</span>
+                                            </span>
+                                        </template>
+                                    </button>
+                                @else
+                                    <div class="inline-flex items-center gap-2 p-4 px-6 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-sm">
+                                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        <span>اكتمل تسجيل الحضور والانصراف لهذا اليوم بنجاح ({{ $workedHoursText }})</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Today Summary Badges -->
+                            <div class="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100">
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-slate-400 block">وقت تسجيل الحضور</span>
+                                    <span class="text-sm font-black text-slate-800 block mt-0.5">
+                                        {{ $todayAttendance && $todayAttendance->check_in_time ? \Carbon\Carbon::parse($todayAttendance->check_in_time)->format('h:i A') : '—' }}
+                                    </span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <span class="text-[11px] font-bold text-slate-400 block">وقت تسجيل الانصراف</span>
+                                    <span class="text-sm font-black text-slate-800 block mt-0.5">
+                                        {{ $todayAttendance && $todayAttendance->check_out_time ? \Carbon\Carbon::parse($todayAttendance->check_out_time)->format('h:i A') : '—' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Log Table This Month -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-base font-black text-slate-900">سجل البصمات للشهر الحالي</h2>
+                            <span class="text-xs font-bold text-slate-400">{{ $attendances->count() }} تسجيل</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs sm:text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 font-bold">
+                                        <th class="py-3 px-4">التاريخ</th>
+                                        <th class="py-3 px-4">اليوم</th>
+                                        <th class="py-3 px-4">الحضور</th>
+                                        <th class="py-3 px-4">الانصراف</th>
+                                        <th class="py-3 px-4">نوع البصمة / الموقع</th>
+                                        <th class="py-3 px-4">إجمالي الساعات</th>
+                                        <th class="py-3 px-4 text-center">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @forelse($attendances as $att)
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-3.5 px-4 font-bold text-slate-800">{{ $att->date }}</td>
+                                            <td class="py-3.5 px-4 text-slate-600">{{ \Carbon\Carbon::parse($att->date)->locale('ar')->translatedFormat('l') }}</td>
+                                            <td class="py-3.5 px-4 font-mono font-bold text-emerald-600">{{ $att->check_in_time ? \Carbon\Carbon::parse($att->check_in_time)->format('h:i A') : '—' }}</td>
+                                            <td class="py-3.5 px-4 font-mono font-bold text-amber-600">{{ $att->check_out_time ? \Carbon\Carbon::parse($att->check_out_time)->format('h:i A') : '—' }}</td>
+                                            <td class="py-3.5 px-4">
+                                                @if($att->is_remote)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                                        <svg class="w-3.5 h-3.5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                                        عن بُعد
+                                                    </span>
+                                                @elseif(!is_null($att->distance_meters))
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="المسافة لمقر الشركة: {{ round($att->distance_meters) }} م">
+                                                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                        مقر الشركة ({{ round($att->distance_meters) }} م)
+                                                    </span>
+                                                @else
+                                                    <span class="text-xs text-slate-400 font-medium">تسجيل مباشر</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-4 text-slate-700 font-semibold">{{ $att->total_hours ?? '—' }}</td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                @if($att->status === 'present')
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">حاضر</span>
+                                                @elseif($att->status === 'late')
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">متأخر</span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{{ $att->status }}</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="py-8 text-center text-slate-400">
+                                                لا توجد سجلات حضور مسجلة لهذا الشهر حتى الآن.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- TAB 3: LEAVES & BALANCES -->
+            @if($activeTab === 'leaves')
+                <div class="space-y-6">
+                    
+                    <!-- Balances Cards Grid -->
+                    <div>
+                        <h2 class="text-base font-black text-slate-900 mb-3">أرصدة الإجازات للعام الحالي ({{ \Carbon\Carbon::today()->year }})</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @foreach($leaveBalancesData as $bal)
+                                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h3 class="text-sm font-black text-slate-800">{{ $bal['name'] }}</h3>
+                                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700">
+                                            المتبقي: {{ $bal['remaining'] }} يوم
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-baseline justify-between text-xs text-slate-500 mb-1.5 font-bold">
+                                        <span>المستهلك: {{ $bal['used'] }} يوم</span>
+                                        <span>الإجمالي: {{ $bal['total'] }} يوم</span>
+                                    </div>
+
+                                    <!-- Progress Bar -->
+                                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                        <div class="bg-brand-600 h-2.5 rounded-full transition-all" style="width: {{ $bal['percent'] }}%"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Leave Request Form -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
+                        <div class="flex items-center gap-2 mb-6">
+                            <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                            </span>
+                            <div>
+                                <h2 class="text-base font-black text-slate-900">تقديم طلب إجازة جديد</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">يرجى تحديد النوع والتواريخ وسبب الإجازة لإرسالها للاعتماد</p>
+                            </div>
+                        </div>
+
+                        <form wire:submit.prevent="submitLeaveRequest" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <!-- Leave Type -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">نوع الإجازة</label>
+                                    <select wire:model="leave_type_id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50">
+                                        @foreach($leaveTypes as $type)
+                                            <option value="{{ $type->id }}">{{ $type->name }} ({{ $type->default_days_per_year ?? 21 }} يوم/سنة)</option>
+                                        @endforeach
+                                    </select>
+                                    @error('leave_type_id') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Start Date -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">تاريخ البداية</label>
+                                    <input type="date" wire:model="start_date" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50">
+                                    @error('start_date') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- End Date -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">تاريخ النهاية</label>
+                                    <input type="date" wire:model="end_date" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50">
+                                    @error('end_date') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <!-- Reason -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">سبب الإجازة وملاحظات الموظف</label>
+                                <textarea wire:model="leave_reason" rows="3" placeholder="اكتب سبب طلب الإجازة هنا..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50"></textarea>
+                                @error('leave_reason') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="flex items-center justify-between pt-2">
+                                <div class="text-xs text-slate-500 font-bold">
+                                    @if($start_date && $end_date && $start_date <= $end_date)
+                                        المدة المحسوبة: <span class="text-brand-700 font-black">{{ \Carbon\Carbon::parse($start_date)->diffInDays(\Carbon\Carbon::parse($end_date)) + 1 }} أيام</span>
+                                    @endif
+                                </div>
+
+                                <button type="submit" 
+                                        wire:loading.attr="disabled"
+                                        class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-brand-500/20 transition-all flex items-center gap-2">
+                                    <svg wire:loading.remove wire:target="submitLeaveRequest" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                                    <span wire:loading.remove wire:target="submitLeaveRequest">إرسال طلب الإجازة</span>
+                                    <span wire:loading wire:target="submitLeaveRequest">جارِ الإرسال...</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Leave Requests History -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+                        <h2 class="text-base font-black text-slate-900 mb-4">سجل طلبات الإجازات السابقة</h2>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs sm:text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 font-bold">
+                                        <th class="py-3 px-4">نوع الإجازة</th>
+                                        <th class="py-3 px-4">من تاريخ</th>
+                                        <th class="py-3 px-4">إلى تاريخ</th>
+                                        <th class="py-3 px-4">المدة</th>
+                                        <th class="py-3 px-4">السبب</th>
+                                        <th class="py-3 px-4 text-center">الحالة</th>
+                                        <th class="py-3 px-4">ملاحظات الإدارة</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @forelse($leaves as $leave)
+                                        @php
+                                            $days = \Carbon\Carbon::parse($leave->start_date)->diffInDays(\Carbon\Carbon::parse($leave->end_date)) + 1;
+                                        @endphp
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-3.5 px-4 font-bold text-slate-800">{{ $leave->leaveType->name ?? 'إجازة' }}</td>
+                                            <td class="py-3.5 px-4 font-semibold text-slate-700">{{ $leave->start_date }}</td>
+                                            <td class="py-3.5 px-4 font-semibold text-slate-700">{{ $leave->end_date }}</td>
+                                            <td class="py-3.5 px-4 font-bold text-brand-700">{{ $days }} أيام</td>
+                                            <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">{{ $leave->reason }}</td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                @if($leave->status === 'approved')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                                        معتمدة
+                                                    </span>
+                                                @elseif($leave->status === 'rejected')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        مرفوضة
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                        <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        قيد المراجعة
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-4 text-xs text-slate-500">{{ $leave->admin_notes ?? '—' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="py-8 text-center text-slate-400">
+                                                لا توجد طلبات إجازات سابقة.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- TAB 4: EXCUSES -->
+            @if($activeTab === 'excuses')
+                <div class="space-y-6">
+                    
+                    <!-- Excuse Request Form -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
+                        <div class="flex items-center gap-2 mb-6">
+                            <span class="p-2 rounded-xl bg-purple-50 text-purple-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </span>
+                            <div>
+                                <h2 class="text-base font-black text-slate-900">تقديم طلب استئذان ساعي</h2>
+                                <p class="text-xs text-slate-500 mt-0.5">يمكنك الاستئذان خلال ساعات الدوام لأسباب شخصية أو طبية</p>
+                            </div>
+                        </div>
+
+                        <form wire:submit.prevent="submitExcuseRequest" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <!-- Date -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">تاريخ الاستئذان</label>
+                                    <input type="date" wire:model="excuse_date" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50">
+                                    @error('excuse_date') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Start Time -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">وقت الخروج</label>
+                                    <input type="time" wire:model="excuse_start_time" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50">
+                                    @error('excuse_start_time') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- End Time -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">وقت العودة المتوقع</label>
+                                    <input type="time" wire:model="excuse_end_time" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50">
+                                    @error('excuse_end_time') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <!-- Reason -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">سبب الاستئذان</label>
+                                <textarea wire:model="excuse_reason" rows="3" placeholder="اكتب سبب الاستئذان بوضوح..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50/50"></textarea>
+                                @error('excuse_reason') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="flex justify-end pt-2">
+                                <button type="submit" 
+                                        wire:loading.attr="disabled"
+                                        class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-brand-500/20 transition-all flex items-center gap-2">
+                                    <svg wire:loading.remove wire:target="submitExcuseRequest" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                                    <span wire:loading.remove wire:target="submitExcuseRequest">إرسال طلب الاستئذان</span>
+                                    <span wire:loading wire:target="submitExcuseRequest">جارِ الإرسال...</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Excuses History Table -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+                        <h2 class="text-base font-black text-slate-900 mb-4">سجل طلبات الاستئذان السابقة</h2>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs sm:text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 font-bold">
+                                        <th class="py-3 px-4">التاريخ</th>
+                                        <th class="py-3 px-4">من</th>
+                                        <th class="py-3 px-4">إلى</th>
+                                        <th class="py-3 px-4">المدة</th>
+                                        <th class="py-3 px-4">السبب</th>
+                                        <th class="py-3 px-4 text-center">الحالة</th>
+                                        <th class="py-3 px-4">ملاحظات الإدارة</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @forelse($excuses as $excuse)
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-3.5 px-4 font-bold text-slate-800">{{ $excuse->date }}</td>
+                                            <td class="py-3.5 px-4 font-mono text-slate-700">{{ $excuse->start_time }}</td>
+                                            <td class="py-3.5 px-4 font-mono text-slate-700">{{ $excuse->end_time }}</td>
+                                            <td class="py-3.5 px-4 font-bold text-brand-700">{{ $excuse->duration_minutes }} دقيقة</td>
+                                            <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">{{ $excuse->reason }}</td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                @if($excuse->status === 'approved')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        معتمد
+                                                    </span>
+                                                @elseif($excuse->status === 'rejected')
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                                        مرفوض
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                        قيد المراجعة
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-4 text-xs text-slate-500">{{ $excuse->admin_notes ?? '—' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="py-8 text-center text-slate-400">
+                                                لا توجد طلبات استئذان مسجلة.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- TAB 5: PAYROLLS & PAYSLIPS -->
+            @if($activeTab === 'payrolls')
+                <div class="space-y-6">
+                    
+                    <!-- Salary Summary Card -->
+                    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <span class="text-xs font-bold text-indigo-300 block mb-1">البيانات المالية للموظف</span>
+                                <h2 class="text-2xl sm:text-3xl font-black">تفاصيل الراتب والبدلات الرسمية</h2>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-center sm:text-left">
+                                <span class="text-xs text-indigo-200 block font-bold">الراتب الأساسي المعتمد</span>
+                                <span class="text-2xl font-black font-mono text-emerald-400 block mt-0.5">
+                                    {{ number_format($employee->salary ?? 0, 2) }} {{ $currency }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Bank & IBAN -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="text-indigo-300 font-bold">اسم البنك المعتمد:</span>
+                                <span class="text-white font-semibold">{{ $employee->bank_name ?? 'لم يُحدد بعد' }}</span>
+                            </div>
+                            <div class="flex items-center gap-2" dir="ltr">
+                                <span class="text-white font-mono font-bold">{{ $employee->iban ?? 'IBAN Not Set' }}</span>
+                                <span class="text-indigo-300 font-bold">:IBAN</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Payrolls History List -->
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-base font-black text-slate-900">سجل مسيرات الرواتب الشهرية</h2>
+                            <span class="text-xs font-bold text-slate-400">إجمالي {{ $payrolls->count() }} مسير</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs sm:text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 font-bold">
+                                        <th class="py-3 px-4">الفترة (الشهر / السنة)</th>
+                                        <th class="py-3 px-4">الراتب الأساسي</th>
+                                        <th class="py-3 px-4">البدلات</th>
+                                        <th class="py-3 px-4">الخصومات</th>
+                                        <th class="py-3 px-4">صافي الراتب المستحق</th>
+                                        <th class="py-3 px-4 text-center">الحالة</th>
+                                        <th class="py-3 px-4 text-center">الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @forelse($payrolls as $payroll)
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="py-3.5 px-4 font-black text-slate-800">
+                                                {{ $payroll->month_name }} {{ $payroll->year }}
+                                            </td>
+                                            <td class="py-3.5 px-4 font-mono text-slate-700">{{ number_format($payroll->basic_salary, 2) }} {{ $currency }}</td>
+                                            <td class="py-3.5 px-4 font-mono text-emerald-600">+{{ number_format($payroll->allowances ?? 0, 2) }} {{ $currency }}</td>
+                                            <td class="py-3.5 px-4 font-mono text-rose-600">-{{ number_format($payroll->deductions ?? 0, 2) }} {{ $currency }}</td>
+                                            <td class="py-3.5 px-4 font-mono font-black text-brand-700 text-base">
+                                                {{ number_format($payroll->net_salary, 2) }} {{ $currency }}
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                @if($payroll->status === 'paid')
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">تم الصرف</span>
+                                                @elseif($payroll->status === 'draft')
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">مسودة</span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">قيد المعالجة</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button wire:click="openPayslip({{ $payroll->id }})" 
+                                                        class="px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs transition-colors inline-flex items-center gap-1.5">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                    <span>عرض مفردات الراتب</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="py-8 text-center text-slate-400">
+                                                لا توجد مسيرات رواتب مسجلة لهذا الموظف بعد.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- TAB 6: PROFILE -->
+            @if($activeTab === 'profile')
+                <div class="space-y-6">
+                    
+                    <!-- Profile Card -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80">
+                        <div class="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-100 text-center sm:text-right">
+                            <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white font-black text-3xl flex items-center justify-center shadow-xl shadow-brand-500/20 overflow-hidden ring-4 ring-slate-50">
+                                @if($employee->avatar_url)
+                                    <img src="{{ str_starts_with($employee->avatar_url, 'http') || str_starts_with($employee->avatar_url, '/') ? $employee->avatar_url : \Illuminate\Support\Facades\Storage::disk('public')->url($employee->avatar_url) }}" 
+                                         alt="{{ $employee->full_name }}" 
+                                         class="w-full h-full object-cover">
+                                @else
+                                    {{ mb_substr($employee->first_name, 0, 1) }}
+                                @endif
+                            </div>
+
+                            <div class="flex-1">
+                                <h1 class="text-2xl font-black text-slate-900">{{ $employee->full_name }}</h1>
+                                <p class="text-brand-600 font-bold text-sm mt-0.5">{{ $employee->job_title ?? 'موظف' }}</p>
+                                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3 text-xs font-semibold">
+                                    <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                                        القسم: {{ $employee->department->name ?? 'غير محدد' }}
+                                    </span>
+                                    <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        الحالة: {{ $employee->status === 'active' ? 'نشط على رأس العمل' : $employee->status }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-8 text-xs sm:text-sm">
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">البريد الإلكتروني</span>
+                                <span class="text-slate-800 font-bold block">{{ $employee->user->email ?? $user->email }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">رقم الجوال</span>
+                                <span class="text-slate-800 font-bold font-mono block">{{ $employee->phone ?? '—' }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">رقم الهوية الوطنية / الإقامة</span>
+                                <span class="text-slate-800 font-bold font-mono block">{{ $employee->national_id ?? '—' }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">تاريخ التعيين</span>
+                                <span class="text-slate-800 font-bold block">{{ $employee->hire_date ?? '—' }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">تاريخ انتهاء العقد</span>
+                                <span class="text-slate-800 font-bold block">{{ $employee->contract_end_date ?? 'عقد غير محدد المدة' }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">المدير المباشر</span>
+                                <span class="text-slate-800 font-bold block">{{ $employee->manager->full_name ?? '—' }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span class="text-slate-400 font-bold block mb-1">البنك المعتمد</span>
+                                <span class="text-slate-800 font-bold block">{{ $employee->bank_name ?? '—' }}</span>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 sm:col-span-2">
+                                <span class="text-slate-400 font-bold block mb-1">رقم الحساب الدولي (IBAN)</span>
+                                <span class="text-slate-800 font-mono font-bold block text-sm" dir="ltr">{{ $employee->iban ?? '—' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+        @endif
+
+    </main>
+
+    <!-- PAYSLIP MODAL (مفردات الراتب الرقمية) -->
+    @if($showPayslipModal && $selectedPayroll)
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 border border-slate-100 payslip-container">
+                
+                <!-- Modal Header & Actions (No Print) -->
+                <div class="flex items-center justify-between pb-6 border-b border-slate-100 no-print">
+                    <div class="flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-brand-50 text-brand-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </span>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">قسيمة الراتب الرسمية (Payslip)</h3>
+                            <span class="text-xs text-slate-400">إشعار صرف راتب رسمي معتمد</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <!-- Print Button -->
+                        <button onclick="window.print()" 
+                                class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            <span>طباعة / PDF</span>
+                        </button>
+
+                        <!-- Close Button -->
+                        <button wire:click="closePayslipModal" 
+                                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Printable Payslip Body -->
+                <div class="py-6 space-y-6">
+                    
+                    <!-- Company & Document Info -->
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-5">
+                        <div>
+                            <h2 class="text-lg font-black text-slate-900">{{ $brandName }}</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">قسم الموارد البشرية والشؤون المالية</p>
+                        </div>
+                        <div class="text-left">
+                            <span class="text-xs font-bold text-brand-600 block">قسيمة راتب شهر</span>
+                            <span class="text-base font-black text-slate-900 block">{{ $selectedPayroll->month_name }} {{ $selectedPayroll->year }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Employee Details Block -->
+                    <div class="bg-slate-50 rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                        <div>
+                            <span class="text-slate-400 font-bold block">اسم الموظف:</span>
+                            <span class="text-slate-900 font-black block mt-0.5">{{ $selectedPayroll->employee->full_name }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block">المسمى الوظيفي:</span>
+                            <span class="text-slate-900 font-bold block mt-0.5">{{ $selectedPayroll->employee->job_title ?? '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block">القسم:</span>
+                            <span class="text-slate-900 font-bold block mt-0.5">{{ $selectedPayroll->employee->department->name ?? '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block">البنك:</span>
+                            <span class="text-slate-900 font-bold block mt-0.5">{{ $selectedPayroll->employee->bank_name ?? '—' }}</span>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <span class="text-slate-400 font-bold block">الحساب (IBAN):</span>
+                            <span class="text-slate-900 font-mono font-bold block mt-0.5" dir="ltr">{{ $selectedPayroll->employee->iban ?? '—' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Earnings & Deductions Table -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        <!-- Earnings (الاستحقاقات) -->
+                        <div class="border border-emerald-100 rounded-2xl p-4 bg-emerald-50/30">
+                            <h4 class="text-xs font-black text-emerald-800 pb-2 border-b border-emerald-100 mb-3 flex items-center justify-between">
+                                <span>الاستحقاقات (Earnings)</span>
+                                <span>المبلغ</span>
+                            </h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-600 font-medium">الراتب الأساسي</span>
+                                    <span class="font-mono font-bold text-slate-800">{{ number_format($selectedPayroll->basic_salary, 2) }} {{ $currency }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-600 font-medium">البدلات والحوافز</span>
+                                    <span class="font-mono font-bold text-emerald-600">+{{ number_format($selectedPayroll->allowances ?? 0, 2) }} {{ $currency }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deductions (الاستقطاعات) -->
+                        <div class="border border-rose-100 rounded-2xl p-4 bg-rose-50/30">
+                            <h4 class="text-xs font-black text-rose-800 pb-2 border-b border-rose-100 mb-3 flex items-center justify-between">
+                                <span>الاستقطاعات (Deductions)</span>
+                                <span>المبلغ</span>
+                            </h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-600 font-medium">الخصومات والغيابات</span>
+                                    <span class="font-mono font-bold text-rose-600">-{{ number_format($selectedPayroll->deductions ?? 0, 2) }} {{ $currency }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Net Salary Banner -->
+                    <div class="bg-slate-900 rounded-2xl p-5 text-white flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-indigo-200 block font-bold">صافي الراتب المستحق (Net Payable Salary)</span>
+                            <span class="text-[11px] text-slate-400 block mt-0.5">شامل كافة الاستحقاقات والخصومات</span>
+                        </div>
+                        <div class="text-left font-mono font-black text-2xl text-emerald-400">
+                            {{ number_format($selectedPayroll->net_salary, 2) }} {{ $currency }}
+                        </div>
+                    </div>
+
+                    <!-- Footer Signatures in Print -->
+                    <div class="pt-8 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 print-only">
+                        <div>
+                            <span>توقيع الموظف المستلم: ___________________</span>
+                        </div>
+                        <div>
+                            <span>ختم إدارة الموارد البشرية: ___________________</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Mobile Bottom Navigation Bar (Visible on mobile only) -->
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/90 z-40 px-2 py-2 flex items-center justify-around shadow-lg">
+        <button wire:click="setTab('overview')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'overview' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <span class="text-[10px]">الرئيسية</span>
+        </button>
+
+        <button wire:click="setTab('attendance')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'attendance' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span class="text-[10px]">البصمة</span>
+        </button>
+
+        <button wire:click="setTab('leaves')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'leaves' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <span class="text-[10px]">الإجازات</span>
+        </button>
+
+        <button wire:click="setTab('excuses')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'excuses' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+            <span class="text-[10px]">الاستئذان</span>
+        </button>
+
+        <button wire:click="setTab('payrolls')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'payrolls' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            <span class="text-[10px]">الرواتب</span>
+        </button>
+
+        <button wire:click="setTab('profile')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'profile' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            <span class="text-[10px]">حسابي</span>
+        </button>
+    </nav>
+</div>

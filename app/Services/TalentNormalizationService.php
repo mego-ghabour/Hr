@@ -73,6 +73,10 @@ class TalentNormalizationService
 
     public function normalizeName(string $name): string
     {
-        return ucwords(strtolower(trim($name)));
+        $name = trim(preg_replace('/\s+/', ' ', $name));
+        if (preg_match('/[a-zA-Z]/', $name)) {
+            return mb_convert_case($name, MB_CASE_TITLE, 'UTF-8');
+        }
+        return $name;
     }
 }

@@ -22,7 +22,23 @@ class LeaveResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'شؤون العاملين';
+        return 'شؤون العاملين والموظفين';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 3;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::where('status', 'pending')->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
     }
 
     public static function getModelLabel(): string
@@ -50,6 +66,25 @@ class LeaveResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery()->with(['employee', 'leaveType']);
+        $user = auth()->user();
+        if (!$user) {
+            return $query;
+        }
+
+        if ($user->hasRole(['Super Admin', 'admin', 'manager', 'المدير العام', 'مسؤول النظام', 'مدير الموارد البشرية', 'مدير قسم'])) {
+            return $query;
+        }
+
+        if ($user->employee) {
+            return $query->where('employee_id', $user->employee->id);
+        }
+
+        return $query->whereNull('id');
     }
 
     public static function getPages(): array

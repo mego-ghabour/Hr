@@ -26,7 +26,7 @@ class SubmitJobApplicationRequest extends FormRequest
         if ($config['show_email'] ?? true) {
             $rules['email'] = [
                 'required', 
-                'email:rfc,dns', 
+                'email:rfc,filter', 
                 'max:255',
                 Rule::unique('talents', 'email')->where(function ($query) use ($job) {
                     return $query->where('job_posting_id', $job->id);

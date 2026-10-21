@@ -32,6 +32,8 @@ class CommunicationSettings extends Page implements HasForms
 
     protected static ?string $cluster = \App\Filament\Clusters\Settings\SettingsCluster::class;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
     protected static string|\UnitEnum|null $navigationGroup = 'إعدادات النظام';
@@ -57,6 +59,8 @@ class CommunicationSettings extends Page implements HasForms
 
     public function mount(): void
     {
+        $this->redirect(\App\Filament\Admin\Pages\Settings::getUrl(['tab' => 'templates']));
+        return;
         $custom = Setting::get('custom_templates');
 
         $this->templatesForm->fill([
@@ -72,6 +76,9 @@ class CommunicationSettings extends Page implements HasForms
             'email_template_reject_subject'    => Setting::get('email_template_reject_subject', "تحديث بخصوص التقديم - {brand}"),
             'email_template_reject_body'       => Setting::get('email_template_reject_body', "عزيزي/عزيزتي {name}،\n\nنشكرك على اهتمامك بالانضمام إلينا. نود إعلامك بأنه لم يقع الاختيار عليك في هذه المرحلة.\n\nنتمنى لك كل التوفيق.\n{brand}"),
             
+            'email_template_application_received_subject' => Setting::get('email_template_application_received_subject', "استلام طلب التوظيف بنجاح - {brand}"),
+            'email_template_application_received_body'    => Setting::get('email_template_application_received_body', "أهلاً {name}،\n\nنود إعلامك بأننا قد استلمنا طلب التوظيف الخاص بك بنجاح، وقمنا بإضافة سيرتك الذاتية إلى قاعدة بياناتنا.\n\nسيقوم فريق الموارد البشرية بمراجعة ملفك والتواصل معك في حال توافقت مهاراتك مع متطلبات الوظيفة.\n\nنتمنى لك التوفيق!\nفريق التوظيف"),
+
             'custom_templates' => $custom ? json_decode($custom, true) : [],
         ]);
     }
@@ -128,7 +135,7 @@ class CommunicationSettings extends Page implements HasForms
                         // ═══════════════ تبويب الإيميل ═══════════════
                         Tab::make('البريد الإلكتروني')
                             ->icon('heroicon-o-envelope')
-                            ->badge(fn () => '3 قوالب')
+                            ->badge(fn () => '4 قوالب')
                             ->badgeColor('primary')
                             ->schema([
                                 Placeholder::make('email_help')
@@ -171,6 +178,22 @@ class CommunicationSettings extends Page implements HasForms
                                             ->label('نص الرسالة')
                                             ->rows(4)
                                             ->required(),
+                                    ]),
+
+                                Section::make('تأكيد استلام طلب التقديم (Application Received)')
+                                    ->icon('heroicon-o-check-badge')
+                                    ->collapsible()
+                                    ->compact()
+                                    ->schema([
+                                        TextInput::make('email_template_application_received_subject')
+                                            ->label('العنوان (Subject)')
+                                            ->required()
+                                            ->prefixIcon('heroicon-o-tag'),
+                                        Textarea::make('email_template_application_received_body')
+                                            ->label('نص الرسالة')
+                                            ->rows(5)
+                                            ->required()
+                                            ->helperText('يمكنك استخدام {name} لاسم المرشح و {brand} لاسم الشركة/البراند'),
                                     ]),
 
                                 Section::make('رسالة اعتذار / رفض')

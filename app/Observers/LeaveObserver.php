@@ -4,19 +4,48 @@ namespace App\Observers;
 
 use App\Models\Leave;
 use App\Models\LeaveBalance;
+use App\Models\User;
+use App\Notifications\LeaveRequestedNotification;
+use App\Notifications\LeaveStatusUpdatedNotification;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Notification;
 
 class LeaveObserver
 {
     public function created(Leave $leave): void
     {
         $this->handleApproval($leave);
+
+        // إشعار الإدارة بطلب الإجازة الجديد
+        try {
+            $availableRoles = \Spatie\Permission\Models\Role::whereIn('name', ['المدير العام', 'مسؤول النظام', 'مدير الموارد البشرية', 'Super Admin', 'admin'])->pluck('name')->toArray();
+            if (!empty($availableRoles)) {
+                $admins = User::role($availableRoles)->get();
+                if ($admins->isNotEmpty()) {
+                    Notification::send($admins, new LeaveRequestedNotification($leave));
+                }
+            }
+        } catch (\Throwable) {
+            // صامت في حالة عدم اكتمال إعدادات البريد
+        }
     }
 
     public function updated(Leave $leave): void
     {
         if ($leave->isDirty('status')) {
             $this->handleApproval($leave);
+
+            // إشعار الموظف باعتماد أو رفض الإجازة
+            try {
+                if (in_array($leave->status, ['approved', 'rejected'])) {
+                    $employeeUser = $leave->employee?->user;
+                    if ($employeeUser) {
+                        $employeeUser->notify(new LeaveStatusUpdatedNotification($leave));
+                    }
+                }
+            } catch (\Throwable) {
+                // صامت في حالة عدم اكتمال إعدادات البريد
+            }
         }
     }
 
@@ -60,15 +89,5 @@ class LeaveObserver
                 $balance->decrement('used_days', $days);
             }
         }
-    }
-
-    public function restored(Leave $leave): void
-    {
-        //
-    }
-
-    public function forceDeleted(Leave $leave): void
-    {
-        //
     }
 }

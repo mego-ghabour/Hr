@@ -16,6 +16,11 @@ class ManageTalentStatuses extends ManageRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    public function mount(): void
+    {
+        $this->redirect(\App\Filament\Admin\Pages\Settings::getUrl(['tab' => 'statuses']));
+    }
 }
 
 

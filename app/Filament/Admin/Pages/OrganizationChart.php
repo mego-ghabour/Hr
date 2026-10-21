@@ -15,8 +15,10 @@ class OrganizationChart extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return 'شؤون العاملين';
+        return 'شؤون العاملين والموظفين';
     }
+
+    protected static ?int $navigationSort = 6;
 
     public static function getNavigationLabel(): string
     {
@@ -57,7 +59,7 @@ class OrganizationChart extends Page
             $parentId = $employee->manager_id ? (string)$employee->manager_id : 'root';
             
             $imageUrl = $employee->avatar_url 
-                ? Storage::url($employee->avatar_url) 
+                ? Storage::disk('public')->url($employee->avatar_url) 
                 : url('https://ui-avatars.com/api/?name=' . urlencode($employee->first_name . ' ' . $employee->last_name) . '&color=7F9CF5&background=EBF4FF');
                 
             $data[] = [

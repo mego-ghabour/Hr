@@ -18,9 +18,20 @@ class DuplicateResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-duplicate';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'إدارة المرشحين';
+    protected static string|\UnitEnum|null $navigationGroup = 'إدارة التوظيف واستقطاب المواهب';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'danger';
+    }
 
     public static function getModelLabel(): string
     {

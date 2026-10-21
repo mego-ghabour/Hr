@@ -9,26 +9,26 @@ class LocationPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_any_location');
+        return $user->can('view_any_location');
     }
 
     public function view(User $user, Location $model): bool
     {
-        return $user->hasPermissionTo('view_location');
+        return $user->can('view_location');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('create_location');
+        return $user->can('create_location');
     }
 
     public function update(User $user, Location $model): bool
     {
-        return $user->hasPermissionTo('update_location');
+        return $user->can('update_location');
     }
 
     public function delete(User $user, Location $model): bool
     {
-        return $user->hasPermissionTo('delete_location');
+        return $user->can('delete_location');
     }
 }

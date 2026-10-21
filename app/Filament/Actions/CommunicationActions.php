@@ -117,8 +117,8 @@ class CommunicationActions
     {
         return Action::make('sendEmail')
             ->label('إرسال إيميل')
-            ->icon('heroicon-o-envelope')
-            ->color('primary')
+            ->icon('heroicon-m-envelope')
+            ->color('info')
             ->form(function () {
                 $options = [
                     'interview' => 'دعوة لمقابلة (Interview)',
