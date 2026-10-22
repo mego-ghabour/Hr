@@ -464,10 +464,72 @@ class AdminPanelProvider extends PanelProvider
                             background-color: rgba(' . $primaryRgb . ', 0.04) !important;
                             transition: background-color 0.15s ease-in-out;
                         }
+                        .dark .fi-ta-row:hover {
+                            background-color: rgba(' . $primaryRgb . ', 0.09) !important;
+                        }
+
+                        /* Dark mode sidebar and topbar enhancements */
+                        .dark #fi-main-sidebar,
+                        .dark .fi-sidebar,
+                        .dark .fi-main-sidebar {
+                            background: ' . ($sidebarTheme === 'deep_black' ? '#09090b' : ($sidebarTheme === 'brand_tinted' ? "linear-gradient(180deg, rgba({$primaryRgb}, 0.28) 0%, #0a0e1a 65%, #070b14 100%)" : ($sidebarTheme === 'slate_gray' ? '#1e293b' : 'linear-gradient(180deg, #090e1a 0%, #0f172a 45%, #131c33 100%)'))) . ' !important;
+                            border-inline-end: 1px solid rgba(255, 255, 255, 0.08) !important;
+                            box-shadow: -4px 0 30px rgba(0, 0, 0, 0.5) !important;
+                        }
+
+                        .dark #fi-main-sidebar .fi-sidebar-item-btn {
+                            color: #cbd5e1 !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-item-icon {
+                            color: #64748b !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-group-label {
+                            color: #94a3b8 !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-header-brand-name,
+                        .dark #fi-main-sidebar .fi-sidebar-header a,
+                        .dark #fi-main-sidebar .fi-sidebar-header span {
+                            color: #ffffff !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover {
+                            background: rgba(255, 255, 255, 0.07) !important;
+                            color: #ffffff !important;
+                            border-color: rgba(255, 255, 255, 0.08) !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover .fi-sidebar-item-icon {
+                            color: #f8fafc !important;
+                        }
+                        .dark #fi-main-sidebar .fi-badge {
+                            background: rgba(255, 255, 255, 0.08) !important;
+                            color: #94a3b8 !important;
+                            border-color: rgba(255, 255, 255, 0.1) !important;
+                        }
+
+                        .dark .fi-topbar-start {
+                            background: #090e1a !important;
+                            border-inline-end: 1px solid rgba(255, 255, 255, 0.08) !important;
+                        }
+                        .dark .fi-topbar-start a,
+                        .dark .fi-topbar-start span {
+                            color: #ffffff !important;
+                        }
+                        .dark .fi-topbar-start button,
+                        .dark .fi-topbar-start .fi-icon-btn {
+                            color: #94a3b8 !important;
+                            background: rgba(255, 255, 255, 0.05) !important;
+                        }
+                        .dark .fi-topbar-start button:hover,
+                        .dark .fi-topbar-start .fi-icon-btn:hover {
+                            color: #ffffff !important;
+                            background: rgba(255, 255, 255, 0.12) !important;
+                        }
 
                         /* Modern Rounded Cards & Sections */
                         .fi-section {
                             border-radius: 0.875rem !important;
+                        }
+                        .dark .fi-section {
+                            border-color: rgba(255, 255, 255, 0.08) !important;
                         }
 
                         /* Sizing constraint: Prevent oversized icons inside fi-section & fi-section-content */

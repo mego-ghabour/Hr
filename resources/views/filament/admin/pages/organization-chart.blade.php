@@ -33,28 +33,32 @@
                         .compactMarginBetween(d => 35)
                         .compactMarginPair(d => 30)
                         .nodeContent(function (d, i, arr, state) {
-                            const color = '#FFFFFF';
+                            const isDark = document.documentElement.classList.contains('dark');
+                            const bgColor = isDark ? '#1e293b' : '#FFFFFF';
+                            const borderColor = isDark ? '#334155' : '#E5E7EB';
+                            const titleColor = isDark ? '#F8FAFC' : '#111827';
+                            const subColor = isDark ? '#94A3B8' : '#6B7280';
                             const imageDiffVert = 25 + 2;
                             return `
                                 <div style='width:${
                                     d.width
                                 }px;height:${d.height}px;padding-top:${imageDiffVert - 2}px;padding-left:1px;padding-right:1px'>
-                                    <div style="font-family: 'Tajawal', 'Cairo', sans-serif; background-color:${color}; border: 1px solid #E5E7EB; border-radius: 10px; width:${
+                                    <div style="font-family: 'Tajawal', 'Cairo', sans-serif; background-color:${bgColor}; border: 1px solid ${borderColor}; border-radius: 10px; width:${
                                 d.width - 2
-                            }px; height:${d.height - imageDiffVert}px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            }px; height:${d.height - imageDiffVert}px; box-shadow: 0 4px 12px rgba(0, 0, 0, ${isDark ? '0.35' : '0.08'});">
                                         
                                         <div style="display:flex;justify-content:center;margin-top:-${imageDiffVert}px">
-                                            <img src="${d.data.imageUrl}" style="border-radius:50%; width: 60px; height: 60px; object-fit: cover; border: 3px solid #3B82F6;" />
+                                            <img src="${d.data.imageUrl}" style="border-radius:50%; width: 60px; height: 60px; object-fit: cover; border: 3px solid #0d9488;" />
                                         </div>
                                         
                                         <div style="text-align:center; margin-top:10px;">
-                                            <div style="font-size:16px; font-weight:bold; color:#111827;">${
+                                            <div style="font-size:16px; font-weight:bold; color:${titleColor};">${
                                                 d.data.name
                                             }</div>
-                                            <div style="font-size:13px; color:#6B7280; margin-top:4px;">${
+                                            <div style="font-size:13px; color:${subColor}; margin-top:4px;">${
                                                 d.data.positionName
                                             }</div>
-                                            ${d.data.department ? `<div style="font-size:12px; color:#3B82F6; margin-top:4px; font-weight: 500;">${d.data.department}</div>` : ''}
+                                            ${d.data.department ? `<div style="font-size:12px; color:#0d9488; margin-top:4px; font-weight: 700;">${d.data.department}</div>` : ''}
                                         </div>
                                     </div>
                                 </div>
