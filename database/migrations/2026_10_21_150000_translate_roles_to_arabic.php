@@ -19,7 +19,19 @@ return new class extends Migration
         ];
 
         foreach ($translations as $en => $ar) {
-            DB::table('roles')->where('name', $en)->update(['name' => $ar]);
+            try {
+                $existingAr = DB::table('roles')->where('name', $ar)->first();
+                $existingEn = DB::table('roles')->where('name', $en)->first();
+
+                if ($existingEn && $existingAr) {
+                    // Both exist: re-link model_has_roles and role_has_permissions to Arabic role, then delete En
+                    DB::table('model_has_roles')->where('role_id', $existingEn->id)->update(['role_id' => $existingAr->id]);
+                    DB::table('role_has_permissions')->where('role_id', $existingEn->id)->update(['role_id' => $existingAr->id]);
+                    DB::table('roles')->where('id', $existingEn->id)->delete();
+                } elseif ($existingEn && !$existingAr) {
+                    DB::table('roles')->where('id', $existingEn->id)->update(['name' => $ar]);
+                }
+            } catch (\Throwable) {}
         }
     }
 
@@ -36,7 +48,9 @@ return new class extends Migration
         ];
 
         foreach ($translations as $ar => $en) {
-            DB::table('roles')->where('name', $ar)->update(['name' => $en]);
+            try {
+                DB::table('roles')->where('name', $ar)->update(['name' => $en]);
+            } catch (\Throwable) {}
         }
     }
 };
