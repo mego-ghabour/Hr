@@ -42,9 +42,11 @@ class LeaveForm
                             Select::make('status')
                                 ->label('حالة الطلب')
                                 ->options([
-                                    'pending' => 'قيد الانتظار',
-                                    'approved' => 'تمت الموافقة',
+                                    'pending_manager' => 'بانتظار موافقة المدير المباشر',
+                                    'pending_hr' => 'بانتظار موافقة الموارد البشرية',
+                                    'approved' => 'معتمد نهائياً',
                                     'rejected' => 'مرفوض',
+                                    'pending' => 'قيد الانتظار',
                                 ])
                                 ->default('pending')
                                 ->required(),
@@ -53,8 +55,12 @@ class LeaveForm
                             ->label('سبب الإجازة')
                             ->placeholder('أسباب أو مبررات طلب الإجازة...')
                             ->columnSpanFull(),
+                        Textarea::make('manager_notes')
+                            ->label('ملاحظات وتوصيات المدير المباشر')
+                            ->placeholder('ملاحظات المدير المباشر (إن وجدت)...')
+                            ->columnSpanFull(),
                         Textarea::make('admin_notes')
-                            ->label('ملاحظات الإدارة')
+                            ->label('ملاحظات الموارد البشرية والإدارة العليا')
                             ->placeholder('ملاحظات الموارد البشرية (إن وجدت)...')
                             ->columnSpanFull(),
                     ])

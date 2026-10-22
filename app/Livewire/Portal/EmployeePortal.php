@@ -337,93 +337,131 @@ class EmployeePortal extends Component
 
         // Leave Balances (ensure balances exist for current year)
         $leaveBalancesData = [];
-        $leaveTypes = LeaveType::all();
-        if ($employee) {
-            $currentYear = Carbon::today()->year;
-            foreach ($leaveTypes as $type) {
-                $balance = LeaveBalance::firstOrCreate(
-                    [
-                        'employee_id' => $employee->id,
-                        'leave_type_id' => $type->id,
-                        'year' => $currentYear,
-                    ],
-                    [
-                        'total_days' => $type->default_days_per_year ?? 21,
-                        'used_days' => 0,
-                    ]
-                );
-                $remaining = max(0, $balance->total_days - $balance->used_days);
-                $percent = $balance->total_days > 0 ? min(100, round(($balance->used_days / $balance->total_days) * 100)) : 0;
-                
-                $leaveBalancesData[] = [
-                    'type_id' => $type->id,
-                    'name' => $type->name,
-                    'total' => $balance->total_days,
-                    'used' => $balance->used_days,
-                    'remaining' => $remaining,
-                    'percent' => $percent,
-                ];
+        $leaveTypes = collect();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('leave_types')) {
+                $leaveTypes = LeaveType::all();
+                if ($employee && \Illuminate\Support\Facades\Schema::hasTable('leave_balances')) {
+                    $currentYear = Carbon::today()->year;
+                    foreach ($leaveTypes as $type) {
+                        $balance = LeaveBalance::firstOrCreate(
+                            [
+                                'employee_id' => $employee->id,
+                                'leave_type_id' => $type->id,
+                                'year' => $currentYear,
+                            ],
+                            [
+                                'total_days' => $type->default_days_per_year ?? 21,
+                                'used_days' => 0,
+                            ]
+                        );
+                        $remaining = max(0, $balance->total_days - $balance->used_days);
+                        $percent = $balance->total_days > 0 ? min(100, round(($balance->used_days / $balance->total_days) * 100)) : 0;
+                        
+                        $leaveBalancesData[] = [
+                            'type_id' => $type->id,
+                            'name' => $type->name,
+                            'total' => $balance->total_days,
+                            'used' => $balance->used_days,
+                            'remaining' => $remaining,
+                            'percent' => $percent,
+                        ];
+                    }
+                }
             }
+        } catch (\Throwable) {
+            $leaveBalancesData = [];
+            $leaveTypes = collect();
         }
 
         // Attendance history this month
         $attendances = collect();
         $presentDaysCount = 0;
-        if ($employee) {
-            $attendances = Attendance::where('employee_id', $employee->id)
-                ->whereMonth('date', Carbon::today()->month)
-                ->whereYear('date', Carbon::today()->year)
-                ->orderBy('date', 'desc')
-                ->get();
-            $presentDaysCount = $attendances->where('status', 'present')->count();
+        try {
+            if ($employee && \Illuminate\Support\Facades\Schema::hasTable('attendances')) {
+                $attendances = Attendance::where('employee_id', $employee->id)
+                    ->whereMonth('date', Carbon::today()->month)
+                    ->whereYear('date', Carbon::today()->year)
+                    ->orderBy('date', 'desc')
+                    ->get();
+                $presentDaysCount = $attendances->where('status', 'present')->count();
+            }
+        } catch (\Throwable) {
+            $attendances = collect();
+            $presentDaysCount = 0;
         }
 
         // Employee Leaves
         $leaves = collect();
-        if ($employee) {
-            $leaves = Leave::with('leaveType')
-                ->where('employee_id', $employee->id)
-                ->orderBy('created_at', 'desc')
-                ->take(15)
-                ->get();
+        try {
+            if ($employee && \Illuminate\Support\Facades\Schema::hasTable('leaves')) {
+                $leaves = Leave::with('leaveType')
+                    ->where('employee_id', $employee->id)
+                    ->orderBy('created_at', 'desc')
+                    ->take(15)
+                    ->get();
+            }
+        } catch (\Throwable) {
+            $leaves = collect();
         }
 
         // Employee Excuses
         $excuses = collect();
         $approvedExcusesCount = 0;
-        if ($employee) {
-            $excuses = Excuse::where('employee_id', $employee->id)
-                ->orderBy('date', 'desc')
-                ->take(15)
-                ->get();
-            $approvedExcusesCount = Excuse::where('employee_id', $employee->id)
-                ->whereMonth('date', Carbon::today()->month)
-                ->where('status', 'approved')
-                ->count();
+        try {
+            if ($employee && \Illuminate\Support\Facades\Schema::hasTable('excuses')) {
+                $excuses = Excuse::where('employee_id', $employee->id)
+                    ->orderBy('date', 'desc')
+                    ->take(15)
+                    ->get();
+                $approvedExcusesCount = Excuse::where('employee_id', $employee->id)
+                    ->whereMonth('date', Carbon::today()->month)
+                    ->where('status', 'approved')
+                    ->count();
+            }
+        } catch (\Throwable) {
+            $excuses = collect();
+            $approvedExcusesCount = 0;
         }
 
         // Employee Payrolls
         $payrolls = collect();
         $latestPayroll = null;
-        if ($employee) {
-            $payrolls = Payroll::where('employee_id', $employee->id)
-                ->orderBy('year', 'desc')
-                ->orderBy('month', 'desc')
-                ->get();
-            $latestPayroll = $payrolls->first();
+        try {
+            if ($employee && \Illuminate\Support\Facades\Schema::hasTable('payrolls')) {
+                $payrolls = Payroll::where('employee_id', $employee->id)
+                    ->orderBy('year', 'desc')
+                    ->orderBy('month', 'desc')
+                    ->get();
+                $latestPayroll = $payrolls->first();
+            }
+        } catch (\Throwable) {
+            $payrolls = collect();
+            $latestPayroll = null;
         }
 
         // Selected Payroll for Payslip Modal
         $selectedPayroll = null;
-        if ($this->selectedPayrollId && $employee) {
-            $selectedPayroll = Payroll::with('employee.department')->where('employee_id', $employee->id)->find($this->selectedPayrollId);
+        try {
+            if ($this->selectedPayrollId && $employee && \Illuminate\Support\Facades\Schema::hasTable('payrolls')) {
+                $selectedPayroll = Payroll::with('employee.department')->where('employee_id', $employee->id)->find($this->selectedPayrollId);
+            }
+        } catch (\Throwable) {
+            $selectedPayroll = null;
         }
 
         // Active Announcements
-        $announcements = Announcement::where('is_active', true)
-            ->latest()
-            ->take(3)
-            ->get();
+        $announcements = collect();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('announcements')) {
+                $announcements = Announcement::where('is_active', true)
+                    ->latest()
+                    ->take(3)
+                    ->get();
+            }
+        } catch (\Throwable) {
+            $announcements = collect();
+        }
 
         // Available employees for admin preview switch
         $allEmployees = collect();

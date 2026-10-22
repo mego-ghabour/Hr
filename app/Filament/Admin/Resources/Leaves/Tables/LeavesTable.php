@@ -51,13 +51,16 @@ class LeavesTable
                     ->label('حالة الطلب')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'pending_manager' => 'بانتظار موافقة المدير المباشر',
+                        'pending_hr' => 'بانتظار موافقة الـ HR',
                         'pending' => 'قيد الانتظار',
-                        'approved' => 'مقبول',
+                        'approved' => 'معتمد نهائياً',
                         'rejected' => 'مرفوض',
                         default => $state,
                     })
                     ->colors([
-                        'warning' => 'pending',
+                        'warning' => ['pending', 'pending_manager'],
+                        'info' => 'pending_hr',
                         'success' => 'approved',
                         'danger' => 'rejected',
                     ]),
@@ -76,24 +79,76 @@ class LeavesTable
                 SelectFilter::make('status')
                     ->label('تصفية بالحالة')
                     ->options([
+                        'pending_manager' => 'بانتظار موافقة المدير المباشر',
+                        'pending_hr' => 'بانتظار موافقة الموارد البشرية',
                         'pending' => 'قيد الانتظار',
-                        'approved' => 'مقبول',
+                        'approved' => 'معتمد نهائياً',
                         'rejected' => 'مرفوض',
                     ]),
             ])
             ->recordActions([
+                // المرحلة الأولى: موافقة المدير المباشر
+                \Filament\Actions\Action::make('manager_approve')
+                    ->label('موافقة المدير')
+                    ->icon('heroicon-o-check')
+                    ->color('info')
+                    ->visible(fn ($record) => $record->status === 'pending_manager')
+                    ->form([
+                        \Filament\Forms\Components\Textarea::make('manager_notes')
+                            ->label('توصيات وملاحظات المدير')
+                            ->placeholder('ملاحظات اختيارية...')
+                            ->rows(3),
+                    ])
+                    ->action(function (array $data, $record) {
+                        $record->update([
+                            'status' => 'pending_hr',
+                            'manager_approved_at' => now(),
+                            'manager_approved_by' => auth()->id(),
+                            'manager_notes' => $data['manager_notes'] ?? null,
+                        ]);
+                        \Filament\Notifications\Notification::make()->title('تمت موافقة المدير المباشر وتحويل الطلب للموارد البشرية')->success()->send();
+                    }),
+
+                // المرحلة الثانية / الاعتماد النهائي للموارد البشرية
                 \Filament\Actions\Action::make('approve')
-                    ->label('موافقة')
+                    ->label('اعتماد نهائي')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading('الموافقة على الإجازة')
-                    ->modalDescription(fn ($record) => 'هل أنت متأكد من الموافقة على طلب إجازة ' . ($record->employee?->first_name ?? '') . '؟ سيتم خصم الأيام من رصيده تلقائياً.')
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->modalHeading('الاعتماد النهائي للإجازة')
+                    ->modalDescription(fn ($record) => 'هل أنت متأكد من الاعتماد النهائي لطلب إجازة ' . ($record->employee?->first_name ?? '') . '؟ سيتم خصم الأيام من رصيده تلقائياً.')
+                    ->visible(fn ($record) => in_array($record->status, ['pending', 'pending_hr']))
                     ->action(function ($record) {
-                        $record->update(['status' => 'approved']);
-                        \Filament\Notifications\Notification::make()->title('تمت الموافقة على الإجازة بنجاح')->success()->send();
+                        $record->update([
+                            'status' => 'approved',
+                            'hr_approved_at' => now(),
+                            'hr_approved_by' => auth()->id(),
+                        ]);
+                        \Filament\Notifications\Notification::make()->title('تم الاعتماد النهائي للإجازة بنجاح')->success()->send();
                     }),
+
+                // خيار إداري: الاعتماد المباشر وتخطي مرحلة المدير
+                \Filament\Actions\Action::make('direct_approve')
+                    ->label('اعتماد مباشر (تخطي)')
+                    ->icon('heroicon-o-bolt')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('اعتماد فوري وتخطي المدير')
+                    ->modalDescription('سيتم تجاوز موافقة المدير المباشر واعتماد الإجازة فورياً مع خصم الرصيد.')
+                    ->visible(fn ($record) => $record->status === 'pending_manager')
+                    ->action(function ($record) {
+                        $record->update([
+                            'status' => 'approved',
+                            'manager_approved_at' => now(),
+                            'manager_approved_by' => auth()->id(),
+                            'hr_approved_at' => now(),
+                            'hr_approved_by' => auth()->id(),
+                            'admin_notes' => 'تم الاعتماد المباشر من الإدارة العليا',
+                        ]);
+                        \Filament\Notifications\Notification::make()->title('تم الاعتماد المباشر للإجازة بنجاح')->success()->send();
+                    }),
+
+                // رفض الطلب
                 \Filament\Actions\Action::make('reject')
                     ->label('رفض')
                     ->icon('heroicon-o-x-circle')
@@ -104,7 +159,7 @@ class LeavesTable
                             ->placeholder('اكتب سبب رفض الإجازة...')
                             ->required(),
                     ])
-                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->visible(fn ($record) => in_array($record->status, ['pending', 'pending_manager', 'pending_hr']))
                     ->action(function (array $data, $record) {
                         $record->update([
                             'status' => 'rejected',

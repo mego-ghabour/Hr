@@ -28,7 +28,12 @@ class LeaveStatusUpdatedNotification extends Notification
         $employeeName = $this->leave->employee?->full_name ?? 'عزيزي الموظف';
         $leaveTypeName = $this->leave->leaveType?->name ?? 'إجازة';
         $days = Carbon::parse($this->leave->start_date)->diffInDays(Carbon::parse($this->leave->end_date)) + 1;
-        $statusText = $this->leave->status === 'approved' ? 'الموافقة على' : 'رفض';
+        $statusText = match ($this->leave->status) {
+            'approved' => 'الموافقة النهائية على',
+            'pending_hr' => 'موافقة مديرك المباشر على',
+            'rejected' => 'رفض',
+            default => 'تحديث حالة',
+        };
 
         $mail = (new MailMessage)
             ->subject("تحديث حالة طلب الإجازة: تم {$statusText} طلبك")
@@ -36,6 +41,10 @@ class LeaveStatusUpdatedNotification extends Notification
             ->line("نود إفادتك بأنه تم {$statusText} طلب الإجازة المقدم من قبلك:")
             ->line("نوع الإجازة: {$leaveTypeName}")
             ->line("الفترة: من {$this->leave->start_date} إلى {$this->leave->end_date} ({$days} أيام)");
+
+        if (!empty($this->leave->manager_notes)) {
+            $mail->line("ملاحظات المدير المباشر: {$this->leave->manager_notes}");
+        }
 
         if (!empty($this->leave->admin_notes)) {
             $mail->line("ملاحظات الإدارة: {$this->leave->admin_notes}");
@@ -48,7 +57,12 @@ class LeaveStatusUpdatedNotification extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        $statusText = $this->leave->status === 'approved' ? 'الموافقة على' : 'رفض';
+        $statusText = match ($this->leave->status) {
+            'approved' => 'الموافقة النهائية على',
+            'pending_hr' => 'موافقة مديرك المباشر على',
+            'rejected' => 'رفض',
+            default => 'تحديث حالة',
+        };
         $leaveTypeName = $this->leave->leaveType?->name ?? 'إجازة';
 
         return [

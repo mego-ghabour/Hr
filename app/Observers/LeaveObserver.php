@@ -16,13 +16,18 @@ class LeaveObserver
     {
         $this->handleApproval($leave);
 
-        // إشعار الإدارة بطلب الإجازة الجديد
+        // إشعار المدير المباشر أو الإدارة بطلب الإجازة الجديد
         try {
-            $availableRoles = \Spatie\Permission\Models\Role::whereIn('name', ['المدير العام', 'مسؤول النظام', 'مدير الموارد البشرية', 'Super Admin', 'admin'])->pluck('name')->toArray();
-            if (!empty($availableRoles)) {
-                $admins = User::role($availableRoles)->get();
-                if ($admins->isNotEmpty()) {
-                    Notification::send($admins, new LeaveRequestedNotification($leave));
+            $managerUser = $leave->employee?->manager?->user;
+            if ($leave->status === 'pending_manager' && $managerUser) {
+                $managerUser->notify(new LeaveRequestedNotification($leave));
+            } else {
+                $availableRoles = \Spatie\Permission\Models\Role::whereIn('name', ['المدير العام', 'مسؤول النظام', 'مدير الموارد البشرية', 'Super Admin', 'admin'])->pluck('name')->toArray();
+                if (!empty($availableRoles)) {
+                    $admins = User::role($availableRoles)->get();
+                    if ($admins->isNotEmpty()) {
+                        Notification::send($admins, new LeaveRequestedNotification($leave));
+                    }
                 }
             }
         } catch (\Throwable) {
@@ -35,13 +40,23 @@ class LeaveObserver
         if ($leave->isDirty('status')) {
             $this->handleApproval($leave);
 
-            // إشعار الموظف باعتماد أو رفض الإجازة
             try {
-                if (in_array($leave->status, ['approved', 'rejected'])) {
-                    $employeeUser = $leave->employee?->user;
-                    if ($employeeUser) {
-                        $employeeUser->notify(new LeaveStatusUpdatedNotification($leave));
+                $employeeUser = $leave->employee?->user;
+
+                // إذا تمت الموافقة المبدئية من المدير وتم تحويلها للـ HR
+                if ($leave->status === 'pending_hr') {
+                    $availableRoles = \Spatie\Permission\Models\Role::whereIn('name', ['المدير العام', 'مسؤول النظام', 'مدير الموارد البشرية', 'Super Admin', 'admin'])->pluck('name')->toArray();
+                    if (!empty($availableRoles)) {
+                        $admins = User::role($availableRoles)->get();
+                        if ($admins->isNotEmpty()) {
+                            Notification::send($admins, new LeaveRequestedNotification($leave));
+                        }
                     }
+                }
+
+                // إشعار الموظف عند اعتماد أو رفض الإجازة
+                if (in_array($leave->status, ['approved', 'rejected', 'pending_hr']) && $employeeUser) {
+                    $employeeUser->notify(new LeaveStatusUpdatedNotification($leave));
                 }
             } catch (\Throwable) {
                 // صامت في حالة عدم اكتمال إعدادات البريد

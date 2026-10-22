@@ -55,6 +55,16 @@ class Employee extends Model
         return $this->belongsTo(Employee::class, 'manager_id');
     }
 
+    public function subordinates(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'manager_id');
+    }
+
+    public function isManager(): bool
+    {
+        return $this->subordinates()->exists();
+    }
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
