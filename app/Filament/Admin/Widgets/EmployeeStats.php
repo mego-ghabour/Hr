@@ -15,11 +15,19 @@ class EmployeeStats extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $activeEmployees = \App\Models\Employee::where('status', 'active')->count();
-        $totalMonthlyPayroll = (float) \App\Models\Employee::where('status', 'active')->sum('salary');
-        $currencySymbol = \App\Models\Setting::currencySymbol();
-        $onLeaveToday = \App\Models\Employee::where('status', 'on_leave')->count();
-        $pendingLeaves = \App\Models\Leave::where('status', 'pending')->count();
+        try {
+            $activeEmployees = \App\Models\Employee::where('status', 'active')->count();
+            $totalMonthlyPayroll = (float) \App\Models\Employee::where('status', 'active')->sum('salary');
+            $currencySymbol = \App\Models\Setting::currencySymbol();
+            $onLeaveToday = \App\Models\Employee::where('status', 'on_leave')->count();
+            $pendingLeaves = \App\Models\Leave::where('status', 'pending')->count();
+        } catch (\Throwable) {
+            $activeEmployees = 0;
+            $totalMonthlyPayroll = 0;
+            $currencySymbol = 'ج.م';
+            $onLeaveToday = 0;
+            $pendingLeaves = 0;
+        }
 
         return [
             Stat::make('الموظفين النشطين', $activeEmployees)

@@ -15,7 +15,8 @@ class DepartmentTalentsTableWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasPermissionTo('view_any_talent');
+        $user = auth()->user();
+        return $user && ($user->hasRole(['Super Admin', 'admin', 'المدير العام', 'مسؤول النظام']) || $user->can('view_any_talent'));
     }
     use InteractsWithPageFilters;
 

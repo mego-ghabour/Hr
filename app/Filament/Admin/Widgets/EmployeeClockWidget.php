@@ -90,42 +90,56 @@ class EmployeeClockWidget extends Widget
 
     public function getAttendanceProperty()
     {
-        $employee = Auth::user()?->employee;
-        if (!$employee) return null;
+        try {
+            $employee = Auth::user()?->employee;
+            if (!$employee) return null;
 
-        return Attendance::where('employee_id', $employee->id)
-            ->where('date', Carbon::today()->format('Y-m-d'))
-            ->first();
+            return Attendance::where('employee_id', $employee->id)
+                ->where('date', Carbon::today()->format('Y-m-d'))
+                ->first();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     protected function getViewData(): array
     {
-        $user = Auth::user();
-        $employee = $user?->employee;
-        $attendance = $this->attendance;
+        try {
+            $user = Auth::user();
+            $employee = $user?->employee;
+            $attendance = $this->attendance;
 
-        $workedHoursText = null;
-        if ($attendance && $attendance->check_in_time) {
-            $in = Carbon::parse($attendance->check_in_time);
-            $out = $attendance->check_out_time ? Carbon::parse($attendance->check_out_time) : Carbon::now();
-            $totalMins = max(0, $in->diffInMinutes($out));
-            $h = intdiv($totalMins, 60);
-            $m = $totalMins % 60;
-            $workedHoursText = "{$h} ساعة و {$m} دقيقة";
+            $workedHoursText = null;
+            if ($attendance && $attendance->check_in_time) {
+                $in = Carbon::parse($attendance->check_in_time);
+                $out = $attendance->check_out_time ? Carbon::parse($attendance->check_out_time) : Carbon::now();
+                $totalMins = max(0, $in->diffInMinutes($out));
+                $h = intdiv($totalMins, 60);
+                $m = $totalMins % 60;
+                $workedHoursText = "{$h} ساعة و {$m} دقيقة";
+            }
+
+            $monthlyAttendances = 0;
+            if ($employee) {
+                $monthlyAttendances = Attendance::where('employee_id', $employee->id)
+                    ->whereMonth('date', Carbon::today()->month)
+                    ->whereYear('date', Carbon::today()->year)
+                    ->where('status', 'present')
+                    ->count();
+            }
+
+            // Stats for admin fallback
+            $todayPresentCount = Attendance::where('date', Carbon::today()->format('Y-m-d'))->where('status', 'present')->count();
+            $totalEmployeesCount = Employee::where('status', 'active')->count();
+        } catch (\Throwable) {
+            $user = Auth::user();
+            $employee = null;
+            $attendance = null;
+            $workedHoursText = null;
+            $monthlyAttendances = 0;
+            $todayPresentCount = 0;
+            $totalEmployeesCount = 0;
         }
-
-        $monthlyAttendances = 0;
-        if ($employee) {
-            $monthlyAttendances = Attendance::where('employee_id', $employee->id)
-                ->whereMonth('date', Carbon::today()->month)
-                ->whereYear('date', Carbon::today()->year)
-                ->where('status', 'present')
-                ->count();
-        }
-
-        // Stats for admin fallback
-        $todayPresentCount = Attendance::where('date', Carbon::today()->format('Y-m-d'))->where('status', 'present')->count();
-        $totalEmployeesCount = Employee::where('status', 'active')->count();
 
         return [
             'user' => $user,

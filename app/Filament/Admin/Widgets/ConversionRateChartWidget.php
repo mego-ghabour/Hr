@@ -13,7 +13,8 @@ class ConversionRateChartWidget extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasPermissionTo('view_any_talent');
+        $user = auth()->user();
+        return $user && ($user->hasRole(['Super Admin', 'admin', 'المدير العام', 'مسؤول النظام']) || $user->can('view_any_talent'));
     }
 
     use InteractsWithPageFilters;
@@ -26,39 +27,44 @@ class ConversionRateChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
-        $departmentId = $this->filters['department_id'] ?? null;
+        try {
+            $startDate = $this->filters['startDate'] ?? null;
+            $endDate = $this->filters['endDate'] ?? null;
+            $departmentId = $this->filters['department_id'] ?? null;
 
-        $statuses = TalentStatus::withCount(['talents' => function ($query) use ($startDate, $endDate, $departmentId) {
-            if ($startDate) {
-                $query->whereDate('created_at', '>=', $startDate);
-            }
-            if ($endDate) {
-                $query->whereDate('created_at', '<=', $endDate);
-            }
-            if ($departmentId) {
-                $query->where('department_id', $departmentId);
-            }
-        }])
-        ->orderBy('order_column')
-        ->get();
+            $statuses = TalentStatus::withCount(['talents' => function ($query) use ($startDate, $endDate, $departmentId) {
+                if ($startDate) {
+                    $query->whereDate('created_at', '>=', $startDate);
+                }
+                if ($endDate) {
+                    $query->whereDate('created_at', '<=', $endDate);
+                }
+                if ($departmentId) {
+                    $query->where('department_id', $departmentId);
+                }
+            }])
+            ->orderBy('order_column')
+            ->get();
 
-        // Extracting data
-        $labels = $statuses->pluck('name')->toArray();
-        $data = $statuses->pluck('talents_count')->toArray();
-        $colors = $statuses->pluck('color')->map(function ($color) {
-            // Mapping filament colors to hex for chart.js if they are named, otherwise generating random or using defaults.
-            $colorMap = [
-                'primary' => '#3b82f6',
-                'success' => '#22c55e',
-                'warning' => '#eab308',
-                'danger' => '#ef4444',
-                'info' => '#0ea5e9',
-                'gray' => '#6b7280',
-            ];
-            return $colorMap[$color] ?? $color ?? '#3b82f6';
-        })->toArray();
+            // Extracting data
+            $labels = $statuses->pluck('name')->toArray();
+            $data = $statuses->pluck('talents_count')->toArray();
+            $colors = $statuses->pluck('color')->map(function ($color) {
+                $colorMap = [
+                    'primary' => '#3b82f6',
+                    'success' => '#22c55e',
+                    'warning' => '#eab308',
+                    'danger' => '#ef4444',
+                    'info' => '#0ea5e9',
+                    'gray' => '#6b7280',
+                ];
+                return $colorMap[$color] ?? $color ?? '#3b82f6';
+            })->toArray();
+        } catch (\Throwable) {
+            $labels = [];
+            $data = [];
+            $colors = [];
+        }
 
         return [
             'datasets' => [

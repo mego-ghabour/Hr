@@ -27,24 +27,28 @@ class SourcePerformanceChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
-        $departmentId = $this->filters['department_id'] ?? null;
+        try {
+            $startDate = $this->filters['startDate'] ?? null;
+            $endDate = $this->filters['endDate'] ?? null;
+            $departmentId = $this->filters['department_id'] ?? null;
 
-        // Get sources with their talent counts
-        $sources = Source::withCount(['talents' => function ($query) use ($startDate, $endDate, $departmentId) {
-            if ($startDate) {
-                $query->whereDate('created_at', '>=', $startDate);
-            }
-            if ($endDate) {
-                $query->whereDate('created_at', '<=', $endDate);
-            }
-            if ($departmentId) {
-                $query->where('department_id', $departmentId);
-            }
-        }])
-        ->orderByDesc('talents_count')
-        ->get();
+            // Get sources with their talent counts
+            $sources = Source::withCount(['talents' => function ($query) use ($startDate, $endDate, $departmentId) {
+                if ($startDate) {
+                    $query->whereDate('created_at', '>=', $startDate);
+                }
+                if ($endDate) {
+                    $query->whereDate('created_at', '<=', $endDate);
+                }
+                if ($departmentId) {
+                    $query->where('department_id', $departmentId);
+                }
+            }])
+            ->orderByDesc('talents_count')
+            ->get();
+        } catch (\Throwable) {
+            $sources = collect();
+        }
 
         return [
             'datasets' => [

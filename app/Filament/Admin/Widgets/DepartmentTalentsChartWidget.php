@@ -31,25 +31,29 @@ class DepartmentTalentsChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
+        try {
+            $startDate = $this->filters['startDate'] ?? null;
+            $endDate = $this->filters['endDate'] ?? null;
 
-        $departmentId = $this->filters['department_id'] ?? null;
+            $departmentId = $this->filters['department_id'] ?? null;
 
-        $departments = Department::withCount(['talents' => function (Builder $query) use ($startDate, $endDate) {
-            if ($startDate) {
-                $query->whereDate('date_added', '>=', $startDate);
-            }
-            if ($endDate) {
-                $query->whereDate('date_added', '<=', $endDate);
-            }
-        }])
-            ->when($departmentId, function ($query, $departmentId) {
-                $query->where('id', $departmentId);
-            })
-            ->orderBy('talents_count', 'desc')
-            ->limit(10)
-            ->get();
+            $departments = Department::withCount(['talents' => function (Builder $query) use ($startDate, $endDate) {
+                if ($startDate) {
+                    $query->whereDate('date_added', '>=', $startDate);
+                }
+                if ($endDate) {
+                    $query->whereDate('date_added', '<=', $endDate);
+                }
+            }])
+                ->when($departmentId, function ($query, $departmentId) {
+                    $query->where('id', $departmentId);
+                })
+                ->orderBy('talents_count', 'desc')
+                ->limit(10)
+                ->get();
+        } catch (\Throwable) {
+            $departments = collect();
+        }
 
         $colors = [
             '#1e4d6e', '#2d6a96', '#3d87be', '#5ba3d9', '#85bbea',

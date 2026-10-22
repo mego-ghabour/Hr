@@ -36,55 +36,63 @@ class HrOverviewWidget extends Widget implements HasActions, HasForms
 
     protected function getViewData(): array
     {
-        $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
-        $departmentId = $this->filters['department_id'] ?? null;
+        try {
+            $startDate = $this->filters['startDate'] ?? null;
+            $endDate = $this->filters['endDate'] ?? null;
+            $departmentId = $this->filters['department_id'] ?? null;
 
-        $talentQuery = Talent::query();
-        $employeeQuery = Employee::query();
-        $leaveQuery = Leave::query();
+            $talentQuery = Talent::query();
+            $employeeQuery = Employee::query();
+            $leaveQuery = Leave::query();
 
-        if ($startDate) {
-            $talentQuery->whereDate('created_at', '>=', $startDate);
-            $employeeQuery->whereDate('created_at', '>=', $startDate);
-        }
+            if ($startDate) {
+                $talentQuery->whereDate('created_at', '>=', $startDate);
+                $employeeQuery->whereDate('created_at', '>=', $startDate);
+            }
 
-        if ($endDate) {
-            $talentQuery->whereDate('created_at', '<=', $endDate);
-            $employeeQuery->whereDate('created_at', '<=', $endDate);
-        }
+            if ($endDate) {
+                $talentQuery->whereDate('created_at', '<=', $endDate);
+                $employeeQuery->whereDate('created_at', '<=', $endDate);
+            }
 
-        if ($departmentId) {
-            $talentQuery->where('department_id', $departmentId);
-            $employeeQuery->where('department_id', $departmentId);
-        }
+            if ($departmentId) {
+                $talentQuery->where('department_id', $departmentId);
+                $employeeQuery->where('department_id', $departmentId);
+            }
 
-        // Stats for the cards (Nathret Al Youm - Today's Overview)
-        $totalEmployees = Employee::where('status', 'active')->count();
-        $totalTalents = $talentQuery->count();
-        $pendingLeaves = Leave::where('status', 'pending')->count();
-        $overdueFollowUps = TalentFollowUp::where('status', 'pending')->where('follow_up_date', '<', now())->count();
-        
-        $todayAttendanceRatio = 0; // Simplified for UI demonstration
+            // Stats for the cards (Nathret Al Youm - Today's Overview)
+            $totalEmployees = Employee::where('status', 'active')->count();
+            $totalTalents = $talentQuery->count();
+            $pendingLeaves = Leave::where('status', 'pending')->count();
+            $overdueFollowUps = TalentFollowUp::where('status', 'pending')->where('follow_up_date', '<', now())->count();
+            
+            $todayAttendanceRatio = 0; // Simplified for UI demonstration
 
-        // Department movement table data
-        $departments = \App\Models\Department::withCount(['talents as pending_talents_count' => function ($query) {
-            // Simplified status check
-            $query->whereHas('status', function($q) {
-                $q->where('name', '!=', 'مرفوض');
+            // Department movement table data
+            $departments = \App\Models\Department::withCount(['talents as pending_talents_count' => function ($query) {
+                // Simplified status check
+                $query->whereHas('status', function($q) {
+                    $q->where('name', '!=', 'مرفوض');
+                });
+            }])->get();
+
+            $departmentStats = $departments->map(function ($dept) {
+                $activeEmp = Employee::where('department_id', $dept->id)->where('status', 'active')->count();
+                return [
+                    'name' => $dept->name,
+                    'manager' => 'مدير القسم', // Placeholder
+                    'pending_candidates' => $dept->pending_talents_count,
+                    'active_employees' => $activeEmp,
+                    'status' => 'طبيعي'
+                ];
             });
-        }])->get();
-
-        $departmentStats = $departments->map(function ($dept) {
-            $activeEmp = Employee::where('department_id', $dept->id)->where('status', 'active')->count();
-            return [
-                'name' => $dept->name,
-                'manager' => 'مدير القسم', // Placeholder
-                'pending_candidates' => $dept->pending_talents_count,
-                'active_employees' => $activeEmp,
-                'status' => 'طبيعي'
-            ];
-        });
+        } catch (\Throwable) {
+            $totalEmployees = 0;
+            $totalTalents = 0;
+            $pendingLeaves = 0;
+            $overdueFollowUps = 0;
+            $departmentStats = collect();
+        }
 
         return [
             'totalEmployees' => $totalEmployees,
