@@ -18,11 +18,16 @@ class CompanyAnnouncementsWidget extends Widget
         $user = Auth::user();
         $canCreate = $user && ($user->hasRole(['Super Admin', 'admin']) || $user->can('create_announcement'));
 
+        try {
+            $announcements = \Illuminate\Support\Facades\Schema::hasTable('announcements')
+                ? Announcement::where('is_active', true)->latest()->take(4)->get()
+                : collect();
+        } catch (\Throwable) {
+            $announcements = collect();
+        }
+
         return [
-            'announcements' => Announcement::where('is_active', true)
-                ->latest()
-                ->take(4)
-                ->get(),
+            'announcements' => $announcements,
             'canCreate' => $canCreate,
         ];
     }
