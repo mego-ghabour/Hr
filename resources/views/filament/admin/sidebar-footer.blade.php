@@ -1,6 +1,4 @@
 @php
-    $sidebarTheme = \App\Models\Setting::get('sidebar_theme', 'dark_navy');
-    $isDarkSidebar = ($sidebarTheme !== 'light_clean');
     $primaryColor = \App\Models\Setting::get('brand_primary_color', '#0d9488');
 @endphp
 
@@ -10,8 +8,8 @@
         width: 100%;
         padding: 0.75rem 0.75rem 1rem 0.75rem;
         margin-top: auto;
-        border-top: {{ $isDarkSidebar ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0' }};
-        background: {{ $isDarkSidebar ? 'rgba(0, 0, 0, 0.3)' : '#f8fafc' }};
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
         backdrop-filter: blur(12px);
         transition: all 0.25s ease;
     }
@@ -24,11 +22,11 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.65rem;
-        background: {{ $isDarkSidebar ? 'rgba(255, 255, 255, 0.04)' : '#ffffff' }};
-        border: {{ $isDarkSidebar ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0' }};
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 0.875rem;
         padding: 0.6rem 0.75rem;
-        box-shadow: {{ $isDarkSidebar ? '0 4px 12px rgba(0, 0, 0, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.05)' }};
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         transition: all 0.2s ease;
     }
     .dark .fi-sidebar-footer-inner {
@@ -39,7 +37,7 @@
     .fi-sidebar-footer-name {
         font-size: 0.825rem;
         font-weight: 800;
-        color: {{ $isDarkSidebar ? '#f8fafc' : '#0f172a' }};
+        color: #0f172a;
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
@@ -55,8 +53,8 @@
         font-weight: 700;
         padding: 0.1rem 0.45rem;
         border-radius: 9999px;
-        background: {{ $isDarkSidebar ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0' }};
-        color: {{ $isDarkSidebar ? '#94a3b8' : '#475569' }};
+        background: #f1f5f9;
+        color: #475569;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -71,9 +69,9 @@
         width: 2rem;
         height: 2rem;
         border-radius: 0.55rem;
-        border: {{ $isDarkSidebar ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e2e8f0' }};
-        background: {{ $isDarkSidebar ? 'rgba(255, 255, 255, 0.06)' : '#ffffff' }};
-        color: {{ $isDarkSidebar ? '#94a3b8' : '#64748b' }};
+        border: 1px solid #e2e8f0;
+        background: #f1f5f9;
+        color: #64748b;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -103,7 +101,7 @@
                     {{ mb_substr(auth()->user()->name ?? 'م', 0, 1) }}
                 </div>
                 <!-- Online Green Dot -->
-                <span style="position: absolute; bottom: -2px; left: -2px; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; border: 2px solid {{ $isDarkSidebar ? '#090e1a' : '#ffffff' }}; box-shadow: 0 0 6px #10b981;" class="dark:!border-gray-900"></span>
+                <span style="position: absolute; bottom: -2px; left: -2px; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; border: 2px solid #ffffff; box-shadow: 0 0 6px #10b981;" class="dark:!border-slate-900"></span>
             </div>
             
             <div style="flex: 1; min-width: 0;">

@@ -146,13 +146,16 @@ class JobApplicationTest extends TestCase
                 'custom_laravel_rating' => 5,
             ]);
 
-        $response->assertRedirect(route('jobs.apply', $this->job->id));
+        $talent = Talent::where('email', 'tarek@example.com')->first();
+        $this->assertNotNull($talent);
+
+        $response->assertRedirect(route('jobs.applied', ['job' => $this->job->id, 'talent_id' => $talent->talent_id]));
         $response->assertSessionHas('success');
 
         // Follow redirect to verify rendering of the success screen without any Undefined variable errors
-        $followedResponse = $this->get(route('jobs.apply', $this->job->id));
+        $followedResponse = $this->get(route('jobs.applied', ['job' => $this->job->id, 'talent_id' => $talent->talent_id]));
         $followedResponse->assertStatus(200);
-        $followedResponse->assertSee('تم استلام طلبك بنجاح');
+        $followedResponse->assertSee('تم استلام طلب تقديمك بنجاح');
 
         $this->assertDatabaseHas('talents', [
             'full_name' => 'طارق عبد السلام',

@@ -110,40 +110,165 @@ class JobPostingResource extends Resource
                                     ->helperText('مثال: شكراً لك، سيقوم فريقنا بمراجعة أعمالك. (اتركه فارغاً للرسالة الافتراضية)')
                                     ->columnSpanFull(),
                             ]),
-                        \Filament\Schemas\Components\Tabs\Tab::make('تخصيص الحقول الافتراضية')
+                        \Filament\Schemas\Components\Tabs\Tab::make('تخصيص الحقول الأساسية لنموذج التقديم')
                             ->icon('heroicon-o-adjustments-horizontal')
                             ->components([
-                                \Filament\Schemas\Components\Fieldset::make('الحقول الأساسية لنموذج التقديم')
-                                    ->components([
-                                                                                Forms\Components\Toggle::make('primary_fields_config.show_full_name')
-                                            ->label('حقل "الاسم الكامل" (إجباري)')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_email')
-                                            ->label('حقل "البريد الإلكتروني" (إجباري)')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_phone')
-                                            ->label('حقل "رقم الجوال" (إجباري)')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_linkedin')
-                                            ->label('حقل "لينكد إن"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_portfolio')
-                                            ->label('حقل "معرض الأعمال"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_current_job_title')
-                                            ->label('حقل "المسمى الوظيفي الحالي"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_current_company')
-                                            ->label('حقل "جهة العمل الحالية"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_years_of_experience')
-                                            ->label('حقل "سنوات الخبرة"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_expected_salary')
-                                            ->label('حقل "الراتب المتوقع"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_seniority_level')
-                                            ->label('حقل "المستوى المهني"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_work_preference')
-                                            ->label('حقل "نظام العمل المفضل"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_availability')
-                                            ->label('حقل "متى يمكنك البدء؟"')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_resume')
-                                            ->label('طلب إرفاق "السيرة الذاتية" (إجباري)')->default(true),
-                                        Forms\Components\Toggle::make('primary_fields_config.show_general_notes')
-                                            ->label('حقل "ملاحظات إضافية"')->default(true),
-                                    ])->columns(3),
+                                \Filament\Schemas\Components\Section::make('البيانات الشخصية والتعريفية (إظهار / إجباري)')
+                                    ->description('حدد الحقول المطلوب ظهورها للمرشح وما إذا كان ملء الحقل إجبارياً أو اختيارياً.')
+                                    ->schema([
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_full_name')
+                                                ->label('إظهار حقل "الاسم الكامل"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_full_name')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(true),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_email')
+                                                ->label('إظهار حقل "البريد الإلكتروني"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_email')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(true),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_phone')
+                                                ->label('إظهار حقل "رقم الجوال"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_phone')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(true),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_national_id')
+                                                ->label('إظهار حقل "رقم الهوية الوطنية / الإقامة"')
+                                                ->default(false),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_national_id')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_city')
+                                                ->label('إظهار حقل "المدينة ومحل الإقامة"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_city')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_birth_date')
+                                                ->label('إظهار حقل "تاريخ الميلاد"')
+                                                ->default(false),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_birth_date')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_gender')
+                                                ->label('إظهار حقل "الجنس / النوع"')
+                                                ->default(false),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_gender')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                    ])->columns(2),
+
+                                \Filament\Schemas\Components\Section::make('المؤهلات والمسيرة المهنية (إظهار / إجباري)')
+                                    ->schema([
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_resume')
+                                                ->label('إظهار رفع "السيرة الذاتية (CV)"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_resume')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(true),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_current_job_title')
+                                                ->label('إظهار "المسمى الوظيفي الحالي"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_current_job_title')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_current_company')
+                                                ->label('إظهار "جهة العمل الحالية"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_current_company')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_years_of_experience')
+                                                ->label('إظهار "سنوات الخبرة"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_years_of_experience')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_expected_salary')
+                                                ->label('إظهار "الراتب المتوقع"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_expected_salary')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_seniority_level')
+                                                ->label('إظهار "المستوى المهني"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_seniority_level')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_work_preference')
+                                                ->label('إظهار "نظام العمل المفضل"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_work_preference')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_availability')
+                                                ->label('إظهار "موعد بدء العمل المتاح"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_availability')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                    ])->columns(2),
+
+                                \Filament\Schemas\Components\Section::make('الروابط الخارجية والملاحظات (إظهار / إجباري)')
+                                    ->schema([
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_linkedin')
+                                                ->label('إظهار حقل "رابط لينكد إن"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_linkedin')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_portfolio')
+                                                ->label('إظهار حقل "معرض الأعمال / الموقع"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_portfolio')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                        \Filament\Schemas\Components\Grid::make(2)->schema([
+                                            Forms\Components\Toggle::make('primary_fields_config.show_general_notes')
+                                                ->label('إظهار حقل "ملاحظات إضافية"')
+                                                ->default(true),
+                                            Forms\Components\Toggle::make('primary_fields_config.required_general_notes')
+                                                ->label('إجباري (مطلوب)')
+                                                ->default(false),
+                                        ]),
+                                    ])->columns(2),
                             ]),
 
                         \Filament\Schemas\Components\Tabs\Tab::make('بناء أسئلة إضافية (Form Builder)')

@@ -56,10 +56,12 @@ class DuplicateResource extends Resource
             ->columns([
                 TextColumn::make('originalTalent.full_name')
                     ->label('المرشح الأصلي')
+                    ->placeholder('— (ملف محذوف أو غير متوفر)')
                     ->searchable()
                     ->weight('bold'),
                 TextColumn::make('duplicateTalent.full_name')
                     ->label('الملف المكرر')
+                    ->placeholder('— (ملف محذوف أو غير متوفر)')
                     ->searchable(),
                 TextColumn::make('confidence')
                     ->label('نسبة التشابه')

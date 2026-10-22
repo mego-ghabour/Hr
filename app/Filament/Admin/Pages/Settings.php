@@ -75,13 +75,14 @@ class Settings extends Page
     // General System Settings
     // ──────────────────────────────────────────
     public string $brand_name = '';
+    public string $country = 'EG';
     public string $currency = 'EGP';
     public string $currency_symbol = 'ج.م';
     public string $timezone = 'Africa/Cairo';
     public string $date_format = 'Y-m-d';
     public string $brand_primary_color = '#0d9488';
     public string $font_family = 'Cairo';
-    public string $sidebar_theme = 'dark_navy';
+    public string $sidebar_theme = 'auto_adaptive';
     public ?string $existing_logo = null;
     public $new_logo = null;
 
@@ -232,19 +233,39 @@ class Settings extends Page
     public function loadGeneralSettings(): void
     {
         $this->brand_name = (string) Setting::get('brand_name', 'نظام إدارة الموارد البشرية');
+        $this->country = Setting::country();
         $this->currency = (string) Setting::get('currency', 'EGP');
         $this->currency_symbol = (string) Setting::get('currency_symbol', 'ج.م');
         $this->timezone = (string) Setting::get('timezone', 'Africa/Cairo');
         $this->date_format = (string) Setting::get('date_format', 'Y-m-d');
         $this->brand_primary_color = (string) Setting::get('brand_primary_color', '#0d9488');
         $this->font_family = (string) Setting::get('font_family', 'Cairo');
-        $this->sidebar_theme = (string) Setting::get('sidebar_theme', 'dark_navy');
+        $this->sidebar_theme = (string) Setting::get('sidebar_theme', 'auto_adaptive');
 
         $logo = Setting::get('logo');
         if ($logo && Storage::disk('public')->exists($logo)) {
             $this->existing_logo = $logo;
         } else {
             $this->existing_logo = null;
+        }
+    }
+
+    public function updatedCountry(string $value): void
+    {
+        $configs = [
+            'EG' => ['currency' => 'EGP', 'symbol' => 'ج.م', 'tz' => 'Africa/Cairo'],
+            'SA' => ['currency' => 'SAR', 'symbol' => 'ر.س', 'tz' => 'Asia/Riyadh'],
+            'AE' => ['currency' => 'AED', 'symbol' => 'د.إ', 'tz' => 'Asia/Dubai'],
+            'KW' => ['currency' => 'KWD', 'symbol' => 'د.ك', 'tz' => 'Asia/Kuwait'],
+            'QA' => ['currency' => 'QAR', 'symbol' => 'ر.ق', 'tz' => 'Asia/Qatar'],
+            'OM' => ['currency' => 'OMR', 'symbol' => 'ر.ع', 'tz' => 'Asia/Muscat'],
+            'BH' => ['currency' => 'BHD', 'symbol' => 'د.ب', 'tz' => 'Asia/Bahrain'],
+        ];
+
+        if (isset($configs[$value])) {
+            $this->currency = $configs[$value]['currency'];
+            $this->currency_symbol = $configs[$value]['symbol'];
+            $this->timezone = $configs[$value]['tz'];
         }
     }
 
@@ -286,17 +307,19 @@ class Settings extends Page
     {
         $this->validate([
             'brand_name'          => 'required|string|max:120',
+            'country'             => 'required|string|in:EG,SA,AE,KW,QA,OM,BH,ALL',
             'currency'            => 'required|string|max:10',
             'currency_symbol'     => 'required|string|max:10',
             'timezone'            => 'required|string|max:60',
             'date_format'         => 'required|string|max:20',
             'brand_primary_color' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
             'font_family'         => 'required|string|max:50',
-            'sidebar_theme'       => 'required|string|in:dark_navy,deep_black,brand_tinted,slate_gray,light_clean',
+            'sidebar_theme'       => 'required|string|in:auto_adaptive,dark_navy,deep_black,brand_tinted,slate_gray,light_clean',
             'new_logo'            => 'nullable|image|max:2048',
         ]);
 
         Setting::set('brand_name', $this->brand_name);
+        Setting::set('country', $this->country);
         Setting::set('currency', strtoupper(trim($this->currency)));
         Setting::set('currency_symbol', trim($this->currency_symbol));
         Setting::set('timezone', trim($this->timezone));

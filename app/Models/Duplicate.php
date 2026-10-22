@@ -27,11 +27,11 @@ class Duplicate extends Model
 
     public function originalTalent(): BelongsTo
     {
-        return $this->belongsTo(Talent::class, 'original_talent_id');
+        return $this->belongsTo(Talent::class, 'original_talent_id')->withTrashed();
     }
 
     public function duplicateTalent(): BelongsTo
     {
-        return $this->belongsTo(Talent::class, 'duplicate_talent_id');
+        return $this->belongsTo(Talent::class, 'duplicate_talent_id')->withTrashed();
     }
 }

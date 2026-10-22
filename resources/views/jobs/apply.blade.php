@@ -11,6 +11,8 @@
         $layout = $job->form_layout ?: 'single_page';
         $isWizard = ($layout === 'wizard');
         $config = $job->primary_fields_config ?? [];
+        $phoneConfig = \App\Models\Setting::getCountryPhoneConfig();
+        $isReq = fn(string $key, bool $default = false) => (bool) ($config["required_{$key}"] ?? $default);
 
         // Compute initial step if validation failed
         $initialStep = 1;
@@ -315,15 +317,16 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     @if($config['show_full_name'] ?? true)
                                     <div class="sm:col-span-2">
-                                        <label for="full_name" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            الاسم الكامل <span class="text-rose-500">*</span>
+                                        <label for="full_name" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>الاسم الكامل @if($isReq('full_name', true))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('full_name', true))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <input type="text" 
                                                name="full_name" 
                                                id="full_name" 
                                                x-model="formData.full_name"
                                                value="{{ old('full_name') }}" 
-                                               required
+                                               {{ $isReq('full_name', true) ? 'required' : '' }}
                                                placeholder="مثال: أحمد عبد الله محمد"
                                                :class="stepErrors.full_name ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-slate-200 brand-ring'"
                                                class="block w-full rounded-xl py-3 px-4 text-sm shadow-xs transition-colors bg-white">
@@ -336,15 +339,16 @@
 
                                     @if($config['show_email'] ?? true)
                                     <div>
-                                        <label for="email" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            البريد الإلكتروني <span class="text-rose-500">*</span>
+                                        <label for="email" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>البريد الإلكتروني @if($isReq('email', true))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('email', true))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <input type="email" 
                                                name="email" 
                                                id="email" 
                                                x-model="formData.email"
                                                value="{{ old('email') }}" 
-                                               required 
+                                               {{ $isReq('email', true) ? 'required' : '' }} 
                                                dir="ltr"
                                                placeholder="name@example.com"
                                                :class="stepErrors.email ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-slate-200 brand-ring'"
@@ -358,21 +362,106 @@
 
                                     @if($config['show_phone'] ?? true)
                                     <div>
-                                        <label for="phone" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            رقم الجوال / الهاتف <span class="text-rose-500">*</span>
+                                        <label for="phone" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>رقم الجوال / الهاتف @if($isReq('phone', true))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('phone', true))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
-                                        <input type="tel" 
-                                               name="phone" 
-                                               id="phone" 
-                                               x-model="formData.phone"
-                                               value="{{ old('phone') }}" 
-                                               required 
-                                               dir="ltr"
-                                               placeholder="05xxxxxxxx / +966..."
-                                               :class="stepErrors.phone ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-slate-200 brand-ring'"
-                                               class="block w-full rounded-xl py-3 px-4 text-sm shadow-xs transition-colors bg-white text-left">
+                                        <div class="relative flex items-center">
+                                            <span class="inline-flex items-center gap-1 px-3 py-3 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 text-slate-700 text-xs font-bold font-mono select-none" title="{{ $phoneConfig['name'] }}">
+                                                <span>{{ $phoneConfig['flag'] }}</span>
+                                                <span dir="ltr">{{ $phoneConfig['dial_code'] }}</span>
+                                            </span>
+                                            <input type="tel" 
+                                                   name="phone" 
+                                                   id="phone" 
+                                                   x-model="formData.phone"
+                                                   value="{{ old('phone') }}" 
+                                                   {{ $isReq('phone', true) ? 'required' : '' }} 
+                                                   dir="ltr"
+                                                   placeholder="{{ $phoneConfig['placeholder'] }}"
+                                                   :class="stepErrors.phone ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-slate-200 brand-ring'"
+                                                   class="block w-full rounded-r-none rounded-l-xl py-3 px-4 text-sm shadow-xs transition-colors bg-white text-left">
+                                        </div>
+                                        <p class="text-[11px] text-slate-400 mt-1">{{ $phoneConfig['hint'] }}</p>
                                         <p x-show="stepErrors.phone" x-text="stepErrors.phone" class="mt-1 text-xs font-bold text-rose-500" style="display:none;"></p>
                                         @error('phone')
+                                            <p class="mt-1 text-xs font-bold text-rose-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    @endif
+
+                                    @if($config['show_national_id'] ?? false)
+                                    <div>
+                                        <label for="national_id" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>رقم الهوية الوطنية / الإقامة @if($isReq('national_id', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('national_id', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
+                                        </label>
+                                        <input type="text" 
+                                               name="national_id" 
+                                               id="national_id" 
+                                               value="{{ old('national_id') }}" 
+                                               {{ $isReq('national_id', false) ? 'required' : '' }}
+                                               dir="ltr"
+                                               placeholder="مثال: 10 أرقام أو 14 رقم"
+                                               class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white text-left">
+                                        @error('national_id')
+                                            <p class="mt-1 text-xs font-bold text-rose-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    @endif
+
+                                    @if($config['show_city'] ?? false)
+                                    <div>
+                                        <label for="city" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>المدينة ومحل الإقامة @if($isReq('city', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('city', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
+                                        </label>
+                                        <input type="text" 
+                                               name="city" 
+                                               id="city" 
+                                               value="{{ old('city') }}" 
+                                               {{ $isReq('city', false) ? 'required' : '' }}
+                                               placeholder="مثال: القاهرة / الرياض / الإسكندرية / جدة"
+                                               class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white">
+                                        @error('city')
+                                            <p class="mt-1 text-xs font-bold text-rose-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    @endif
+
+                                    @if($config['show_birth_date'] ?? false)
+                                    <div>
+                                        <label for="birth_date" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>تاريخ الميلاد @if($isReq('birth_date', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('birth_date', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
+                                        </label>
+                                        <input type="date" 
+                                               name="birth_date" 
+                                               id="birth_date" 
+                                               value="{{ old('birth_date') }}" 
+                                               {{ $isReq('birth_date', false) ? 'required' : '' }}
+                                               class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white">
+                                        @error('birth_date')
+                                            <p class="mt-1 text-xs font-bold text-rose-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    @endif
+
+                                    @if($config['show_gender'] ?? false)
+                                    <div>
+                                        <label for="gender" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>الجنس / النوع @if($isReq('gender', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('gender', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
+                                        </label>
+                                        <select name="gender" 
+                                                id="gender" 
+                                                {{ $isReq('gender', false) ? 'required' : '' }}
+                                                class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white cursor-pointer">
+                                            <option value="">-- اختر --</option>
+                                            <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>ذكر</option>
+                                            <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>أنثى</option>
+                                        </select>
+                                        @error('gender')
                                             <p class="mt-1 text-xs font-bold text-rose-500">{{ $message }}</p>
                                         @enderror
                                     </div>
@@ -381,14 +470,15 @@
                                     @if($config['show_linkedin'] ?? true)
                                     <div>
                                         <label for="linkedin_url" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                                            <span>رابط ملف لينكد إن (LinkedIn)</span>
-                                            <span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>
+                                            <span>رابط ملف لينكد إن (LinkedIn) @if($isReq('linkedin', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('linkedin', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <input type="url" 
                                                name="linkedin_url" 
                                                id="linkedin_url" 
                                                x-model="formData.linkedin_url"
                                                value="{{ old('linkedin_url') }}" 
+                                               {{ $isReq('linkedin', false) ? 'required' : '' }}
                                                dir="ltr"
                                                placeholder="https://linkedin.com/in/username"
                                                class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white text-left">
@@ -401,14 +491,15 @@
                                     @if($config['show_portfolio'] ?? true)
                                     <div>
                                         <label for="portfolio_url" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                                            <span>معرض الأعمال أو الموقع الشخصي</span>
-                                            <span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>
+                                            <span>معرض الأعمال أو الموقع الشخصي @if($isReq('portfolio', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('portfolio', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <input type="url" 
                                                name="portfolio_url" 
                                                id="portfolio_url" 
                                                x-model="formData.portfolio_url"
                                                value="{{ old('portfolio_url') }}" 
+                                               {{ $isReq('portfolio', false) ? 'required' : '' }}
                                                dir="ltr"
                                                placeholder="https://myportfolio.com"
                                                class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white text-left">
@@ -435,14 +526,16 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     @if($config['show_current_job_title'] ?? true)
                                     <div>
-                                        <label for="current_job_title" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            المسمى الوظيفي الحالي / الأخير
+                                        <label for="current_job_title" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>المسمى الوظيفي الحالي / الأخير @if($isReq('current_job_title', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('current_job_title', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <input type="text" 
                                                name="current_job_title" 
                                                id="current_job_title" 
                                                x-model="formData.current_job_title"
                                                value="{{ old('current_job_title') }}" 
+                                               {{ $isReq('current_job_title', false) ? 'required' : '' }}
                                                placeholder="مثال: مطور برمجيات أول / مهندس مدني"
                                                class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white">
                                         @error('current_job_title')
@@ -453,14 +546,16 @@
 
                                     @if($config['show_current_company'] ?? true)
                                     <div>
-                                        <label for="current_company" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            جهة العمل الحالية / السابقة
+                                        <label for="current_company" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>جهة العمل الحالية / السابقة @if($isReq('current_company', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('current_company', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <input type="text" 
                                                name="current_company" 
                                                id="current_company" 
                                                x-model="formData.current_company"
                                                value="{{ old('current_company') }}" 
+                                               {{ $isReq('current_company', false) ? 'required' : '' }}
                                                placeholder="مثال: شركة الحلول المبتكرة"
                                                class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white">
                                         @error('current_company')
@@ -471,8 +566,9 @@
 
                                     @if($config['show_years_of_experience'] ?? true)
                                     <div>
-                                        <label for="years_of_experience" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            سنوات الخبرة العملية
+                                        <label for="years_of_experience" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>سنوات الخبرة العملية @if($isReq('years_of_experience', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('years_of_experience', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <div class="relative">
                                             <input type="number" 
@@ -482,6 +578,7 @@
                                                    id="years_of_experience" 
                                                    x-model="formData.years_of_experience"
                                                    value="{{ old('years_of_experience') }}" 
+                                                   {{ $isReq('years_of_experience', false) ? 'required' : '' }}
                                                    placeholder="0"
                                                    class="block w-full rounded-xl border-slate-200 py-3 pl-14 pr-4 text-sm shadow-xs brand-ring transition-colors bg-white">
                                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
@@ -496,8 +593,9 @@
 
                                     @if($config['show_expected_salary'] ?? true)
                                     <div>
-                                        <label for="expected_salary" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            الراتب الشهري المتوقع
+                                        <label for="expected_salary" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>الراتب الشهري المتوقع @if($isReq('expected_salary', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('expected_salary', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <div class="relative">
                                             <input type="number" 
@@ -506,6 +604,7 @@
                                                    id="expected_salary" 
                                                    x-model="formData.expected_salary"
                                                    value="{{ old('expected_salary') }}" 
+                                                   {{ $isReq('expected_salary', false) ? 'required' : '' }}
                                                    placeholder="0"
                                                    class="block w-full rounded-xl border-slate-200 py-3 pl-14 pr-4 text-sm shadow-xs brand-ring transition-colors bg-white font-mono">
                                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
@@ -520,12 +619,14 @@
 
                                     @if($config['show_seniority_level'] ?? true)
                                     <div>
-                                        <label for="seniority_level" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            المستوى المهني
+                                        <label for="seniority_level" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>المستوى المهني @if($isReq('seniority_level', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('seniority_level', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <select name="seniority_level" 
                                                 id="seniority_level" 
                                                 x-model="formData.seniority_level"
+                                                {{ $isReq('seniority_level', false) ? 'required' : '' }}
                                                 class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white cursor-pointer">
                                             <option value="">-- يرجى الاختيار --</option>
                                             <option value="intern" {{ old('seniority_level') == 'intern' ? 'selected' : '' }}>متدرب (Intern / Trainee)</option>
@@ -543,12 +644,14 @@
 
                                     @if($config['show_work_preference'] ?? true)
                                     <div>
-                                        <label for="work_preference" class="block text-xs font-bold text-slate-700 mb-1.5">
-                                            نظام العمل المفضل
+                                        <label for="work_preference" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                            <span>نظام العمل المفضل @if($isReq('work_preference', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('work_preference', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <select name="work_preference" 
                                                 id="work_preference" 
                                                 x-model="formData.work_preference"
+                                                {{ $isReq('work_preference', false) ? 'required' : '' }}
                                                 class="block w-full rounded-xl border-slate-200 py-3 px-4 text-sm shadow-xs brand-ring transition-colors bg-white cursor-pointer">
                                             <option value="">-- يرجى الاختيار --</option>
                                             <option value="onsite" {{ old('work_preference') == 'onsite' ? 'selected' : '' }}>حضوري في مقر العمل (Onsite)</option>
@@ -563,7 +666,10 @@
 
                                     @if($config['show_availability'] ?? true)
                                     <div class="sm:col-span-2">
-                                        <label class="block text-xs font-bold text-slate-700 mb-2">متى يمكنك مباشرة العمل؟</label>
+                                        <label class="block text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+                                            <span>متى يمكنك مباشرة العمل؟ @if($isReq('availability', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('availability', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
+                                        </label>
                                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                                             @foreach(['immediately' => 'فوراً', 'two_weeks' => 'خلال أسبوعين', 'one_month' => 'خلال شهر', 'two_months' => 'أكثر من شهر'] as $val => $lbl)
                                                 <label class="relative flex items-center justify-center p-3 border rounded-xl cursor-pointer transition-all text-center text-xs font-bold shadow-xs select-none"
@@ -601,8 +707,9 @@
                                 <div class="space-y-6">
                                     @if($config['show_resume'] ?? true)
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-700 mb-2">
-                                            السيرة الذاتية (CV) <span class="text-rose-500">*</span>
+                                        <label class="block text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+                                            <span>السيرة الذاتية (CV) @if($isReq('resume', true))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('resume', true))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         
                                         <!-- Drag and drop zone -->
@@ -649,7 +756,7 @@
                                                    id="resume" 
                                                    x-ref="resumeInput" 
                                                    class="sr-only" 
-                                                   required 
+                                                   {{ $isReq('resume', true) ? 'required' : '' }} 
                                                    accept=".pdf,.doc,.docx"
                                                    @change="handleFileChange($event)">
                                         </div>
@@ -784,13 +891,14 @@
                                     @if($config['show_general_notes'] ?? true)
                                     <div>
                                         <label for="general_notes" class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                                            <span>ملاحظات أو رسالة إضافية تود إرفاقها</span>
-                                            <span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>
+                                            <span>ملاحظات أو رسالة إضافية تود إرفاقها @if($isReq('general_notes', false))<span class="text-rose-500">*</span>@endif</span>
+                                            @if(!$isReq('general_notes', false))<span class="text-slate-400 font-normal text-[10px] bg-slate-100 px-2 py-0.5 rounded">اختياري</span>@endif
                                         </label>
                                         <textarea id="general_notes" 
                                                   name="general_notes" 
                                                   x-model="formData.general_notes"
                                                   rows="3" 
+                                                  {{ $isReq('general_notes', false) ? 'required' : '' }}
                                                   placeholder="اكتب هنا أي تفاصيل تود توضيحها لفريق التوظيف..."
                                                   class="block w-full rounded-xl border-slate-200 py-3 px-4 text-xs shadow-xs brand-ring transition-colors bg-white">{{ old('general_notes') }}</textarea>
                                         @error('general_notes')
@@ -1005,21 +1113,29 @@
                     let isValid = true;
 
                     if (this.step === 1) {
+                        const nameEl = document.getElementById('full_name');
                         const name = this.formData.full_name?.trim();
-                        if (!name || name.length < 3) {
+                        if (nameEl && nameEl.hasAttribute('required') && (!name || name.length < 3)) {
                             this.stepErrors.full_name = 'يرجى إدخال الاسم الكامل (3 أحرف على الأقل).';
                             isValid = false;
                         }
 
+                        const emailEl = document.getElementById('email');
                         const email = this.formData.email?.trim();
                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                        if (!email || !emailRegex.test(email)) {
-                            this.stepErrors.email = 'يرجى إدخال بريد إلكتروني صحيح.';
-                            isValid = false;
+                        if (emailEl) {
+                            if (emailEl.hasAttribute('required') && !email) {
+                                this.stepErrors.email = 'يرجى إدخال البريد الإلكتروني.';
+                                isValid = false;
+                            } else if (email && !emailRegex.test(email)) {
+                                this.stepErrors.email = 'يرجى إدخال بريد إلكتروني صحيح.';
+                                isValid = false;
+                            }
                         }
 
+                        const phoneEl = document.getElementById('phone');
                         const phone = this.formData.phone?.trim();
-                        if (!phone || phone.length < 8) {
+                        if (phoneEl && phoneEl.hasAttribute('required') && (!phone || phone.length < 8)) {
                             this.stepErrors.phone = 'يرجى إدخال رقم هاتف صحيح.';
                             isValid = false;
                         }

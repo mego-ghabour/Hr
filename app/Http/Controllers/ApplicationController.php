@@ -101,6 +101,37 @@ class ApplicationController extends Controller
             }
         }
 
+        // حفظ الحقول الأساسية الإضافية ضمن الإجابات المنظمة
+        if (!empty($validated['national_id'])) {
+            $customAnswers['national_id'] = [
+                'type' => 'text',
+                'value' => $validated['national_id'],
+                'question' => 'رقم الهوية الوطنية / الإقامة',
+            ];
+        }
+        if (!empty($validated['city'])) {
+            $customAnswers['city'] = [
+                'type' => 'text',
+                'value' => $validated['city'],
+                'question' => 'المدينة ومحل الإقامة',
+            ];
+        }
+        if (!empty($validated['birth_date'])) {
+            $customAnswers['birth_date'] = [
+                'type' => 'text',
+                'value' => $validated['birth_date'],
+                'question' => 'تاريخ الميلاد',
+            ];
+        }
+        if (!empty($validated['gender'])) {
+            $genderLabel = in_array(strtolower($validated['gender']), ['male', 'ذكر']) ? 'ذكر' : 'أنثى';
+            $customAnswers['gender'] = [
+                'type' => 'text',
+                'value' => $genderLabel,
+                'question' => 'الجنس / النوع',
+            ];
+        }
+
         // تحويل وتحديد الإتاحة (Availability)
         $rawAvailability = strtolower(trim((string) ($validated['availability'] ?? '')));
         $availabilityMap = [
@@ -245,7 +276,21 @@ class ApplicationController extends Controller
             }
         }
 
-        $successMessage = $job->success_message ?: 'تم التقديم بنجاح! سيقوم فريق التوظيف بمراجعة ملفك والتواصل معك قريباً.';
-        return redirect()->back()->with('success', strip_tags($successMessage));
+        $successMessage = $job->success_message ?: 'تم استلام طلب تقديمك بنجاح! سيقوم فريق التوظيف بمراجعة سيرتك الذاتية وبياناتك ومطابقتها والتواصل معك في أقرب وقت.';
+        
+        return redirect()->route('jobs.applied', [
+            'job' => $job->id,
+            'talent_id' => $talent->talent_id,
+        ])->with('success', strip_tags($successMessage));
+    }
+
+    public function showSuccess(\App\Models\JobPosting $job, Request $request)
+    {
+        $talent = null;
+        if ($request->filled('talent_id')) {
+            $talent = Talent::where('talent_id', $request->talent_id)->first();
+        }
+
+        return view('jobs.applied', compact('job', 'talent'));
     }
 }

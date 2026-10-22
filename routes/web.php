@@ -9,6 +9,7 @@ Route::get('/', [ApplicationController::class, 'index'])->name('jobs.index');
 Route::get('/jobs', [ApplicationController::class, 'index'])->name('jobs.list');
 Route::get('/jobs/{job}/apply', [ApplicationController::class, 'showJobForm'])->name('jobs.apply');
 Route::post('/jobs/{job}/apply', [ApplicationController::class, 'submitJobForm'])->name('jobs.submit');
+Route::get('/jobs/{job}/applied', [ApplicationController::class, 'showSuccess'])->name('jobs.applied');
 
 // Employee Self-Service (ESS) Portal Routes
 Route::get('/login', fn () => redirect()->route('portal.login'))->name('login');

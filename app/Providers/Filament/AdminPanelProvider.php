@@ -131,20 +131,26 @@ class AdminPanelProvider extends PanelProvider
                         }
 
                         /* ==========================================================================
-                           ENTERPRISE MODERN SIDEBAR STYLING
+                           ENTERPRISE MODERN SIDEBAR STYLING (PERFECT LIGHT & DARK HARMONY)
                            ========================================================================== */
 
                         /* 1. Main Sidebar Outer Container */
                         #fi-main-sidebar,
                         .fi-sidebar,
                         .fi-main-sidebar {
-                            background: ' . $sidebarBg . ' !important;
-                            border-inline-end: ' . $sidebarBorder . ' !important;
-                            box-shadow: ' . ($isDarkSidebar ? '-4px 0 30px rgba(0, 0, 0, 0.45)' : '4px 0 20px rgba(0, 0, 0, 0.04)') . ' !important;
                             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
                         }
 
-                        /* 2. Sidebar Header Area (Mobile only - hidden on Desktop to prevent duplicate logo) */
+                        /* --- LIGHT MODE SIDEBAR (Clean, Crisp, Pure Modern White) --- */
+                        html:not(.dark) #fi-main-sidebar,
+                        html:not(.dark) .fi-sidebar,
+                        html:not(.dark) .fi-main-sidebar {
+                            background: #ffffff !important;
+                            border-inline-end: 1px solid #e2e8f0 !important;
+                            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02) !important;
+                        }
+
+                        /* 2. Sidebar Header Area (Mobile only) */
                         @media (min-width: 1024px) {
                             #fi-main-sidebar .fi-sidebar-header-ctn,
                             #fi-main-sidebar .fi-sidebar-header {
@@ -158,10 +164,21 @@ class AdminPanelProvider extends PanelProvider
                         }
 
                         @media (max-width: 1023.98px) {
-                            #fi-main-sidebar .fi-sidebar-header-ctn,
-                            #fi-main-sidebar .fi-sidebar-header {
-                                background: ' . $sidebarHeaderBg . ' !important;
-                                border-bottom: ' . $sidebarBorder . ' !important;
+                            html:not(.dark) #fi-main-sidebar .fi-sidebar-header-ctn,
+                            html:not(.dark) #fi-main-sidebar .fi-sidebar-header {
+                                background: #ffffff !important;
+                                border-bottom: 1px solid #e2e8f0 !important;
+                                padding: 0.85rem 1.15rem !important;
+                                min-height: 4.5rem !important;
+                                display: flex !important;
+                                flex-direction: row-reverse !important;
+                                justify-content: space-between !important;
+                                align-items: center !important;
+                            }
+                            .dark #fi-main-sidebar .fi-sidebar-header-ctn,
+                            .dark #fi-main-sidebar .fi-sidebar-header {
+                                background: #090e1a !important;
+                                border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
                                 padding: 0.85rem 1.15rem !important;
                                 min-height: 4.5rem !important;
                                 display: flex !important;
@@ -174,25 +191,27 @@ class AdminPanelProvider extends PanelProvider
                         #fi-main-sidebar .fi-sidebar-header .fi-logo {
                             max-height: 2.75rem !important;
                             object-fit: contain !important;
-                            filter: ' . ($isDarkSidebar ? 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))' : 'none') . ' !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-header-brand-name,
-                        #fi-main-sidebar .fi-sidebar-header a,
-                        #fi-main-sidebar .fi-sidebar-header span {
-                            color: ' . $sidebarBrandText . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-header-brand-name,
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-header a,
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-header span {
+                            color: #0f172a !important;
                             font-weight: 800 !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-header button {
-                            color: ' . ($isDarkSidebar ? '#94a3b8' : '#64748b') . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-header button {
+                            color: #64748b !important;
                         }
 
                         /* 3. Navigation Container & Custom Ultra-Sleek Scrollbar */
                         #fi-main-sidebar .fi-sidebar-nav {
                             padding: 1rem 0.75rem 2.5rem 0.75rem !important;
                             scrollbar-width: thin !important;
-                            scrollbar-color: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.15) transparent' : 'rgba(0, 0, 0, 0.15) transparent') . ' !important;
+                        }
+
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-nav {
+                            scrollbar-color: rgba(0, 0, 0, 0.12) transparent !important;
                         }
 
                         #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar {
@@ -203,13 +222,13 @@ class AdminPanelProvider extends PanelProvider
                             background: transparent !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb {
-                            background: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.12)') . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb {
+                            background: rgba(0, 0, 0, 0.12) !important;
                             border-radius: 9999px !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
-                            background: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.25)') . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
+                            background: rgba(0, 0, 0, 0.22) !important;
                         }
 
                         #fi-main-sidebar .fi-sidebar-nav-groups {
@@ -231,20 +250,23 @@ class AdminPanelProvider extends PanelProvider
                             border-radius: 0.5rem !important;
                             transition: all 0.18s ease !important;
                             margin-bottom: 0.15rem !important;
-                            border-bottom: ' . ($isDarkSidebar ? '1px solid rgba(255, 255, 255, 0.04)' : '1px solid rgba(0, 0, 0, 0.04)') . ' !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-group-label {
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-group-btn {
+                            border-bottom: 1px solid #f1f5f9 !important;
+                        }
+
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-group-label {
                             font-size: 0.72rem !important;
                             font-weight: 800 !important;
                             letter-spacing: 0.06em !important;
                             text-transform: uppercase !important;
-                            color: ' . ($isDarkSidebar ? '#94a3b8' : '#64748b') . ' !important;
+                            color: #64748b !important;
                             opacity: 0.9 !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-group-btn .fi-icon {
-                            color: ' . ($isDarkSidebar ? '#64748b' : '#94a3b8') . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-group-btn .fi-icon {
+                            color: #94a3b8 !important;
                             width: 0.95rem !important;
                             height: 0.95rem !important;
                             transition: transform 0.2s ease !important;
@@ -269,11 +291,14 @@ class AdminPanelProvider extends PanelProvider
                             border-radius: 0.75rem !important;
                             font-size: 0.875rem !important;
                             font-weight: 600 !important;
-                            color: ' . ($isDarkSidebar ? '#cbd5e1' : '#334155') . ' !important;
                             background: transparent !important;
                             border: 1px solid transparent !important;
                             transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
                             position: relative !important;
+                        }
+
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item-btn {
+                            color: #334155 !important;
                         }
 
                         #fi-main-sidebar .fi-sidebar-item-label {
@@ -286,37 +311,37 @@ class AdminPanelProvider extends PanelProvider
                             flex: 1 !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-item-icon {
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item-icon {
                             width: 1.25rem !important;
                             height: 1.25rem !important;
-                            color: ' . ($isDarkSidebar ? '#64748b' : '#94a3b8') . ' !important;
+                            color: #64748b !important;
                             transition: all 0.18s ease !important;
                             flex-shrink: 0 !important;
                         }
 
-                        /* Regular item hover */
-                        #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover {
-                            background: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.04)') . ' !important;
-                            color: ' . ($isDarkSidebar ? '#ffffff' : '#0f172a') . ' !important;
-                            border-color: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)') . ' !important;
+                        /* Light Mode item hover */
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover {
+                            background: #f1f5f9 !important;
+                            color: #0f172a !important;
+                            border-color: #e2e8f0 !important;
                             transform: translateX(-2px) !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover .fi-sidebar-item-icon {
-                            color: ' . ($isDarkSidebar ? '#f8fafc' : '#0f172a') . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover .fi-sidebar-item-icon {
+                            color: #0f172a !important;
                             transform: scale(1.08) !important;
                         }
 
-                        /* 6. Active Item (Radiant Glowing Modern Look) */
-                        #fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-                            background: linear-gradient(135deg, rgba(' . $primaryRgb . ', 0.22) 0%, rgba(' . $primaryRgb . ', 0.08) 100%) !important;
-                            color: ' . ($isDarkSidebar ? '#ffffff' : $primaryColorHex) . ' !important;
+                        /* 6. Active Item Light Mode (Clean Brand Highlight) */
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+                            background: linear-gradient(135deg, rgba(' . $primaryRgb . ', 0.12) 0%, rgba(' . $primaryRgb . ', 0.04) 100%) !important;
+                            color: ' . $primaryColorHex . ' !important;
                             font-weight: 800 !important;
-                            border: 1px solid rgba(' . $primaryRgb . ', 0.35) !important;
-                            box-shadow: 0 4px 16px rgba(0, 0, 0, ' . ($isDarkSidebar ? '0.35' : '0.06') . '), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                            border: 1px solid rgba(' . $primaryRgb . ', 0.25) !important;
+                            box-shadow: 0 2px 8px rgba(' . $primaryRgb . ', 0.08) !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn::before {
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn::before {
                             content: "" !important;
                             position: absolute !important;
                             top: 18% !important;
@@ -325,59 +350,44 @@ class AdminPanelProvider extends PanelProvider
                             width: 4px !important;
                             border-radius: 9999px !important;
                             background: ' . $primaryColorHex . ' !important;
-                            box-shadow: 0 0 10px ' . $primaryColorHex . ' !important;
+                            box-shadow: 0 0 8px ' . $primaryColorHex . ' !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
                             color: ' . $primaryColorHex . ' !important;
-                            filter: drop-shadow(0 0 8px rgba(' . $primaryRgb . ', 0.7)) !important;
+                            filter: none !important;
                             transform: scale(1.06) !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label {
-                            color: ' . ($isDarkSidebar ? '#ffffff' : $primaryColorHex) . ' !important;
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label {
+                            color: ' . $primaryColorHex . ' !important;
                         }
 
-                        /* 7. Badges (Counters) */
-                        #fi-main-sidebar .fi-badge {
+                        /* 7. Badges (Counters) Light Mode */
+                        html:not(.dark) #fi-main-sidebar .fi-badge {
                             border-radius: 9999px !important;
                             font-size: 0.72rem !important;
                             font-weight: 800 !important;
                             padding: 0.15rem 0.55rem !important;
-                            background: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9') . ' !important;
-                            color: ' . ($isDarkSidebar ? '#94a3b8' : '#475569') . ' !important;
-                            border: 1px solid ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0') . ' !important;
+                            background: #f1f5f9 !important;
+                            color: #475569 !important;
+                            border: 1px solid #e2e8f0 !important;
                         }
 
-                        #fi-main-sidebar .fi-sidebar-item.fi-active .fi-badge {
+                        html:not(.dark) #fi-main-sidebar .fi-sidebar-item.fi-active .fi-badge {
                             background: ' . $primaryColorHex . ' !important;
                             color: #ffffff !important;
                             border-color: ' . $primaryColorHex . ' !important;
-                            box-shadow: 0 2px 8px rgba(' . $primaryRgb . ', 0.4) !important;
+                            box-shadow: 0 2px 8px rgba(' . $primaryRgb . ', 0.3) !important;
                         }
 
-                        /* 8. Topbar Modern Tweaks & Seamless Header */
-                        .fi-topbar {
-                            background: #ffffff !important;
-                            backdrop-filter: blur(12px) !important;
-                            border-bottom: 1px solid #e2e8f0 !important;
-                            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
-                        }
-                        .dark .fi-topbar {
-                            background: #090e1a !important;
-                            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-                        }
-
+                        /* 8. Topbar Start (Desktop Logo Area) Light Mode */
                         @media (min-width: 1024px) {
-                            .fi-topbar {
-                                padding-inline-start: 0 !important;
-                            }
-
-                            .fi-topbar-start {
-                                background: ' . $sidebarHeaderBg . ' !important;
+                            html:not(.dark) .fi-topbar-start {
+                                background: #ffffff !important;
                                 height: 4rem !important;
                                 min-height: 4rem !important;
-                                border-inline-end: ' . $sidebarBorder . ' !important;
+                                border-inline-end: 1px solid #e2e8f0 !important;
                                 width: var(--sidebar-width, 18rem) !important;
                                 min-width: var(--sidebar-width, 18rem) !important;
                                 max-width: var(--sidebar-width, 18rem) !important;
@@ -391,30 +401,30 @@ class AdminPanelProvider extends PanelProvider
                                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
                             }
 
-                            .fi-topbar-start a,
-                            .fi-topbar-start span {
-                                color: ' . $sidebarBrandText . ' !important;
+                            html:not(.dark) .fi-topbar-start a,
+                            html:not(.dark) .fi-topbar-start span {
+                                color: #0f172a !important;
                                 font-weight: 800 !important;
                             }
 
-                            .fi-topbar-start .fi-logo {
+                            html:not(.dark) .fi-topbar-start .fi-logo {
                                 max-height: 2.5rem !important;
                                 object-fit: contain !important;
-                                filter: ' . ($isDarkSidebar ? 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4))' : 'none') . ' !important;
                             }
 
-                            .fi-topbar-start button,
-                            .fi-topbar-start .fi-icon-btn {
-                                color: ' . ($isDarkSidebar ? '#94a3b8' : '#64748b') . ' !important;
-                                background: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)') . ' !important;
+                            html:not(.dark) .fi-topbar-start button,
+                            html:not(.dark) .fi-topbar-start .fi-icon-btn {
+                                color: #64748b !important;
+                                background: #f8fafc !important;
+                                border: 1px solid #e2e8f0 !important;
                                 border-radius: 0.5rem !important;
                                 transition: all 0.2s ease !important;
                             }
 
-                            .fi-topbar-start button:hover,
-                            .fi-topbar-start .fi-icon-btn:hover {
-                                color: ' . ($isDarkSidebar ? '#ffffff' : '#0f172a') . ' !important;
-                                background: ' . ($isDarkSidebar ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)') . ' !important;
+                            html:not(.dark) .fi-topbar-start button:hover,
+                            html:not(.dark) .fi-topbar-start .fi-icon-btn:hover {
+                                color: #0f172a !important;
+                                background: #f1f5f9 !important;
                             }
                         }
 
@@ -486,6 +496,9 @@ class AdminPanelProvider extends PanelProvider
                         .dark #fi-main-sidebar .fi-sidebar-group-label {
                             color: #94a3b8 !important;
                         }
+                        .dark #fi-main-sidebar .fi-sidebar-group-btn {
+                            border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+                        }
                         .dark #fi-main-sidebar .fi-sidebar-header-brand-name,
                         .dark #fi-main-sidebar .fi-sidebar-header a,
                         .dark #fi-main-sidebar .fi-sidebar-header span {
@@ -499,10 +512,32 @@ class AdminPanelProvider extends PanelProvider
                         .dark #fi-main-sidebar .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-btn:hover .fi-sidebar-item-icon {
                             color: #f8fafc !important;
                         }
+                        .dark #fi-main-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+                            background: linear-gradient(135deg, rgba(' . $primaryRgb . ', 0.22) 0%, rgba(' . $primaryRgb . ', 0.08) 100%) !important;
+                            color: #ffffff !important;
+                            border: 1px solid rgba(' . $primaryRgb . ', 0.35) !important;
+                            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+                            color: ' . $primaryColorHex . ' !important;
+                            filter: drop-shadow(0 0 8px rgba(' . $primaryRgb . ', 0.7)) !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label {
+                            color: #ffffff !important;
+                        }
                         .dark #fi-main-sidebar .fi-badge {
                             background: rgba(255, 255, 255, 0.08) !important;
                             color: #94a3b8 !important;
                             border-color: rgba(255, 255, 255, 0.1) !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-nav {
+                            scrollbar-color: rgba(255, 255, 255, 0.15) transparent !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb {
+                            background: rgba(255, 255, 255, 0.14) !important;
+                        }
+                        .dark #fi-main-sidebar .fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
+                            background: rgba(255, 255, 255, 0.3) !important;
                         }
 
                         .dark .fi-topbar-start {
@@ -517,6 +552,7 @@ class AdminPanelProvider extends PanelProvider
                         .dark .fi-topbar-start .fi-icon-btn {
                             color: #94a3b8 !important;
                             background: rgba(255, 255, 255, 0.05) !important;
+                            border: 1px solid rgba(255, 255, 255, 0.08) !important;
                         }
                         .dark .fi-topbar-start button:hover,
                         .dark .fi-topbar-start .fi-icon-btn:hover {

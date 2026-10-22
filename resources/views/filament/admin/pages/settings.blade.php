@@ -901,6 +901,25 @@
                                 @error('brand_name') <span style="color: #dc2626; font-size: 0.75rem;">{{ $message }}</span> @enderror
                             </div>
 
+                            <!-- Target Country & Market -->
+                            <div style="margin-bottom: 1.15rem;">
+                                <label class="form-label flex items-center justify-between">
+                                    <span>الدولة وسوق العمل المستهدف (تنسيق الهواتف وقوالب التقديم)</span>
+                                    <span style="font-size: 0.7rem; color: #0d9488; font-weight: 700;">يحدد صيغة الهاتف والعملة والتوقيت</span>
+                                </label>
+                                <select wire:model.live="country" class="form-input" style="cursor: pointer; font-weight: 600;">
+                                    <option value="EG">🇪🇬 مصر (جمهورية مصر العربية) - صيغة الهاتف: 010/011/012/015</option>
+                                    <option value="SA">🇸🇦 السعودية (المملكة العربية السعودية) - صيغة الهاتف: 05xxxxxxxx</option>
+                                    <option value="AE">🇦🇪 الإمارات العربية المتحدة - صيغة الهاتف: 05xxxxxxxx</option>
+                                    <option value="KW">🇰🇼 الكويت - صيغة الهاتف: 8 أرقام</option>
+                                    <option value="QA">🇶🇦 قطر - صيغة الهاتف: 8 أرقام</option>
+                                    <option value="OM">🇴🇲 سلطنة عمان - صيغة الهاتف: 8 أرقام</option>
+                                    <option value="BH">🇧🇭 مملكة البحرين - صيغة الهاتف: 8 أرقام</option>
+                                    <option value="ALL">🌐 دولي / كافة الدول (صيغة مرنة لكافة الأرقام)</option>
+                                </select>
+                                @error('country') <span style="color: #dc2626; font-size: 0.75rem;">{{ $message }}</span> @enderror
+                            </div>
+
                             <!-- Currency & Currency Symbol -->
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.15rem;">
                                 <div>
@@ -1036,12 +1055,20 @@
                                     @php
                                         $sidebarThemes = [
                                             [
+                                                'id' => 'auto_adaptive',
+                                                'title' => 'متناسق تلقائي (ذكي)',
+                                                'desc' => 'أبيض ناصع في النهار، داكن فاخر في الليل',
+                                                'bg' => 'linear-gradient(135deg, #ffffff 50%, #090e1a 50%)',
+                                                'border' => '#0d9488',
+                                                'tag' => 'موصى به',
+                                            ],
+                                            [
                                                 'id' => 'dark_navy',
                                                 'title' => 'كحلي داكن فاخر',
-                                                'desc' => 'المظهر العصري الموصى به (Midnight Slate)',
+                                                'desc' => 'المظهر الليلي (Midnight Slate)',
                                                 'bg' => 'linear-gradient(135deg, #090e1a 0%, #0f172a 100%)',
                                                 'border' => '#1e293b',
-                                                'tag' => 'موصى به',
+                                                'tag' => null,
                                             ],
                                             [
                                                 'id' => 'deep_black',
