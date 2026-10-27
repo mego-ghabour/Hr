@@ -41,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\JobPosting::class, \App\Policies\JobPostingPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Announcement::class, \App\Policies\AnnouncementPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Payroll::class, \App\Policies\PayrollPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\EvaluationForm::class, \App\Policies\EvaluationFormPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Evaluation::class, \App\Policies\EvaluationPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Grievance::class, \App\Policies\GrievancePolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\Spatie\Activitylog\Models\Activity::class, \App\Policies\ActivityPolicy::class);
 
         // إعطاء صلاحيات كاملة للـ Super Admin والـ admin لمنع أي تعليق في الصلاحيات

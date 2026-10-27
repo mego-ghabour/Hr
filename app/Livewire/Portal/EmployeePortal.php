@@ -5,7 +5,10 @@ namespace App\Livewire\Portal;
 use App\Models\Announcement;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\Evaluation;
+use App\Models\EvaluationForm;
 use App\Models\Excuse;
+use App\Models\Grievance;
 use App\Models\Leave;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
@@ -20,6 +23,24 @@ use Livewire\Component;
 class EmployeePortal extends Component
 {
     public string $activeTab = 'overview';
+
+    // Grievance form state
+    public bool $showGrievanceModal = false;
+    public string $grievance_type = 'administrative';
+    public string $grievance_priority = 'normal';
+    public string $grievance_title = '';
+    public string $grievance_content = '';
+    public bool $grievance_is_anonymous = false;
+    public bool $grievance_against_manager = false;
+
+    // Evaluation form state
+    public bool $showEvaluationModal = false;
+    public ?int $selectedFormId = null;
+    public ?int $evaluatingEmployeeId = null;
+    public bool $evaluation_is_anonymous = false;
+    public array $evaluation_answers = [];
+    public string $evaluation_strengths = '';
+    public string $evaluation_improvements = '';
 
     // Leave request form
     public ?int $leave_type_id = null;
@@ -311,6 +332,138 @@ class EmployeePortal extends Component
         $this->flashMessage = null;
     }
 
+    public function openGrievanceModal()
+    {
+        $this->resetGrievanceForm();
+        $this->showGrievanceModal = true;
+    }
+
+    public function closeGrievanceModal()
+    {
+        $this->showGrievanceModal = false;
+    }
+
+    public function resetGrievanceForm()
+    {
+        $this->grievance_type = 'administrative';
+        $this->grievance_priority = 'normal';
+        $this->grievance_title = '';
+        $this->grievance_content = '';
+        $this->grievance_is_anonymous = false;
+        $this->grievance_against_manager = false;
+    }
+
+    public function submitGrievance()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            $this->notify('يجب تسجيل الدخول أولاً.', 'error');
+            return;
+        }
+
+        $this->validate([
+            'grievance_type' => 'required|string',
+            'grievance_priority' => 'required|string',
+            'grievance_title' => 'required|string|min:4|max:255',
+            'grievance_content' => 'required|string|min:10',
+        ], [
+            'grievance_title.required' => 'يرجى كتابة عنوان أو موضوع الشكوى',
+            'grievance_title.min' => 'عنوان الشكوى يجب ألا يقل عن 4 أحرف',
+            'grievance_content.required' => 'يرجى كتابة تفاصيل الشكوى بالكامل',
+            'grievance_content.min' => 'تفاصيل الشكوى يجب ألا تقل عن 10 أحرف',
+        ]);
+
+        $employee = $this->employee;
+
+        $grievance = Grievance::create([
+            'user_id' => $user->id,
+            'employee_id' => $employee?->id,
+            'is_anonymous' => $this->grievance_is_anonymous,
+            'type' => $this->grievance_type,
+            'priority' => $this->grievance_priority,
+            'title' => $this->grievance_title,
+            'content' => $this->grievance_content,
+            'against_manager' => $this->grievance_against_manager,
+            'department_id' => $employee?->department_id,
+            'status' => 'new',
+        ]);
+
+        $this->resetGrievanceForm();
+        $this->showGrievanceModal = false;
+
+        $msg = $this->grievance_is_anonymous
+            ? "تم تسجيل شكواك برقم مرجعي ({$grievance->ticket_number}) بسرية تامة دون ذكر هويتك."
+            : "تم تسجيل الشكوى برقم مرجعي ({$grievance->ticket_number}) وستتم مراجعتها من إدارة الموارد البشرية.";
+
+        $this->notify($msg, 'success');
+    }
+
+    public function openEvaluationModal(int $formId)
+    {
+        $this->selectedFormId = $formId;
+        $this->evaluation_answers = [];
+        $this->evaluation_strengths = '';
+        $this->evaluation_improvements = '';
+        $this->evaluation_is_anonymous = false;
+
+        $form = EvaluationForm::find($formId);
+        if ($form) {
+            if ($form->type === 'employee_to_manager') {
+                $this->evaluation_is_anonymous = true;
+                $this->evaluatingEmployeeId = $this->employee?->manager_id;
+            } elseif ($form->type === 'manager_to_employee') {
+                $this->evaluation_is_anonymous = false;
+                $this->evaluatingEmployeeId = null;
+            }
+            if (is_array($form->questions)) {
+                foreach ($form->questions as $idx => $q) {
+                    $this->evaluation_answers['q_' . $idx] = ($q['type'] ?? '') === 'rating_5' ? 5 : null;
+                }
+            }
+        }
+
+        $this->showEvaluationModal = true;
+    }
+
+    public function closeEvaluationModal()
+    {
+        $this->showEvaluationModal = false;
+        $this->selectedFormId = null;
+    }
+
+    public function submitPortalEvaluation()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            $this->notify('يجب تسجيل الدخول أولاً.', 'error');
+            return;
+        }
+
+        $form = EvaluationForm::find($this->selectedFormId);
+        if (!$form) {
+            $this->notify('نموذج التقييم غير موجود.', 'error');
+            return;
+        }
+
+        $score = $form->calculateScore($this->evaluation_answers);
+
+        Evaluation::create([
+            'evaluation_form_id' => $form->id,
+            'evaluator_id' => $user->id,
+            'evaluated_employee_id' => $this->evaluatingEmployeeId,
+            'is_anonymous' => $this->evaluation_is_anonymous,
+            'period' => Carbon::now()->translatedFormat('F Y'),
+            'answers' => $this->evaluation_answers,
+            'score' => $score,
+            'strengths' => $this->evaluation_strengths,
+            'areas_for_improvement' => $this->evaluation_improvements,
+            'status' => 'submitted',
+        ]);
+
+        $this->closeEvaluationModal();
+        $this->notify('شكراً لك! تم إرسال تقييمك بنجاح واحتساب النتائج.', 'success');
+    }
+
     public function render()
     {
         $user = Auth::user();
@@ -469,6 +622,51 @@ class EmployeePortal extends Component
             $allEmployees = Employee::orderBy('first_name')->get();
         }
 
+        // Grievances
+        $myGrievances = collect();
+        try {
+            if ($user && \Illuminate\Support\Facades\Schema::hasTable('grievances')) {
+                $myGrievances = Grievance::where('user_id', $user->id)
+                    ->orWhere(function ($q) use ($employee) {
+                        if ($employee) {
+                            $q->where('employee_id', $employee->id);
+                        }
+                    })
+                    ->latest()
+                    ->get();
+            }
+        } catch (\Throwable) {
+            $myGrievances = collect();
+        }
+
+        // Available Evaluation Forms
+        $availableForms = collect();
+        $selectedForm = null;
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('evaluation_forms')) {
+                $availableForms = EvaluationForm::where('is_active', true)->latest()->get();
+                if ($this->selectedFormId) {
+                    $selectedForm = EvaluationForm::find($this->selectedFormId);
+                }
+            }
+        } catch (\Throwable) {
+            $availableForms = collect();
+        }
+
+        // Employee Evaluations (received)
+        $myEvaluations = collect();
+        try {
+            if ($employee && \Illuminate\Support\Facades\Schema::hasTable('evaluations')) {
+                $myEvaluations = Evaluation::with('form')
+                    ->where('evaluated_employee_id', $employee->id)
+                    ->where('status', '!=', 'draft')
+                    ->latest()
+                    ->get();
+            }
+        } catch (\Throwable) {
+            $myEvaluations = collect();
+        }
+
         $isGpsRequired = (bool) Setting::get('enable_gps_clockin', false);
         $companyRadius = (int) Setting::get('company_geofence_radius', 200);
         $isRemoteEmployee = (bool) ($employee->is_remote ?? false);
@@ -496,6 +694,10 @@ class EmployeePortal extends Component
             'selectedPayroll' => $selectedPayroll,
             'announcements' => $announcements,
             'allEmployees' => $allEmployees,
+            'myGrievances' => $myGrievances,
+            'availableForms' => $availableForms,
+            'selectedForm' => $selectedForm,
+            'myEvaluations' => $myEvaluations,
         ]);
     }
 }

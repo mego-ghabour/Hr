@@ -79,6 +79,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Employee::class);
     }
 
+    public function evaluationsGiven(): HasMany
+    {
+        return $this->hasMany(Evaluation::class, 'evaluator_id');
+    }
+
+    public function grievances(): HasMany
+    {
+        return $this->hasMany(Grievance::class);
+    }
+
     /**
      * التحقق مما إذا كان المستخدم يمتلك أي دور إداري أو قيادي
      */

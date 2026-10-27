@@ -225,6 +225,22 @@
                     </svg>
                     <span>ملفي الوظيفي</span>
                 </button>
+
+                <button wire:click="setTab('grievances')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'grievances' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>الشكاوى والمقترحات</span>
+                </button>
+
+                <button wire:click="setTab('evaluations')" 
+                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap {{ $activeTab === 'evaluations' ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    <span>التقييمات والاستبيانات</span>
+                </button>
             </nav>
         </div>
     </header>
@@ -1136,6 +1152,246 @@
                 </div>
             @endif
 
+            <!-- ========================================== -->
+            <!-- 7. GRIEVANCES TAB (الشكاوى والمقترحات الرقمية) -->
+            <!-- ========================================== -->
+            @if($activeTab === 'grievances')
+                <div class="space-y-6">
+                    <!-- Header Banner -->
+                    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
+                        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white backdrop-blur-md mb-3 border border-white/10">
+                                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                    <span>نظام لا ورقي موثق بالكامل</span>
+                                </span>
+                                <h2 class="text-xl sm:text-2xl font-black text-white">صندوق الشكاوى والمقترحات الرقمي</h2>
+                                <p class="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
+                                    تواصل مباشرة مع إدارة الموارد البشرية لتقديم أي شكوى، ملاحظة، أو مقترح تطويري. يمكنك تقديم الشكوى بسرية تامة (دون إظهار هويتك) لحماية خصوصيتك التامة.
+                                </p>
+                            </div>
+
+                            <button wire:click="openGrievanceModal" 
+                                    class="px-6 py-3.5 bg-brand-600 hover:bg-brand-500 active:scale-95 text-white font-black text-sm rounded-2xl shadow-lg shadow-brand-500/30 transition-all flex items-center justify-center gap-2 whitespace-nowrap self-start md:self-auto">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                <span>تقديم شكوى أو مقترح جديد</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-400 block mb-1">إجمالي طلباتي المقدمة</span>
+                                <span class="text-2xl font-black text-slate-900 font-mono">{{ $myGrievances->count() }}</span>
+                            </div>
+                            <span class="p-3 rounded-2xl bg-slate-50 text-slate-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            </span>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-amber-500 block mb-1">قيد المراجعة والفحص</span>
+                                <span class="text-2xl font-black text-amber-600 font-mono">{{ $myGrievances->whereIn('status', ['new', 'in_progress'])->count() }}</span>
+                            </div>
+                            <span class="p-3 rounded-2xl bg-amber-50 text-amber-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </span>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-emerald-500 block mb-1">تم الرد والمعالجة</span>
+                                <span class="text-2xl font-black text-emerald-600 font-mono">{{ $myGrievances->where('status', 'resolved')->count() }}</span>
+                            </div>
+                            <span class="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Grievances List -->
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
+                            <span>سجل الشكاوى والمقترحات السابقة</span>
+                            <span class="text-xs font-normal text-slate-400">({{ $myGrievances->count() }} طلب)</span>
+                        </h3>
+
+                        @if($myGrievances->isEmpty())
+                            <div class="text-center py-12">
+                                <span class="inline-flex p-4 rounded-3xl bg-slate-50 text-slate-400 mb-3">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                </span>
+                                <h4 class="text-sm font-bold text-slate-700">لا توجد شكاوى أو مقترحات مسجلة لديك حالياً</h4>
+                                <p class="text-xs text-slate-400 mt-1">صوتك مسموع دائماً! انقر على زر التقديم أعلاه لرفع أي استفسار أو مقترح لإدارة الموارد البشرية.</p>
+                            </div>
+                        @else
+                            <div class="space-y-4">
+                                @foreach($myGrievances as $item)
+                                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all space-y-3">
+                                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono font-bold text-xs px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                                    {{ $item->ticket_number }}
+                                                </span>
+                                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg {{ $item->type === 'suggestion' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-700' }}">
+                                                    {{ $item->type_label }}
+                                                </span>
+                                                @if($item->is_anonymous)
+                                                    <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-white flex items-center gap-1">
+                                                        <span>🔒 سري (مجهول الهوية)</span>
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs font-bold px-3 py-1 rounded-full {{ match($item->status) { 'resolved' => 'bg-emerald-100 text-emerald-800', 'in_progress' => 'bg-amber-100 text-amber-800', 'rejected' => 'bg-slate-200 text-slate-700', default => 'bg-rose-100 text-rose-800' } }}">
+                                                    {{ $item->status_label }}
+                                                </span>
+                                                <span class="text-[11px] text-slate-400 font-mono">{{ $item->created_at->format('Y-m-d H:i') }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h4 class="text-sm font-bold text-slate-900">{{ $item->title }}</h4>
+                                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $item->content }}</p>
+                                        </div>
+
+                                        @if($item->hr_response)
+                                            <div class="mt-3 p-4 rounded-xl bg-emerald-50/80 border border-emerald-200/80">
+                                                <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-900 mb-1">
+                                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    <span>رد وقرار إدارة الموارد البشرية:</span>
+                                                </div>
+                                                <p class="text-xs text-emerald-800 leading-relaxed font-medium">{{ $item->hr_response }}</p>
+                                                @if($item->resolved_at)
+                                                    <span class="block text-[10px] text-emerald-600/80 mt-1 font-mono">تاريخ الاعتماد: {{ $item->resolved_at->format('Y-m-d H:i') }}</span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <!-- ========================================== -->
+            <!-- 8. EVALUATIONS TAB (التقييمات والاستبيانات) -->
+            <!-- ========================================== -->
+            @if($activeTab === 'evaluations')
+                <div class="space-y-6">
+                    <!-- Header Banner -->
+                    <div class="bg-gradient-to-r from-teal-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
+                        <div class="relative z-10">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white backdrop-blur-md mb-3 border border-white/10">
+                                <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                <span>تقييم الأداء والتغذية الراجعة المستمرة</span>
+                            </span>
+                            <h2 class="text-xl sm:text-2xl font-black text-white">التقييمات واستبيانات الرضا الوظيفي</h2>
+                            <p class="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
+                                هنا يمكنك تقييم أسلوب إدارة مديرك المباشر (Upward Feedback بسرية كاملة)، والمشاركة في استبيانات رضا الموظفين، والاطلاع على نتائج وملاحظات تقييم أدائك الوظيفي.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Section: Available Evaluation Forms -->
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center justify-between">
+                            <span>نماذج التقييم والاستبيانات المتاحة لك الآن</span>
+                            <span class="text-xs text-brand-600 font-bold font-mono">{{ $availableForms->count() }} نموذج</span>
+                        </h3>
+
+                        @if($availableForms->isEmpty())
+                            <div class="text-center py-8 text-slate-400 text-xs">
+                                لا توجد نماذج تقييم مفتوحة في الوقت الحالي.
+                            </div>
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($availableForms as $form)
+                                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 transition-all flex flex-col justify-between gap-4">
+                                        <div>
+                                            <div class="flex items-center justify-between gap-2 mb-2">
+                                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg {{ $form->type === 'employee_to_manager' ? 'bg-amber-100 text-amber-800' : 'bg-brand-100 text-brand-800' }}">
+                                                    {{ $form->type_label }}
+                                                </span>
+                                                <span class="text-xs text-slate-400 font-mono">{{ count($form->questions ?? []) }} معيار</span>
+                                            </div>
+                                            <h4 class="text-sm font-black text-slate-900">{{ $form->title }}</h4>
+                                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ $form->description }}</p>
+                                        </div>
+
+                                        <button wire:click="openEvaluationModal({{ $form->id }})" 
+                                                class="w-full py-2.5 px-4 bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm">
+                                            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                            <span>تعبئة وإرسال التقييم</span>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Section: My Performance Reviews Received -->
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
+                            <span>سجل تقييمات أدائي الوظيفي (المعتمدة من الإدارة)</span>
+                            <span class="text-xs text-slate-400 font-mono">({{ $myEvaluations->count() }} تقييم)</span>
+                        </h3>
+
+                        @if($myEvaluations->isEmpty())
+                            <div class="text-center py-10 text-slate-400 text-xs">
+                                لم يتم اعتماد أي تقييم أداء رسمي لك حتى الآن. يتم التقييم بشكل دوري من قبل مديرك المباشر.
+                            </div>
+                        @else
+                            <div class="space-y-4">
+                                @foreach($myEvaluations as $rev)
+                                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/40 space-y-3">
+                                        <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                                            <div>
+                                                <h4 class="text-sm font-bold text-slate-900">{{ $rev->form?->title ?? 'تقييم أداء دوري' }}</h4>
+                                                <span class="text-xs text-slate-400">عن فترة: {{ $rev->period ?? $rev->created_at->format('Y-m') }}</span>
+                                            </div>
+                                            <div class="text-left">
+                                                <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-bold text-sm font-mono">
+                                                    <span>{{ number_format((float)$rev->score, 2) }}</span>
+                                                    <span class="text-amber-500">/ 5.0 ⭐</span>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                            @if($rev->strengths)
+                                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
+                                                    <span class="font-bold text-emerald-900 block mb-1">أبرز نقاط القوة:</span>
+                                                    <p class="text-emerald-800 leading-relaxed">{{ $rev->strengths }}</p>
+                                                </div>
+                                            @endif
+                                            @if($rev->areas_for_improvement)
+                                                <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-100">
+                                                    <span class="font-bold text-amber-900 block mb-1">نقاط التطوير والتحسين:</span>
+                                                    <p class="text-amber-800 leading-relaxed">{{ $rev->areas_for_improvement }}</p>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        @if($rev->action_plan)
+                                            <div class="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs">
+                                                <span class="font-bold text-indigo-900 block mb-1">خطة العمل المقترحة:</span>
+                                                <p class="text-indigo-800 leading-relaxed">{{ $rev->action_plan }}</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
         @endif
 
     </main>
@@ -1273,6 +1529,175 @@
         </div>
     @endif
 
+    <!-- NEW GRIEVANCE MODAL (تقديم شكوى أو مقترح جديد) -->
+    @if($showGrievanceModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 border border-slate-100">
+                <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-5">
+                    <div class="flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-brand-50 text-brand-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        </span>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">تقديم شكوى أو مقترح رسمي</h3>
+                            <span class="text-xs text-slate-400">نموذج إلكتروني بديل للسجلات الورقية</span>
+                        </div>
+                    </div>
+                    <button wire:click="closeGrievanceModal" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <form wire:submit.prevent="submitGrievance" class="space-y-4">
+                    <!-- Anonymous Toggle -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-slate-900 block">تقديم بسرية تامة (إخفاء هويتي) 🔒</span>
+                            <span class="text-[11px] text-slate-500 block">لن يظهر اسمك نهائياً وستسجل كشكوى مجهولة المصدر.</span>
+                        </div>
+                        <input type="checkbox" wire:model.live="grievance_is_anonymous" class="w-5 h-5 text-brand-600 rounded-lg border-slate-300 focus:ring-brand-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">نوع الشكوى / الطلب</label>
+                            <select wire:model="grievance_type" class="w-full text-xs font-bold rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-2.5">
+                                <option value="administrative">إدارية / مالية</option>
+                                <option value="workplace">بيئة العمل والأدوات</option>
+                                <option value="behavioral">سلوكية / نزاع مهني</option>
+                                <option value="suggestion">مقترح تطويري للعمل</option>
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">مستوى الأهمية</label>
+                            <select wire:model="grievance_priority" class="w-full text-xs font-bold rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-2.5">
+                                <option value="low">منخفضة</option>
+                                <option value="normal">عادية</option>
+                                <option value="high">عالية</option>
+                                <option value="urgent">عاجلة جداً</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">عنوان وموضوع الشكوى</label>
+                        <input type="text" wire:model="grievance_title" placeholder="اكتب ملخصاً لموضوع الشكوى..." class="w-full text-xs font-bold rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-2.5">
+                        @error('grievance_title') <span class="text-rose-500 text-[11px] font-bold block mt-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">تفاصيل الشكوى أو المقترح</label>
+                        <textarea wire:model="grievance_content" rows="4" placeholder="اشرح بالتفصيل ما حدث أو ما تقترحه..." class="w-full text-xs font-medium rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500"></textarea>
+                        @error('grievance_content') <span class="text-rose-500 text-[11px] font-bold block mt-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Against Manager Toggle -->
+                    <div class="flex items-center gap-2 p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs">
+                        <input type="checkbox" wire:model="grievance_against_manager" id="against_mgr" class="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500">
+                        <label for="against_mgr" class="font-bold text-amber-900 cursor-pointer">
+                            الشكوى متعلقة بالإدارة المباشرة (توجيهها حصراً للـ HR وحجبها عن مديري المباشر)
+                        </label>
+                    </div>
+
+                    <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
+                        <button type="button" wire:click="closeGrievanceModal" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold">
+                            إلغاء
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md shadow-brand-500/20">
+                            إرسال الشكوى الآن
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- EVALUATION / SURVEY MODAL (تعبئة نموذج التقييم والاستبيان) -->
+    @if($showEvaluationModal && $selectedForm)
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div class="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 border border-slate-100 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-5">
+                    <div>
+                        <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-brand-50 text-brand-600">{{ $selectedForm->type_label }}</span>
+                        <h3 class="text-base font-black text-slate-900 mt-1">{{ $selectedForm->title }}</h3>
+                    </div>
+                    <button wire:click="closeEvaluationModal" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                @if($selectedForm->type === 'employee_to_manager')
+                    <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 mb-4 text-xs flex items-center gap-2">
+                        <span class="text-lg">🔒</span>
+                        <div>
+                            <span class="font-bold text-amber-900 block">تقييم سري تماماً للمدير المباشر</span>
+                            <span class="text-amber-800 text-[11px]">يتم تجميع التقييمات في إحصاءات عامة ولن يظهر اسمك أو هويتك الشخصية لمديرك.</span>
+                        </div>
+                    </div>
+                @endif
+
+                <form wire:submit.prevent="submitPortalEvaluation" class="space-y-5">
+                    @if(is_array($selectedForm->questions))
+                        @foreach($selectedForm->questions as $idx => $q)
+                            @php $qKey = 'q_' . $idx; @endphp
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                                <label class="block text-xs font-bold text-slate-800">
+                                    {{ $idx + 1 }}. {{ $q['label'] ?? '' }}
+                                    @if($q['required'] ?? true) <span class="text-rose-500">*</span> @endif
+                                </label>
+
+                                @if(($q['type'] ?? '') === 'rating_5')
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        @foreach([5 => '5 - ممتاز ⭐', 4 => '4 - جيد جداً', 3 => '3 - جيد', 2 => '2 - مقبول', 1 => '1 - يحتاج تحسين'] as $starVal => $starLabel)
+                                            <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all {{ ($evaluation_answers[$qKey] ?? null) == $starVal ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100' }}">
+                                                <input type="radio" wire:model="evaluation_answers.{{ $qKey }}" value="{{ $starVal }}" class="sr-only">
+                                                <span>{{ $starLabel }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @elseif(($q['type'] ?? '') === 'boolean')
+                                    <div class="flex items-center gap-3">
+                                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer">
+                                            <input type="radio" wire:model="evaluation_answers.{{ $qKey }}" value="1" class="text-brand-600">
+                                            <span>نعم / محقق بالكامل</span>
+                                        </label>
+                                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer">
+                                            <input type="radio" wire:model="evaluation_answers.{{ $qKey }}" value="0" class="text-brand-600">
+                                            <span>لا / غير محقق</span>
+                                        </label>
+                                    </div>
+                                @else
+                                    <textarea wire:model="evaluation_answers.{{ $qKey }}" rows="2" placeholder="اكتب إجابتك أو ملاحظاتك هنا..." class="w-full text-xs font-medium rounded-xl border-slate-200 focus:border-brand-500"></textarea>
+                                @endif
+                            </div>
+                        @endforeach
+                    @endif
+
+                    <div class="space-y-3 pt-2 border-t border-slate-100">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">أبرز الإيجابيات ونقاط القوة (اختياري)</label>
+                            <textarea wire:model="evaluation_strengths" rows="2" placeholder="ما هي النقاط الإيجابية البارزة؟" class="w-full text-xs font-medium rounded-xl border-slate-200"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">مقترحات وفرص التحسين والتطوير (اختياري)</label>
+                            <textarea wire:model="evaluation_improvements" rows="2" placeholder="ما الذي يمكن تطويره أو تحسينه؟" class="w-full text-xs font-medium rounded-xl border-slate-200"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex items-center justify-end gap-2 border-t border-slate-100">
+                        <button type="button" wire:click="closeEvaluationModal" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold">
+                            إلغاء
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold shadow-md">
+                            إرسال التقييم واحتساب النتيجة
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <!-- Mobile Bottom Navigation Bar (Visible on mobile only) -->
     <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/90 z-40 px-2 py-2 flex items-center justify-around shadow-lg">
         <button wire:click="setTab('overview')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'overview' ? 'text-brand-600' : 'text-slate-500' }}">
@@ -1290,14 +1715,14 @@
             <span class="text-[10px]">الإجازات</span>
         </button>
 
-        <button wire:click="setTab('excuses')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'excuses' ? 'text-brand-600' : 'text-slate-500' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-            <span class="text-[10px]">الاستئذان</span>
+        <button wire:click="setTab('grievances')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'grievances' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span class="text-[10px]">الشكاوى</span>
         </button>
 
-        <button wire:click="setTab('payrolls')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'payrolls' ? 'text-brand-600' : 'text-slate-500' }}">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            <span class="text-[10px]">الرواتب</span>
+        <button wire:click="setTab('evaluations')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'evaluations' ? 'text-brand-600' : 'text-slate-500' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+            <span class="text-[10px]">التقييمات</span>
         </button>
 
         <button wire:click="setTab('profile')" class="flex flex-col items-center gap-1 p-1 text-xs font-bold {{ $activeTab === 'profile' ? 'text-brand-600' : 'text-slate-500' }}">

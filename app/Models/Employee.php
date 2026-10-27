@@ -100,6 +100,16 @@ class Employee extends Model
         return $this->hasMany(Payroll::class);
     }
 
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(Evaluation::class, 'evaluated_employee_id');
+    }
+
+    public function grievances(): HasMany
+    {
+        return $this->hasMany(Grievance::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
