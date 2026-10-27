@@ -10,8 +10,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
@@ -21,184 +22,187 @@ class EvaluationSchema
     {
         return $schema
             ->components([
-                Grid::make(['default' => 1, 'lg' => 3])
-                    ->schema([
+                Tabs::make('EvaluationTabs')
+                    ->tabs([
                         // ==========================================
-                        // العمود الرئيسي (2 من 3): النموذج والأسئلة والتحليل
+                        // التبويب الأول: بيانات التقييم والأسئلة
                         // ==========================================
-                        Group::make([
-                            Section::make('اختيار النموذج والمعايير')
-                                ->icon('heroicon-o-document-chart-bar')
-                                ->schema([
-                                    Select::make('evaluation_form_id')
-                                        ->label('اختر نموذج التقييم المستخدم')
-                                        ->options(fn () => EvaluationForm::where('is_active', true)->pluck('title', 'id'))
-                                        ->searchable()
-                                        ->preload()
-                                        ->required()
-                                        ->live()
-                                        ->native(false)
-                                        ->columnSpanFull(),
-                                ]),
+                        Tab::make('بيانات التقييم والمعايير')
+                            ->icon('heroicon-o-document-chart-bar')
+                            ->schema([
+                                Section::make('بيانات التقييم والموظف')
+                                    ->description('حدد نموذج التقييم والموظف الخاضع للتقييم والفترة الزمنية.')
+                                    ->icon('heroicon-o-user')
+                                    ->schema([
+                                        Grid::make(2)->schema([
+                                            Select::make('evaluation_form_id')
+                                                ->label('اختر نموذج التقييم المستخدم')
+                                                ->options(fn () => EvaluationForm::where('is_active', true)->pluck('title', 'id'))
+                                                ->searchable()
+                                                ->preload()
+                                                ->required()
+                                                ->live()
+                                                ->native(false),
 
-                            Section::make('معايير وأسئلة التقييم (Evaluation Criteria)')
-                                ->description('يتم تحميل بنود التقييم تلقائياً بناءً على النموذج المختار.')
-                                ->icon('heroicon-o-clipboard-document-check')
-                                ->schema(function (Get $get): array {
-                                    $formId = $get('evaluation_form_id');
-                                    if (!$formId) {
-                                        return [
-                                            Placeholder::make('hint')
-                                                ->label('')
-                                                ->content('← يرجى اختيار نموذج التقييم من القسم أعلاه لعرض بنود ومعايير التقييم الخاصة به.'),
-                                        ];
-                                    }
+                                            Select::make('evaluated_employee_id')
+                                                ->label('الموظف / الوكيل الخاضع للتقييم')
+                                                ->options(fn () => Employee::query()
+                                                    ->get()
+                                                    ->mapWithKeys(fn ($emp) => [$emp->id => "{$emp->full_name} ({$emp->job_title}) - " . ($emp->department?->name ?? 'بدون قسم')])
+                                                )
+                                                ->searchable()
+                                                ->preload()
+                                                ->required()
+                                                ->native(false),
 
-                                    $form = EvaluationForm::find($formId);
-                                    if (!$form || empty($form->questions)) {
-                                        return [
-                                            Placeholder::make('hint')
-                                                ->label('')
-                                                ->content('لا توجد أسئلة أو معايير مضافة في هذا النموذج حتى الآن.'),
-                                        ];
-                                    }
+                                            TextInput::make('period')
+                                                ->label('الفترة التقييمية')
+                                                ->placeholder('مثال: أكتوبر 2026')
+                                                ->default(date('F Y'))
+                                                ->required(),
 
-                                    $components = [];
-                                    foreach ($form->questions as $index => $q) {
-                                        $key = "answers.q_{$index}";
-                                        $label = ($index + 1) . '. ' . ($q['label'] ?? ('معيار رقم ' . ($index + 1)));
-                                        $type = $q['type'] ?? 'rating_5';
-                                        $required = $q['required'] ?? true;
-
-                                        if ($type === 'rating_5') {
-                                            $components[] = Select::make($key)
-                                                ->label($label)
+                                            Select::make('status')
+                                                ->label('حالة التقييم')
                                                 ->options([
-                                                    5 => '⭐⭐⭐⭐⭐ ممتاز (5 من 5)',
-                                                    4 => '⭐⭐⭐⭐ جيد جداً (4 من 5)',
-                                                    3 => '⭐⭐⭐ جيد (3 من 5)',
-                                                    2 => '⭐⭐ مقبول (2 من 5)',
-                                                    1 => '⭐ ضعيف / يحتاج تطوير (1 من 5)',
+                                                    'draft' => 'مسودة (Draft)',
+                                                    'submitted' => 'تم التقديم (Submitted)',
+                                                    'reviewed' => 'معتمد ومراجع (Reviewed)',
                                                 ])
-                                                ->required($required)
-                                                ->native(false);
-                                        } elseif ($type === 'rating_10') {
-                                            $components[] = Select::make($key)
-                                                ->label($label)
-                                                ->options([
-                                                    10 => '10 / 10 - استثنائي',
-                                                    9 => '9 / 10 - ممتاز مرتفع',
-                                                    8 => '8 / 10 - جيد جداً مرتفع',
-                                                    7 => '7 / 10 - جيد جداً',
-                                                    6 => '6 / 10 - جيد',
-                                                    5 => '5 / 10 - متوسط',
-                                                    4 => '4 / 10 - دون المتوسط',
-                                                    3 => '3 / 10 - ضعيف',
-                                                    2 => '2 / 10 - ضعيف جداً',
-                                                    1 => '1 / 10 - غير مقبول',
-                                                ])
-                                                ->required($required)
-                                                ->native(false);
-                                        } elseif ($type === 'boolean') {
-                                            $components[] = Select::make($key)
-                                                ->label($label)
-                                                ->options([
-                                                    1 => 'نعم / محقق بالكامل',
-                                                    0 => 'لا / غير محقق',
-                                                ])
-                                                ->required($required)
-                                                ->native(false);
-                                        } else {
-                                            $components[] = Textarea::make($key)
-                                                ->label($label)
-                                                ->rows(2)
-                                                ->placeholder('اكتب الإجابة أو الملاحظات...')
-                                                ->required($required);
-                                        }
-                                    }
+                                                ->default('submitted')
+                                                ->required()
+                                                ->native(false),
 
-                                    return $components;
-                                })
-                                ->columns(2),
-
-                            Section::make('التحليل النوعي وخطة التطوير (Action Plan & Feedback)')
-                                ->icon('heroicon-o-light-bulb')
-                                ->schema([
-                                    Grid::make(2)->schema([
-                                        Textarea::make('strengths')
-                                            ->label('أبرز نقاط القوة والإنجازات')
-                                            ->placeholder('ما الذي تميز به الموظف/المدير خلال هذه الفترة؟')
-                                            ->rows(3),
-
-                                        Textarea::make('areas_for_improvement')
-                                            ->label('نقاط ومجالات التحسين')
-                                            ->placeholder('ما هي النقاط التي تحتاج إلى تطوير أو تدريب؟')
-                                            ->rows(3),
-
-                                        Textarea::make('action_plan')
-                                            ->label('خطة العمل والتطوير المقترحة (Action Plan)')
-                                            ->placeholder('خطوات واضحة لتحسين الأداء خلال الشهر / الربع القادم...')
-                                            ->rows(3)
-                                            ->columnSpanFull(),
-
-                                        Textarea::make('notes')
-                                            ->label('ملاحظات إضافية عامة')
-                                            ->rows(2)
-                                            ->columnSpanFull(),
+                                            Toggle::make('is_anonymous')
+                                                ->label('تقييم سري (إخفاء هوية المُقيّم) 🔒')
+                                                ->helperText('عند التفعيل، لن يظهر اسمك في التقرير للخاضع للتقييم.')
+                                                ->default(false)
+                                                ->inline(false),
+                                        ]),
                                     ]),
-                                ]),
-                        ])->columnSpan(['default' => 1, 'lg' => 2]),
+
+                                Section::make('معايير وأسئلة التقييم (Evaluation Criteria)')
+                                    ->description('يتم تحميل بنود التقييم تلقائياً بناءً على النموذج المختار أعلاه.')
+                                    ->icon('heroicon-o-clipboard-document-check')
+                                    ->schema(function (Get $get): array {
+                                        $formId = $get('evaluation_form_id');
+                                        if (!$formId) {
+                                            return [
+                                                Placeholder::make('hint')
+                                                    ->label('')
+                                                    ->content('← يرجى اختيار نموذج التقييم من القسم أعلاه لعرض بنود ومعايير التقييم الخاصة به.'),
+                                            ];
+                                        }
+
+                                        $form = EvaluationForm::find($formId);
+                                        if (!$form || empty($form->questions)) {
+                                            return [
+                                                Placeholder::make('hint')
+                                                    ->label('')
+                                                    ->content('لا توجد أسئلة أو معايير مضافة في هذا النموذج حتى الآن.'),
+                                            ];
+                                        }
+
+                                        $components = [];
+                                        foreach ($form->questions as $index => $q) {
+                                            $key = "answers.q_{$index}";
+                                            $label = ($index + 1) . '. ' . ($q['label'] ?? ('معيار رقم ' . ($index + 1)));
+                                            $type = $q['type'] ?? 'rating_5';
+                                            $required = $q['required'] ?? true;
+
+                                            if ($type === 'rating_5') {
+                                                $components[] = Select::make($key)
+                                                    ->label($label)
+                                                    ->options([
+                                                        5 => '⭐⭐⭐⭐⭐ ممتاز (5 من 5)',
+                                                        4 => '⭐⭐⭐⭐ جيد جداً (4 من 5)',
+                                                        3 => '⭐⭐⭐ جيد (3 من 5)',
+                                                        2 => '⭐⭐ مقبول (2 من 5)',
+                                                        1 => '⭐ ضعيف / يحتاج تطوير (1 من 5)',
+                                                    ])
+                                                    ->required($required)
+                                                    ->native(false);
+                                            } elseif ($type === 'rating_10') {
+                                                $components[] = Select::make($key)
+                                                    ->label($label)
+                                                    ->options([
+                                                        10 => '10 / 10 - استثنائي',
+                                                        9 => '9 / 10 - ممتاز مرتفع',
+                                                        8 => '8 / 10 - جيد جداً مرتفع',
+                                                        7 => '7 / 10 - جيد جداً',
+                                                        6 => '6 / 10 - جيد',
+                                                        5 => '5 / 10 - متوسط',
+                                                        4 => '4 / 10 - دون المتوسط',
+                                                        3 => '3 / 10 - ضعيف',
+                                                        2 => '2 / 10 - ضعيف جداً',
+                                                        1 => '1 / 10 - غير مقبول',
+                                                    ])
+                                                    ->required($required)
+                                                    ->native(false);
+                                            } elseif ($type === 'boolean') {
+                                                $components[] = Select::make($key)
+                                                    ->label($label)
+                                                    ->options([
+                                                        1 => 'نعم / محقق بالكامل',
+                                                        0 => 'لا / غير محقق',
+                                                    ])
+                                                    ->required($required)
+                                                    ->native(false);
+                                            } else {
+                                                $components[] = Textarea::make($key)
+                                                    ->label($label)
+                                                    ->rows(2)
+                                                    ->placeholder('اكتب الإجابة أو الملاحظات...')
+                                                    ->required($required);
+                                            }
+                                        }
+
+                                        return $components;
+                                    })
+                                    ->columns(2),
+                            ]),
 
                         // ==========================================
-                        // العمود الجانبي (1 من 3): الشخص الخاضع والحالة
+                        // التبويب الثاني: التحليل النوعي وخطة التطوير
                         // ==========================================
-                        Group::make([
-                            Section::make('بيانات الموظف والفترة')
-                                ->icon('heroicon-o-user')
-                                ->schema([
-                                    Select::make('evaluated_employee_id')
-                                        ->label('الموظف / الوكيل الخاضع للتقييم')
-                                        ->options(fn () => Employee::query()
-                                            ->get()
-                                            ->mapWithKeys(fn ($emp) => [$emp->id => "{$emp->full_name} ({$emp->job_title}) - " . ($emp->department?->name ?? 'بدون قسم')])
-                                        )
-                                        ->searchable()
-                                        ->preload()
-                                        ->required()
-                                        ->native(false),
+                        Tab::make('التحليل النوعي وخطة التطوير')
+                            ->icon('heroicon-o-light-bulb')
+                            ->schema([
+                                Section::make('تحليل الأداء وخطة التحسين (Action Plan & Feedback)')
+                                    ->schema([
+                                        Grid::make(2)->schema([
+                                            Textarea::make('strengths')
+                                                ->label('أبرز نقاط القوة والإنجازات')
+                                                ->placeholder('ما الذي تميز به الموظف/المدير خلال هذه الفترة؟')
+                                                ->rows(4),
 
-                                    TextInput::make('period')
-                                        ->label('الفترة التقييمية')
-                                        ->placeholder('مثال: أكتوبر 2026')
-                                        ->default(date('F Y'))
-                                        ->required(),
+                                            Textarea::make('areas_for_improvement')
+                                                ->label('نقاط ومجالات التحسين والتطوير')
+                                                ->placeholder('ما هي النقاط التي تحتاج إلى تطوير أو تدريب؟')
+                                                ->rows(4),
 
-                                    Toggle::make('is_anonymous')
-                                        ->label('تقييم سري (إخفاء هوية المُقيّم) 🔒')
-                                        ->helperText('لن يظهر اسمك في التقرير للخاضع للتقييم.')
-                                        ->default(false),
+                                            Textarea::make('action_plan')
+                                                ->label('خطة العمل والتطوير المقترحة (Action Plan)')
+                                                ->placeholder('خطوات واضحة لتحسين الأداء خلال الشهر / الربع القادم...')
+                                                ->rows(4)
+                                                ->columnSpanFull(),
 
-                                    Select::make('status')
-                                        ->label('حالة التقييم')
-                                        ->options([
-                                            'draft' => 'مسودة (Draft)',
-                                            'submitted' => 'تم التقديم (Submitted)',
-                                            'reviewed' => 'معتمد ومراجع (Reviewed)',
-                                        ])
-                                        ->default('submitted')
-                                        ->required()
-                                        ->native(false),
-                                ]),
+                                            Textarea::make('notes')
+                                                ->label('ملاحظات إضافية عامة')
+                                                ->rows(3)
+                                                ->columnSpanFull(),
+                                        ]),
+                                    ]),
 
-                            Section::make('احتساب النتيجة')
-                                ->icon('heroicon-o-star')
-                                ->schema([
-                                    Placeholder::make('score_notice')
-                                        ->label('')
-                                        ->content('⭐ يتم احتساب النتيجة والدرجة النهائية آلياً من 5.0 نجوم فور حفظ التقييم بناءً على الإجابات المسجلة.'),
-                                ]),
-                        ])->columnSpan(['default' => 1, 'lg' => 1]),
-                    ]),
+                                Section::make('💡 احتساب النتيجة آلياً')
+                                    ->icon('heroicon-o-star')
+                                    ->schema([
+                                        Placeholder::make('score_notice')
+                                            ->label('')
+                                            ->content('⭐ يتم احتساب النتيجة والدرجة النهائية آلياً من 5.0 نجوم فور حفظ التقييم بناءً على الإجابات المسجلة لكافة المعايير.'),
+                                    ]),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 }
