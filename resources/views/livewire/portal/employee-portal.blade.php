@@ -1212,36 +1212,74 @@
                         </div>
                     </div>
 
-                    <!-- Grievances List -->
+                    <!-- Grievances List & Filter Bar -->
                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-                        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
-                            <span>سجل الشكاوى والمقترحات السابقة</span>
-                            <span class="text-xs font-normal text-slate-400">({{ $myGrievances->count() }} طلب)</span>
-                        </h3>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                                    <span>سجل الشكاوى والمقترحات</span>
+                                    <span class="text-xs font-normal text-slate-400">({{ $allMyGrievances->count() }} طلب)</span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">يمكنك متابعة مرحلة فحص طلبك ورد الموارد البشرية عليه لحظة بلحظة</p>
+                            </div>
+
+                            <!-- Filter Pills -->
+                            <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl overflow-x-auto">
+                                <button type="button" wire:click="setGrievanceFilter('all')" 
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $grievanceFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                    الكل ({{ $allMyGrievances->count() }})
+                                </button>
+                                <button type="button" wire:click="setGrievanceFilter('in_progress')" 
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $grievanceFilter === 'in_progress' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                    قيد الفحص ({{ $allMyGrievances->whereIn('status', ['new', 'in_progress'])->count() }})
+                                </button>
+                                <button type="button" wire:click="setGrievanceFilter('resolved')" 
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $grievanceFilter === 'resolved' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                    تم الحل ({{ $allMyGrievances->where('status', 'resolved')->count() }})
+                                </button>
+                                <button type="button" wire:click="setGrievanceFilter('suggestion')" 
+                                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $grievanceFilter === 'suggestion' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                                    مقترحات ({{ $allMyGrievances->where('type', 'suggestion')->count() }})
+                                </button>
+                            </div>
+                        </div>
 
                         @if($myGrievances->isEmpty())
                             <div class="text-center py-12">
                                 <span class="inline-flex p-4 rounded-3xl bg-slate-50 text-slate-400 mb-3">
                                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
                                 </span>
-                                <h4 class="text-sm font-bold text-slate-700">لا توجد شكاوى أو مقترحات مسجلة لديك حالياً</h4>
+                                <h4 class="text-sm font-bold text-slate-700">لا توجد شكاوى أو مقترحات مطابقة</h4>
                                 <p class="text-xs text-slate-400 mt-1">صوتك مسموع دائماً! انقر على زر التقديم أعلاه لرفع أي استفسار أو مقترح لإدارة الموارد البشرية.</p>
                             </div>
                         @else
-                            <div class="space-y-4">
+                            <div class="space-y-5">
                                 @foreach($myGrievances as $item)
-                                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all space-y-3">
-                                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-mono font-bold text-xs px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                                    {{ $item->ticket_number }}
-                                                </span>
-                                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg {{ $item->type === 'suggestion' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-700' }}">
+                                    <div class="p-5 sm:p-6 rounded-3xl border border-slate-100 bg-white hover:border-slate-200 transition-all shadow-sm space-y-4">
+                                        <!-- Top Info Bar -->
+                                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <button type="button" 
+                                                        onclick="navigator.clipboard.writeText('{{ $item->ticket_number }}'); alert('تم نسخ رقم التذكرة: {{ $item->ticket_number }}');"
+                                                        title="انقر لنسخ رقم التذكرة"
+                                                        class="group flex items-center gap-1.5 font-mono font-bold text-xs px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors">
+                                                    <span>{{ $item->ticket_number }}</span>
+                                                    <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                </button>
+
+                                                <span class="text-xs font-bold px-3 py-1 rounded-xl {{ $item->type === 'suggestion' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-indigo-50 text-indigo-700 border border-indigo-100' }}">
                                                     {{ $item->type_label }}
                                                 </span>
+
                                                 @if($item->is_anonymous)
-                                                    <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-white flex items-center gap-1">
-                                                        <span>🔒 سري (مجهول الهوية)</span>
+                                                    <span class="text-xs font-bold px-3 py-1 rounded-xl bg-slate-900 text-white flex items-center gap-1 shadow-sm">
+                                                        <span>🔒 سري تماماً (مشفر)</span>
+                                                    </span>
+                                                @endif
+
+                                                @if($item->against_manager)
+                                                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-200">
+                                                        موجه للإدارة العليا
                                                     </span>
                                                 @endif
                                             </div>
@@ -1254,21 +1292,71 @@
                                             </div>
                                         </div>
 
+                                        <!-- Content -->
                                         <div>
-                                            <h4 class="text-sm font-bold text-slate-900">{{ $item->title }}</h4>
-                                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $item->content }}</p>
+                                            <h4 class="text-sm sm:text-base font-black text-slate-900">{{ $item->title }}</h4>
+                                            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed bg-slate-50/60 p-4 rounded-2xl border border-slate-100">{{ $item->content }}</p>
                                         </div>
 
-                                        @if($item->hr_response)
-                                            <div class="mt-3 p-4 rounded-xl bg-emerald-50/80 border border-emerald-200/80">
-                                                <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-900 mb-1">
-                                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                    <span>رد وقرار إدارة الموارد البشرية:</span>
+                                        <!-- Visual Timeline Progress Tracker -->
+                                        <div class="py-2 px-4 rounded-2xl bg-slate-50/70 border border-slate-100">
+                                            <div class="flex items-center justify-between text-xs">
+                                                <!-- Step 1 -->
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
+                                                    <div>
+                                                        <span class="font-bold text-slate-800 block text-[11px]">تم الاستلام والتوثيق</span>
+                                                        <span class="text-[10px] text-slate-400 block font-mono">{{ $item->created_at->format('Y/m/d') }}</span>
+                                                    </div>
                                                 </div>
-                                                <p class="text-xs text-emerald-800 leading-relaxed font-medium">{{ $item->hr_response }}</p>
-                                                @if($item->resolved_at)
-                                                    <span class="block text-[10px] text-emerald-600/80 mt-1 font-mono">تاريخ الاعتماد: {{ $item->resolved_at->format('Y-m-d H:i') }}</span>
-                                                @endif
+
+                                                <div class="flex-1 mx-3 h-0.5 {{ $item->status !== 'new' ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
+
+                                                <!-- Step 2 -->
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded-full {{ in_array($item->status, ['in_progress', 'resolved', 'rejected']) ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500' }} flex items-center justify-center text-[10px] font-bold">
+                                                        {{ in_array($item->status, ['in_progress', 'resolved', 'rejected']) ? '✓' : '2' }}
+                                                    </span>
+                                                    <div>
+                                                        <span class="font-bold {{ in_array($item->status, ['in_progress', 'resolved', 'rejected']) ? 'text-slate-800' : 'text-slate-400' }} block text-[11px]">قيد الفحص والدراسة</span>
+                                                        <span class="text-[10px] text-slate-400 block">فريق الموارد البشرية</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex-1 mx-3 h-0.5 {{ $item->status === 'resolved' ? 'bg-emerald-500' : 'bg-slate-200' }}"></div>
+
+                                                <!-- Step 3 -->
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded-full {{ $item->status === 'resolved' ? 'bg-emerald-600 text-white' : ($item->status === 'rejected' ? 'bg-slate-500 text-white' : 'bg-slate-200 text-slate-500') }} flex items-center justify-center text-[10px] font-bold">
+                                                        {{ $item->status === 'resolved' ? '✓' : '3' }}
+                                                    </span>
+                                                    <div>
+                                                        <span class="font-bold {{ in_array($item->status, ['resolved', 'rejected']) ? 'text-slate-800' : 'text-slate-400' }} block text-[11px]">
+                                                            {{ $item->status === 'rejected' ? 'تم الإغلاق' : 'تم الحل والمعالجة' }}
+                                                        </span>
+                                                        <span class="text-[10px] text-slate-400 block font-mono">
+                                                            {{ $item->resolved_at ? $item->resolved_at->format('Y/m/d') : 'بانتظار الإجراء' }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Official HR Resolution Box -->
+                                        @if($item->hr_response)
+                                            <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/90 to-teal-50/70 border border-emerald-200 shadow-sm space-y-2">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="p-1.5 rounded-lg bg-emerald-600 text-white">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        </span>
+                                                        <span class="text-xs font-black text-emerald-950">رد وتوجيه رسمي من إدارة الموارد البشرية</span>
+                                                    </div>
+                                                    @if($item->resolved_at)
+                                                        <span class="text-[11px] text-emerald-700 font-mono">بتاريخ: {{ $item->resolved_at->format('Y-m-d H:i') }}</span>
+                                                    @endif
+                                                </div>
+                                                <p class="text-xs sm:text-sm text-emerald-900 leading-relaxed font-medium pt-1">{{ $item->hr_response }}</p>
                                             </div>
                                         @endif
                                     </div>
@@ -1549,63 +1637,98 @@
                 </div>
 
                 <form wire:submit.prevent="submitGrievance" class="space-y-4">
-                    <!-- Anonymous Toggle -->
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-slate-900 block">تقديم بسرية تامة (إخفاء هويتي) 🔒</span>
-                            <span class="text-[11px] text-slate-500 block">لن يظهر اسمك نهائياً وستسجل كشكوى مجهولة المصدر.</span>
+                    <!-- Anonymous Shield Card -->
+                    <div class="p-4 rounded-2xl transition-all border {{ $grievance_is_anonymous ? 'bg-slate-900 border-slate-800 text-white shadow-md' : 'bg-slate-50 border-slate-200/80 text-slate-900' }}">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <span class="p-2.5 rounded-xl {{ $grievance_is_anonymous ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-200 text-slate-600' }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                </span>
+                                <div>
+                                    <span class="text-xs font-black block">تقديم بسرية تامة (إخفاء هويتي) 🔒</span>
+                                    <span class="text-[11px] block {{ $grievance_is_anonymous ? 'text-slate-300' : 'text-slate-500' }}">
+                                        {{ $grievance_is_anonymous ? '✓ وضع الخصوصية مفعل: لن يتم تسجيل اسمك أو بريدك.' : 'انقر لتفعيل وضع السرية الكاملة وتشفير هويتك.' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <input type="checkbox" wire:model.live="grievance_is_anonymous" class="w-5 h-5 text-emerald-500 rounded-lg border-slate-300 focus:ring-emerald-500 cursor-pointer">
                         </div>
-                        <input type="checkbox" wire:model.live="grievance_is_anonymous" class="w-5 h-5 text-brand-600 rounded-lg border-slate-300 focus:ring-brand-500">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">نوع الشكوى / الطلب</label>
-                            <select wire:model="grievance_type" class="w-full text-xs font-bold rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-2.5">
-                                <option value="administrative">إدارية / مالية</option>
-                                <option value="workplace">بيئة العمل والأدوات</option>
-                                <option value="behavioral">سلوكية / نزاع مهني</option>
-                                <option value="suggestion">مقترح تطويري للعمل</option>
-                                <option value="other">أخرى</option>
-                            </select>
+                    <!-- Category Visual Cards -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-800 mb-2">اختر تصنيف الشكوى أو المقترح</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" wire:click="selectGrievanceType('administrative')" 
+                                    class="p-3 rounded-2xl border text-right transition-all {{ $grievance_type === 'administrative' ? 'border-brand-500 bg-brand-50/70 ring-2 ring-brand-500/20' : 'border-slate-200 bg-white hover:bg-slate-50' }}">
+                                <span class="text-lg block mb-1">🏢</span>
+                                <span class="text-xs font-black text-slate-900 block">إدارية / مالية</span>
+                                <span class="text-[10px] text-slate-500 block">رواتب، بدلات، إجازات</span>
+                            </button>
+
+                            <button type="button" wire:click="selectGrievanceType('workplace')" 
+                                    class="p-3 rounded-2xl border text-right transition-all {{ $grievance_type === 'workplace' ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/20' : 'border-slate-200 bg-white hover:bg-slate-50' }}">
+                                <span class="text-lg block mb-1">💻</span>
+                                <span class="text-xs font-black text-slate-900 block">بيئة العمل والأدوات</span>
+                                <span class="text-[10px] text-slate-500 block">أجهزة، تكييف، مقاعد</span>
+                            </button>
+
+                            <button type="button" wire:click="selectGrievanceType('behavioral')" 
+                                    class="p-3 rounded-2xl border text-right transition-all {{ $grievance_type === 'behavioral' ? 'border-rose-500 bg-rose-50/70 ring-2 ring-rose-500/20' : 'border-slate-200 bg-white hover:bg-slate-50' }}">
+                                <span class="text-lg block mb-1">🤝</span>
+                                <span class="text-xs font-black text-slate-900 block">سلوكية وتعامل مهني</span>
+                                <span class="text-[10px] text-slate-500 block">معاملة، سوء تفاهم</span>
+                            </button>
+
+                            <button type="button" wire:click="selectGrievanceType('suggestion')" 
+                                    class="p-3 rounded-2xl border text-right transition-all {{ $grievance_type === 'suggestion' ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/20' : 'border-slate-200 bg-white hover:bg-slate-50' }}">
+                                <span class="text-lg block mb-1">💡</span>
+                                <span class="text-xs font-black text-slate-900 block">فكرة / مقترح تطويري</span>
+                                <span class="text-[10px] text-slate-500 block">أفكار تحسين العمل</span>
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">مستوى الأهمية</label>
-                            <select wire:model="grievance_priority" class="w-full text-xs font-bold rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-2.5">
-                                <option value="low">منخفضة</option>
-                                <option value="normal">عادية</option>
-                                <option value="high">عالية</option>
-                                <option value="urgent">عاجلة جداً</option>
-                            </select>
+                    </div>
+
+                    <!-- Priority Chips -->
+                    <div>
+                        <label class="block text-xs font-black text-slate-800 mb-1.5">مستوى الأهمية والسرعة</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            @foreach(['low' => 'منخفضة', 'normal' => 'عادية', 'high' => 'عالية', 'urgent' => 'عاجلة جداً ⚠️'] as $pVal => $pLabel)
+                                <button type="button" wire:click="selectGrievancePriority('{{ $pVal }}')" 
+                                        class="py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all {{ $grievance_priority === $pVal ? ($pVal === 'urgent' ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-slate-900 text-white border-slate-900 shadow-sm') : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100' }}">
+                                    {{ $pLabel }}
+                                </button>
+                            @endforeach
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">عنوان وموضوع الشكوى</label>
-                        <input type="text" wire:model="grievance_title" placeholder="اكتب ملخصاً لموضوع الشكوى..." class="w-full text-xs font-bold rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-2.5">
+                        <label class="block text-xs font-black text-slate-800 mb-1">موضوع الطلب / الشكوى</label>
+                        <input type="text" wire:model="grievance_title" placeholder="اكتب ملخصاً واضحاً في جملة واحدة..." class="w-full text-xs font-bold rounded-2xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 py-3 px-4">
                         @error('grievance_title') <span class="text-rose-500 text-[11px] font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">تفاصيل الشكوى أو المقترح</label>
-                        <textarea wire:model="grievance_content" rows="4" placeholder="اشرح بالتفصيل ما حدث أو ما تقترحه..." class="w-full text-xs font-medium rounded-xl border-slate-200 focus:border-brand-500 focus:ring-brand-500"></textarea>
+                        <label class="block text-xs font-black text-slate-800 mb-1">التفاصيل والشرح</label>
+                        <textarea wire:model="grievance_content" rows="4" placeholder="اشرح المشكلة أو المقترح بالتفصيل لمساعدتنا في معالجتها بأسرع وقت..." class="w-full text-xs font-medium rounded-2xl border-slate-200 focus:border-brand-500 focus:ring-brand-500 p-4 leading-relaxed"></textarea>
                         @error('grievance_content') <span class="text-rose-500 text-[11px] font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Against Manager Toggle -->
-                    <div class="flex items-center gap-2 p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs">
-                        <input type="checkbox" wire:model="grievance_against_manager" id="against_mgr" class="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500">
-                        <label for="against_mgr" class="font-bold text-amber-900 cursor-pointer">
-                            الشكوى متعلقة بالإدارة المباشرة (توجيهها حصراً للـ HR وحجبها عن مديري المباشر)
+                    <!-- Against Manager Checkbox -->
+                    <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs">
+                        <input type="checkbox" wire:model="grievance_against_manager" id="against_mgr" class="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500 mt-0.5 cursor-pointer">
+                        <label for="against_mgr" class="font-bold text-amber-950 cursor-pointer leading-relaxed">
+                            الشكوى متعلقة بمديري المباشر (توجيهها مباشرة لإدارة الـ HR وحجبها تماماً عن المدير)
                         </label>
                     </div>
 
                     <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
-                        <button type="button" wire:click="closeGrievanceModal" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold">
+                        <button type="button" wire:click="closeGrievanceModal" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold">
                             إلغاء
                         </button>
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-md shadow-brand-500/20">
-                            إرسال الشكوى الآن
+                        <button type="submit" wire:loading.attr="disabled" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold shadow-lg shadow-brand-500/25 flex items-center gap-1.5">
+                            <span wire:loading.remove>إرسال الشكوى وتوثيقها</span>
+                            <span wire:loading>جاري الإرسال...</span>
                         </button>
                     </div>
                 </form>

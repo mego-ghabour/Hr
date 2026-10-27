@@ -27,6 +27,13 @@ Route::prefix('portal')->name('portal.')->group(function () {
 // Shortcut redirect for /ess
 Route::get('/ess', fn () => redirect()->route('portal.dashboard'));
 
+// مسارات مختصرة وسريعة للشكاوى والتقييمات
+Route::get('/grievance', fn () => redirect('/portal?tab=grievances'));
+Route::get('/grievances', fn () => redirect('/portal?tab=grievances'));
+Route::get('/complaint', fn () => redirect('/portal?tab=grievances'));
+Route::get('/complaints', fn () => redirect('/portal?tab=grievances'));
+Route::get('/evaluations', fn () => redirect('/portal?tab=evaluations'));
+
 // Keep old route to redirect or just show jobs
 Route::get('/apply', function () {
     return redirect()->route('jobs.index');
@@ -45,6 +52,17 @@ Route::get('/system/migrate', function (\Illuminate\Http\Request $request) {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        $seedOutput = '';
+        try {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\EvaluationsAndGrievancesSeeder',
+                '--force' => true,
+            ]);
+            $seedOutput = \Illuminate\Support\Facades\Artisan::output();
+        } catch (\Throwable $se) {
+            $seedOutput = 'Seeder note: ' . $se->getMessage();
+        }
 
         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
         $clearOutput = \Illuminate\Support\Facades\Artisan::output();
@@ -67,8 +85,8 @@ Route::get('/system/migrate', function (\Illuminate\Http\Request $request) {
     <div class='card'>
         <div class='badge'>✓ تم التحديث بنجاح (Database Migrated)</div>
         <h2 style='margin: 0 0 0.5rem 0; font-size: 1.5rem;'>تم إنشاء الجداول وتحديث قاعدة البيانات بنجاح!</h2>
-        <p style='color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;'>تم إنشاء جداول التعميمات والرواتب وكافة التحديثات الأخيرة بنجاح على قاعدة بيانات السيرفر.</p>
-        <pre>" . e($migrateOutput . "\n" . $clearOutput) . "</pre>
+        <p style='color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;'>تم إنشاء جداول التقييمات والشكاوى والمقترحات وكافة التحديثات الأخيرة بنجاح على قاعدة بيانات السيرفر.</p>
+        <pre>" . e($migrateOutput . "\n" . $seedOutput . "\n" . $clearOutput) . "</pre>
         <div style='text-align: left;'>
             <a href='/admin' class='btn'>الانتقال إلى لوحة الإدارة</a>
         </div>

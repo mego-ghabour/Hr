@@ -32,6 +32,7 @@ class EmployeePortal extends Component
     public string $grievance_content = '';
     public bool $grievance_is_anonymous = false;
     public bool $grievance_against_manager = false;
+    public string $grievanceFilter = 'all'; // all, in_progress, resolved, suggestion
 
     // Evaluation form state
     public bool $showEvaluationModal = false;
@@ -86,6 +87,11 @@ class EmployeePortal extends Component
             if ($firstEmp) {
                 $this->previewEmployeeId = $firstEmp->id;
             }
+        }
+
+        $requestedTab = request()->query('tab');
+        if ($requestedTab && in_array($requestedTab, ['overview', 'attendance', 'leaves', 'excuses', 'payrolls', 'profile', 'grievances', 'evaluations'])) {
+            $this->activeTab = $requestedTab;
         }
     }
 
@@ -351,6 +357,21 @@ class EmployeePortal extends Component
         $this->grievance_content = '';
         $this->grievance_is_anonymous = false;
         $this->grievance_against_manager = false;
+    }
+
+    public function setGrievanceFilter(string $filter)
+    {
+        $this->grievanceFilter = $filter;
+    }
+
+    public function selectGrievanceType(string $type)
+    {
+        $this->grievance_type = $type;
+    }
+
+    public function selectGrievancePriority(string $priority)
+    {
+        $this->grievance_priority = $priority;
     }
 
     public function submitGrievance()
@@ -623,19 +644,32 @@ class EmployeePortal extends Component
         }
 
         // Grievances
+        $allMyGrievances = collect();
         $myGrievances = collect();
         try {
             if ($user && \Illuminate\Support\Facades\Schema::hasTable('grievances')) {
-                $myGrievances = Grievance::where('user_id', $user->id)
+                $baseQuery = Grievance::where('user_id', $user->id)
                     ->orWhere(function ($q) use ($employee) {
                         if ($employee) {
                             $q->where('employee_id', $employee->id);
                         }
                     })
-                    ->latest()
-                    ->get();
+                    ->latest();
+
+                $allMyGrievances = (clone $baseQuery)->get();
+
+                if ($this->grievanceFilter === 'in_progress') {
+                    $baseQuery->whereIn('status', ['new', 'in_progress']);
+                } elseif ($this->grievanceFilter === 'resolved') {
+                    $baseQuery->where('status', 'resolved');
+                } elseif ($this->grievanceFilter === 'suggestion') {
+                    $baseQuery->where('type', 'suggestion');
+                }
+
+                $myGrievances = $baseQuery->get();
             }
         } catch (\Throwable) {
+            $allMyGrievances = collect();
             $myGrievances = collect();
         }
 
@@ -694,6 +728,7 @@ class EmployeePortal extends Component
             'selectedPayroll' => $selectedPayroll,
             'announcements' => $announcements,
             'allEmployees' => $allEmployees,
+            'allMyGrievances' => $allMyGrievances,
             'myGrievances' => $myGrievances,
             'availableForms' => $availableForms,
             'selectedForm' => $selectedForm,

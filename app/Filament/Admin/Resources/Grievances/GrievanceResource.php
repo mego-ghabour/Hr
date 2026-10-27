@@ -41,8 +41,16 @@ class GrievanceResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $newCount = Grievance::where('status', 'new')->count();
-        return $newCount > 0 ? (string)$newCount : null;
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('grievances')) {
+                $newCount = Grievance::where('status', 'new')->count();
+                return $newCount > 0 ? (string)$newCount : null;
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
     }
 
     public static function getNavigationBadgeColor(): ?string
