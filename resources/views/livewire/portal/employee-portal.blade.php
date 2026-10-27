@@ -1722,6 +1722,13 @@
                         </label>
                     </div>
 
+                    <!-- Attachment Upload -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">مستند أو صورة داعمة (اختياري)</label>
+                        <input type="file" wire:model="grievance_attachment" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="text-xs text-slate-500 file:mr-0 file:ml-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer">
+                        <span wire:loading wire:target="grievance_attachment" class="text-xs text-brand-600 block mt-1 animate-pulse">جاري تحميل الملف...</span>
+                    </div>
+
                     <div class="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
                         <button type="button" wire:click="closeGrievanceModal" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold">
                             إلغاء

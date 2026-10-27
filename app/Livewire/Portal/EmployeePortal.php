@@ -18,10 +18,13 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.portal')]
 class EmployeePortal extends Component
 {
+    use WithFileUploads;
+
     public string $activeTab = 'overview';
 
     // Grievance form state
@@ -32,6 +35,7 @@ class EmployeePortal extends Component
     public string $grievance_content = '';
     public bool $grievance_is_anonymous = false;
     public bool $grievance_against_manager = false;
+    public $grievance_attachment = null;
     public string $grievanceFilter = 'all'; // all, in_progress, resolved, suggestion
 
     // Evaluation form state
@@ -357,6 +361,7 @@ class EmployeePortal extends Component
         $this->grievance_content = '';
         $this->grievance_is_anonymous = false;
         $this->grievance_against_manager = false;
+        $this->grievance_attachment = null;
     }
 
     public function setGrievanceFilter(string $filter)
@@ -396,6 +401,11 @@ class EmployeePortal extends Component
 
         $employee = $this->employee;
 
+        $attachmentPath = null;
+        if ($this->grievance_attachment) {
+            $attachmentPath = $this->grievance_attachment->store('grievances', 'public');
+        }
+
         $grievance = Grievance::create([
             'user_id' => $user->id,
             'employee_id' => $employee?->id,
@@ -406,6 +416,7 @@ class EmployeePortal extends Component
             'content' => $this->grievance_content,
             'against_manager' => $this->grievance_against_manager,
             'department_id' => $employee?->department_id,
+            'attachment_path' => $attachmentPath,
             'status' => 'new',
         ]);
 

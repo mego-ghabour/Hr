@@ -41,6 +41,12 @@ class GrievancesTable
                     ->badge()
                     ->color(fn ($record) => $record->is_anonymous ? 'gray' : 'info'),
 
+                TextColumn::make('department.name')
+                    ->label('القسم المعني')
+                    ->placeholder('الإدارة العامة')
+                    ->badge()
+                    ->color('gray'),
+
                 TextColumn::make('type')
                     ->label('النوع')
                     ->badge()
@@ -135,6 +141,13 @@ class GrievancesTable
                         'high' => 'عالية',
                         'urgent' => 'عاجلة جداً',
                     ]),
+
+                SelectFilter::make('is_anonymous')
+                    ->label('الخصوصية والسرية')
+                    ->options([
+                        '1' => 'شكاوى سرية (مجهولة الهوية 🔒)',
+                        '0' => 'شكاوى معلنة الهوية',
+                    ]),
             ])
             ->recordActions([
                 Action::make('quick_resolve')
@@ -174,6 +187,39 @@ class GrievancesTable
                             ->success()
                             ->send();
                     }),
+
+                Action::make('copy_tracking_link')
+                    ->label('رابط التتبع')
+                    ->icon('heroicon-o-link')
+                    ->color('info')
+                    ->tooltip('عرض ونسخ رابط المتابعة المباشر لهذه التذكرة')
+                    ->modalHeading(fn ($record) => "رابط متابعة التذكرة: {$record->ticket_number}")
+                    ->modalDescription('يمكنك نسخ هذا الرابط وإرساله للموظف لمتابعة التحديثات والرد الإداري مباشرة دون تسجيل دخول:')
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('public_url')
+                            ->label('الرابط المباشر للموظف')
+                            ->default(fn ($record) => url('/complaints?ticket=' . $record->ticket_number))
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->suffixAction(
+                                \Filament\Actions\Action::make('copy')
+                                    ->icon('heroicon-o-clipboard-document')
+                                    ->tooltip('تم النسخ')
+                                    ->extraAttributes([
+                                        'onclick' => 'navigator.clipboard.writeText(this.closest("div").querySelector("input").value); alert("تم نسخ رابط التذكرة بنجاح!");',
+                                    ])
+                            ),
+                    ])
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق'),
+
+                Action::make('view_attachment')
+                    ->label('المرفق')
+                    ->icon('heroicon-o-paper-clip')
+                    ->color('gray')
+                    ->visible(fn ($record) => ! empty($record->attachment_path))
+                    ->url(fn ($record) => asset('storage/' . $record->attachment_path))
+                    ->openUrlInNewTab(),
 
                 EditAction::make(),
                 DeleteAction::make(),

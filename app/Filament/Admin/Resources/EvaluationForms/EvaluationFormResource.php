@@ -39,6 +39,25 @@ class EvaluationFormResource extends Resource
         return 'نماذج التقييم والاستبيانات';
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('evaluation_forms')) {
+                $count = EvaluationForm::where('is_active', true)->count();
+                return $count > 0 ? (string)$count : null;
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return EvaluationFormSchema::configure($schema);

@@ -95,6 +95,61 @@ class EvaluationsTable
                     ->searchable(),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('approve')
+                    ->label('اعتماد')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->status === 'submitted')
+                    ->requiresConfirmation()
+                    ->modalHeading('اعتماد التقييم رسمياً')
+                    ->modalDescription(fn ($record) => "هل تريد اعتماد نتيجة تقييم ({$record->evaluatedEmployee?->full_name}) بدرجة (" . number_format((float)$record->score, 2) . "/5.0)؟")
+                    ->action(function ($record): void {
+                        $record->update(['status' => 'reviewed']);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('تم اعتماد التقييم بنجاح')
+                            ->success()
+                            ->send();
+                    }),
+
+                \Filament\Actions\Action::make('view_summary')
+                    ->label('تفاصيل')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->modalHeading(fn ($record) => 'ملخص تقييم: ' . ($record->evaluatedEmployee?->full_name ?? ''))
+                    ->modalDescription(fn ($record) => 'النموذج: ' . ($record->form?->title ?? '') . ' | الفترة: ' . $record->period)
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('score_display')
+                            ->label('الدرجة الإجمالية')
+                            ->default(fn ($record) => number_format((float)$record->score, 2) . ' من 5.0 نجوم ⭐')
+                            ->disabled(),
+
+                        \Filament\Forms\Components\TextInput::make('evaluator_display')
+                            ->label('المُقيّم')
+                            ->default(fn ($record) => $record->display_evaluator_name)
+                            ->disabled(),
+
+                        \Filament\Forms\Components\Textarea::make('strengths_display')
+                            ->label('نقاط القوة والإنجازات')
+                            ->default(fn ($record) => $record->strengths ?: 'لا توجد ملاحظات مسجلة')
+                            ->disabled()
+                            ->rows(3),
+
+                        \Filament\Forms\Components\Textarea::make('improvements_display')
+                            ->label('نقاط التحسين والتطوير')
+                            ->default(fn ($record) => $record->areas_for_improvement ?: 'لا توجد ملاحظات مسجلة')
+                            ->disabled()
+                            ->rows(3),
+
+                        \Filament\Forms\Components\Textarea::make('action_plan_display')
+                            ->label('خطة العمل المقترحة (Action Plan)')
+                            ->default(fn ($record) => $record->action_plan ?: 'لا توجد خطة مسجلة')
+                            ->disabled()
+                            ->rows(3),
+                    ])
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('إغلاق'),
+
                 EditAction::make(),
                 DeleteAction::make(),
             ])

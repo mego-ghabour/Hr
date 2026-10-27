@@ -56,6 +56,8 @@ return new class extends Migration
             $table->string('ticket_number')->unique();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('employee_id')->nullable()->constrained('employees')->nullOnDelete();
+            $table->string('submitter_name')->nullable();
+            $table->string('submitter_contact')->nullable();
             $table->boolean('is_anonymous')->default(false);
             $table->string('type')->default('administrative'); // administrative, workplace, behavioral, suggestion, other
             $table->string('priority')->default('normal'); // low, normal, high, urgent

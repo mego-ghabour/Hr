@@ -9,7 +9,7 @@ class EvaluationPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isAdministrative();
     }
 
     public function view(User $user, Evaluation $model): bool

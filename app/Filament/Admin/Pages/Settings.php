@@ -86,6 +86,9 @@ class Settings extends Page
     public ?string $existing_logo = null;
     public $new_logo = null;
 
+    // Digital Grievances Box Settings
+    public bool $allow_public_grievances = true;
+
     // Password Update
     public string $current_password = '';
     public string $new_password = '';
@@ -241,6 +244,7 @@ class Settings extends Page
         $this->brand_primary_color = (string) Setting::get('brand_primary_color', '#0d9488');
         $this->font_family = (string) Setting::get('font_family', 'Cairo');
         $this->sidebar_theme = (string) Setting::get('sidebar_theme', 'auto_adaptive');
+        $this->allow_public_grievances = (bool) Setting::get('allow_public_grievances', true);
 
         $logo = Setting::get('logo');
         if ($logo && Storage::disk('public')->exists($logo)) {
@@ -327,6 +331,7 @@ class Settings extends Page
         Setting::set('brand_primary_color', trim($this->brand_primary_color));
         Setting::set('font_family', trim($this->font_family));
         Setting::set('sidebar_theme', trim($this->sidebar_theme));
+        Setting::set('allow_public_grievances', $this->allow_public_grievances ? '1' : '0');
 
         // تطبيق التوقيت فورياً على وقت تنفيذ الجلسة الحالية
         try {

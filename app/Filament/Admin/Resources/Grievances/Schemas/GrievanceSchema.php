@@ -74,6 +74,18 @@ class GrievanceSchema
                                 ->helperText(fn (Get $get) => $get('is_anonymous') ? 'معطل لأن الشكوى سرية مجهولة الهوية.' : '')
                                 ->native(false),
 
+                            TextInput::make('submitter_name')
+                                ->label('اسم مقدم الشكوى (مُقدّم من الرابط الخارجي)')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->visible(fn ($record) => ! empty($record?->submitter_name)),
+
+                            TextInput::make('submitter_contact')
+                                ->label('معلومات الاتصال (الهاتف / البريد)')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->visible(fn ($record) => ! empty($record?->submitter_contact)),
+
                             Toggle::make('against_manager')
                                 ->label('الشكوى متعلقة بالإدارة المباشرة ⚠️')
                                 ->helperText('في حال تفعيل هذا الخيار، يتم حجب الشكوى عن المدير المباشر وتوجيهها حصراً لإدارة الـ HR.')
@@ -115,6 +127,12 @@ class GrievanceSchema
                                 ])
                                 ->required()
                                 ->default('new')
+                                ->live()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state === 'resolved') {
+                                        $set('resolved_at', now()->format('Y-m-d H:i:s'));
+                                    }
+                                })
                                 ->native(false),
 
                             Select::make('assigned_to')

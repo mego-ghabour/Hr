@@ -10,6 +10,16 @@ class CreateEvaluation extends CreateRecord
 {
     protected static string $resource = EvaluationResource::class;
 
+    public function mount(): void
+    {
+        parent::mount();
+
+        $formId = request()->query('evaluation_form_id');
+        if ($formId) {
+            $this->form->fill(['evaluation_form_id' => (int) $formId]);
+        }
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['evaluator_id'] = auth()->id();

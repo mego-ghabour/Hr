@@ -1135,6 +1135,28 @@
                                 @error('sidebar_theme') <span style="color: #dc2626; font-size: 0.75rem;">{{ $message }}</span> @enderror
                             </div>
 
+                            <!-- Digital Grievances Public Access Setting -->
+                            <div style="margin-bottom: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.875rem; padding: 1.15rem;">
+                                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
+                                    <div style="flex: 1;">
+                                        <label for="allow_public_grievances_chk" style="font-weight: 800; color: #0f172a; font-size: 0.925rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                            <x-filament::icon icon="heroicon-o-chat-bubble-left-right" style="width: 1.25rem; height: 1.25rem; color: #0d9488;" />
+                                            <span>إتاحة صندوق الشكاوى والمقترحات للعموم وللموظفين بدون تسجيل دخول</span>
+                                        </label>
+                                        <p style="font-size: 0.775rem; color: #64748b; margin: 0.35rem 0 0 0; line-height: 1.5;">
+                                            عند تفعيل هذا الخيار، يمكن لأي موظف أو طرف معني إرسال شكوى أو مقترح مباشرة عبر رابط <code>{{ url('/complaints') }}</code> دون الحاجة لتسجيل الدخول، مع منحه كود متابعة سري فوري. في حال إيقافه، سيُحوّل الزائر تلقائياً لتسجيل الدخول إلى بوابة الموظف.
+                                        </p>
+                                        <div style="margin-top: 0.65rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <a href="{{ url('/complaints') }}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 700; color: #0d9488; background: #f0fdfa; border: 1px solid #ccfbf1; padding: 0.25rem 0.65rem; border-radius: 0.5rem; text-decoration: none;">
+                                                <x-filament::icon icon="heroicon-o-arrow-top-right-on-square" style="width: 0.9rem; height: 0.9rem;" />
+                                                <span>معاينة صفحة الشكاوى العامة ({{ url('/complaints') }})</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" id="allow_public_grievances_chk" wire:model="allow_public_grievances" style="width: 1.35rem; height: 1.35rem; accent-color: #0d9488; cursor: pointer; flex-shrink: 0; margin-top: 0.25rem;" />
+                                </div>
+                            </div>
+
                             <!-- Logo Upload -->
                             <div style="margin-bottom: 1.5rem; padding: 1rem; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 0.75rem;">
                                 <label class="form-label">شعار الشركة (Logo)</label>

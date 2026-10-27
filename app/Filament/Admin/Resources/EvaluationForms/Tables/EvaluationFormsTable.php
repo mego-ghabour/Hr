@@ -8,6 +8,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
@@ -56,9 +57,10 @@ class EvaluationFormsTable
                     ->badge()
                     ->color('primary'),
 
-                IconColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('مفعل')
-                    ->boolean(),
+                    ->onColor('success')
+                    ->offColor('gray'),
 
                 TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
@@ -83,6 +85,25 @@ class EvaluationFormsTable
                     ]),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('duplicate')
+                    ->label('استنساخ')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('استنساخ نموذج التقييم')
+                    ->modalDescription(fn ($record) => "هل تريد إنشاء نسخة جديدة من نموذج ({$record->title})؟")
+                    ->action(function ($record): void {
+                        $clone = $record->replicate();
+                        $clone->title = $record->title . ' (نسخة مستنسخة)';
+                        $clone->save();
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('تم استنساخ النموذج بنجاح')
+                            ->body('يمكنك الآن تعديل النسخة الجديدة وتخصيص معاييرها.')
+                            ->success()
+                            ->send();
+                    }),
+
                 EditAction::make(),
                 DeleteAction::make(),
             ])

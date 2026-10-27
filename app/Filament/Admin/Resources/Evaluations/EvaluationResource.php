@@ -39,6 +39,25 @@ class EvaluationResource extends Resource
         return 'سجل تقييمات الأداء';
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('evaluations')) {
+                $pendingCount = \App\Models\Evaluation::where('status', 'submitted')->count();
+                return $pendingCount > 0 ? (string)$pendingCount : null;
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return EvaluationSchema::configure($schema);

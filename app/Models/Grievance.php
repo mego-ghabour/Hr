@@ -15,6 +15,8 @@ class Grievance extends Model
         'ticket_number',
         'user_id',
         'employee_id',
+        'submitter_name',
+        'submitter_contact',
         'is_anonymous',
         'type',
         'priority',
@@ -78,7 +80,15 @@ class Grievance extends Model
             return $this->employee->full_name;
         }
 
-        return $this->user?->name ?? 'غير محدد';
+        if ($this->user) {
+            return $this->user->name;
+        }
+
+        if (! empty($this->submitter_name)) {
+            return $this->submitter_name . ($this->submitter_contact ? " ({$this->submitter_contact})" : '');
+        }
+
+        return 'زائر غير مسجل';
     }
 
     public function getTypeLabelAttribute(): string

@@ -27,11 +27,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
 // Shortcut redirect for /ess
 Route::get('/ess', fn () => redirect()->route('portal.dashboard'));
 
-// مسارات مختصرة وسريعة للشكاوى والتقييمات
-Route::get('/grievance', fn () => redirect('/portal?tab=grievances'));
-Route::get('/grievances', fn () => redirect('/portal?tab=grievances'));
-Route::get('/complaint', fn () => redirect('/portal?tab=grievances'));
-Route::get('/complaints', fn () => redirect('/portal?tab=grievances'));
+// مسارات صندوق الشكاوى والمقترحات الرقمي العام والتتبع
+Route::get('/complaints', \App\Livewire\PublicGrievancePage::class)->name('complaints.public');
+Route::get('/complaint', fn () => redirect()->route('complaints.public'));
+Route::get('/grievance', fn () => redirect()->route('complaints.public'));
+Route::get('/grievances', fn () => redirect()->route('complaints.public'));
 Route::get('/evaluations', fn () => redirect('/portal?tab=evaluations'));
 
 // Keep old route to redirect or just show jobs
