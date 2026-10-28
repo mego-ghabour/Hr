@@ -18,9 +18,9 @@ class LeaveTypeResource extends Resource
 {
     protected static ?string $model = LeaveType::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     public static function getNavigationGroup(): ?string
     {
@@ -29,7 +29,7 @@ class LeaveTypeResource extends Resource
 
     public static function getNavigationSort(): ?int
     {
-        return 6;
+        return 4;
     }
 
     public static function getModelLabel(): string

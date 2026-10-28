@@ -49,6 +49,22 @@ class LeaveBalancesRelationManager extends RelationManager
                 \Filament\Forms\Components\Select::make('leave_type_id')
                     ->label('نوع الإجازة')
                     ->relationship('leaveType', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        \Filament\Forms\Components\TextInput::make('name')
+                            ->label('اسم نوع الإجازة')
+                            ->placeholder('مثال: إجازة زواج، إجازة أمومة...')
+                            ->required(),
+                        \Filament\Forms\Components\TextInput::make('default_days_per_year')
+                            ->label('الرصيد الافتراضي (أيام بالسنة)')
+                            ->numeric()
+                            ->default(21)
+                            ->required(),
+                        \Filament\Forms\Components\Toggle::make('requires_approval')
+                            ->label('تتطلب موافقة المدير؟')
+                            ->default(true),
+                    ])
                     ->required(),
                 \Filament\Forms\Components\TextInput::make('year')
                     ->label('السنة')

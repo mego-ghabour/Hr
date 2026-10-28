@@ -32,6 +32,20 @@ class LeaveForm
                                 ->relationship('leaveType', 'name')
                                 ->searchable()
                                 ->preload()
+                                ->createOptionForm([
+                                    \Filament\Forms\Components\TextInput::make('name')
+                                        ->label('اسم نوع الإجازة')
+                                        ->placeholder('مثال: إجازة اضطرارية، إجازة دراسية...')
+                                        ->required(),
+                                    \Filament\Forms\Components\TextInput::make('default_days_per_year')
+                                        ->label('الرصيد الافتراضي السنوي (أيام)')
+                                        ->numeric()
+                                        ->default(21)
+                                        ->required(),
+                                    \Filament\Forms\Components\Toggle::make('requires_approval')
+                                        ->label('تتطلب موافقة المدير؟')
+                                        ->default(true),
+                                ])
                                 ->required(),
                             DatePicker::make('start_date')
                                 ->label('تاريخ البداية')
