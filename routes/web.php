@@ -26,6 +26,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
 // Shortcut redirect for /ess
 Route::get('/ess', fn () => redirect()->route('portal.dashboard'));
+Route::get('/install', fn () => redirect('/admin/install-app'));
+Route::get('/install-app', fn () => redirect('/admin/install-app'));
+Route::get('/clock', fn () => redirect('/portal?tab=attendance'));
+Route::get('/punch', fn () => redirect('/portal?tab=attendance'));
 
 // مسارات صندوق الشكاوى والمقترحات الرقمي العام والتتبع
 Route::get('/complaints', \App\Livewire\PublicGrievancePage::class)->name('complaints.public');

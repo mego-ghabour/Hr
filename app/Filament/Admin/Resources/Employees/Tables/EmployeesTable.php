@@ -2,12 +2,16 @@
 
 namespace App\Filament\Admin\Resources\Employees\Tables;
 
+use App\Services\PermissionModuleService;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\Layout\Stack;
@@ -47,6 +51,52 @@ class EmployeesTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('managePermissions')
+                    ->label('صلاحيات الوصول')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('primary')
+                    ->modalHeading('')
+                    ->modalWidth('2xl')
+                    ->modalSubmitActionLabel('حفظ الصلاحيات')
+                    ->modalCancelActionLabel('إلغاء')
+                    ->fillForm(function ($record) {
+                        $user = $record->user;
+                        if (! $user) {
+                            return ['active_modules' => []];
+                        }
+                        return [
+                            'active_modules' => PermissionModuleService::getActiveModulesForRecord($user),
+                        ];
+                    })
+                    ->form([
+                        ViewField::make('active_modules')
+                            ->view('filament.admin.components.permission-matrix-modal')
+                            ->columnSpanFull(),
+                    ])
+                    ->action(function (array $data, $record) {
+                        $user = $record->user;
+                        if (! $user) {
+                            $user = \App\Models\User::firstOrCreate(
+                                ['email' => $record->work_email ?: ($record->personal_email ?: "emp_{$record->id}@company.local")],
+                                [
+                                    'name' => $record->full_name,
+                                    'password' => bcrypt('password123'),
+                                ]
+                            );
+                            $record->update(['user_id' => $user->id]);
+                        }
+
+                        $modules = $data['active_modules'] ?? [];
+                        if (is_string($modules)) {
+                            $modules = json_decode($modules, true) ?: [];
+                        }
+                        PermissionModuleService::syncModulesToRecord($user, $modules);
+                        Notification::make()
+                            ->title('تم حفظ الصلاحيات بنجاح')
+                            ->body('تم تحديث صلاحيات الوصول للموظف ' . $record->full_name)
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

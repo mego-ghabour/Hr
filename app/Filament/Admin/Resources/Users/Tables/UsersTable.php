@@ -2,11 +2,14 @@
 
 namespace App\Filament\Admin\Resources\Users\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -69,6 +72,34 @@ class UsersTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('managePermissions')
+                    ->label('إدارة الصلاحيات')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('primary')
+                    ->modalHeading('')
+                    ->modalWidth('2xl')
+                    ->modalSubmitActionLabel('حفظ الصلاحيات')
+                    ->modalCancelActionLabel('إلغاء')
+                    ->fillForm(fn ($record) => [
+                        'active_modules' => \App\Services\PermissionModuleService::getActiveModulesForRecord($record),
+                    ])
+                    ->form([
+                        ViewField::make('active_modules')
+                            ->view('filament.admin.components.permission-matrix-modal')
+                            ->columnSpanFull(),
+                    ])
+                    ->action(function (array $data, $record) {
+                        $modules = $data['active_modules'] ?? [];
+                        if (is_string($modules)) {
+                            $modules = json_decode($modules, true) ?: [];
+                        }
+                        \App\Services\PermissionModuleService::syncModulesToRecord($record, $modules);
+                        Notification::make()
+                            ->title('تم حفظ الصلاحيات بنجاح')
+                            ->body('تم تحديث صلاحيات الوصول للمستخدم ' . $record->name)
+                            ->success()
+                            ->send();
+                    }),
                 DeleteAction::make()
                     ->hidden(fn ($record) => $record && $record->id === auth()->id()),
             ])

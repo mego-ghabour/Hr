@@ -15,12 +15,22 @@ class CreateRole extends CreateRecord
         foreach (RoleForm::getPermissionGroups() as $group) {
             unset($data[$group['field']]);
         }
+        unset($data['active_modules']);
 
         return $data;
     }
 
     protected function afterCreate(): void
     {
+        $modules = $this->data['active_modules'] ?? null;
+        if (!empty($modules)) {
+            if (is_string($modules)) {
+                $modules = json_decode($modules, true) ?: [];
+            }
+            \App\Services\PermissionModuleService::syncModulesToRecord($this->record, $modules);
+            return;
+        }
+
         $allPerms = [];
         foreach (RoleForm::getPermissionGroups() as $group) {
             $field = $group['field'];

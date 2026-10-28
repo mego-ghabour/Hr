@@ -191,8 +191,17 @@ class RoleForm
                             ->placeholder('مثال: HR Specialist أو مدير قسم'),
                     ]),
 
-                Section::make('مصفوفة الصلاحيات المقسمة حسب الأقسام')
-                    ->description('قم بتحديد الصلاحيات الممنوحة لهذا الدور بدقة. يمكنك استخدام "تحديد الكل" في كل قسم لتسريع الإعداد.')
+                Section::make('إدارة صلاحيات الوصول للصفحات والوحدات')
+                    ->description('حدد الصفحات والوحدات التي يمكن لهذا الدور الوصول إليها عبر تفعيل المفاتيح أدناه.')
+                    ->schema([
+                        \Filament\Forms\Components\ViewField::make('active_modules')
+                            ->view('filament.admin.components.permission-matrix-modal')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('الصلاحيات التفصيلية الدقيقة (متقدم)')
+                    ->description('يمكنك تخصيص الأذونات الفردية بدقة لكل قسم إذا لزم الأمر.')
+                    ->collapsed()
                     ->schema([
                         Tabs::make('RolePermissionsTabs')
                             ->tabs($tabs)

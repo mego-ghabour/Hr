@@ -119,6 +119,22 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn (): string => \Illuminate\Support\Facades\Blade::render('
+                    <!-- PWA Manifest & Capabilities -->
+                    <link rel="manifest" href="/manifest.json">
+                    <meta name="theme-color" content="' . $primaryColorHex . '">
+                    <meta name="apple-mobile-web-app-capable" content="yes">
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                    <meta name="apple-mobile-web-app-title" content="' . addslashes($brandName) . '">
+                    <link rel="apple-touch-icon" href="/icons/icon.svg">
+                    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+                    <script>
+                        if ("serviceWorker" in navigator) {
+                            window.addEventListener("load", () => {
+                                navigator.serviceWorker.register("/sw.js").catch(() => {});
+                            });
+                        }
+                    </script>
+
                     <style>
                         :root {
                             --primary-color: ' . $primaryColorHex . ';

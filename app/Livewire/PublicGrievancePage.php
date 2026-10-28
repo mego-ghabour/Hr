@@ -20,6 +20,10 @@ class PublicGrievancePage extends Component
     // View State: 'submit', 'success', 'track'
     public string $viewMode = 'submit';
 
+    // Wizard State
+    public int $currentStep = 1;
+    public int $totalSteps = 3;
+
     // Submission Form State
     public string $type = 'administrative'; // administrative, workplace, behavioral, suggestion, other
     public string $priority = 'normal'; // low, normal, high, urgent
@@ -85,7 +89,71 @@ class PublicGrievancePage extends Component
     {
         if (in_array($mode, ['submit', 'track'])) {
             $this->viewMode = $mode;
+            if ($mode === 'submit') {
+                $this->currentStep = 1;
+            }
             $this->resetValidation();
+        }
+    }
+
+    public function nextStep(): void
+    {
+        if ($this->currentStep === 1) {
+            $rules = [
+                'type' => 'required|string|in:administrative,workplace,behavioral,suggestion,other',
+                'is_anonymous' => 'boolean',
+            ];
+
+            if (! $this->is_anonymous && ! Auth::check()) {
+                $rules['submitter_name'] = 'required|string|min:3|max:100';
+                $rules['submitter_contact'] = 'nullable|string|max:100';
+            }
+
+            $messages = [
+                'type.required' => 'يرجى اختيار تصنيف الشكوى أو المقترح.',
+                'submitter_name.required' => 'يرجى إدخال اسمك أو قم باختيار "تقديم سري 100%".',
+                'submitter_name.min' => 'الاسم يجب ألا يقل عن 3 أحرف.',
+            ];
+
+            $this->validate($rules, $messages);
+            $this->currentStep = 2;
+        } elseif ($this->currentStep === 2) {
+            $rules = [
+                'title' => 'required|string|min:4|max:200',
+                'content' => 'required|string|min:15|max:5000',
+                'priority' => 'required|string|in:low,normal,high,urgent',
+                'department_id' => 'nullable|exists:departments,id',
+                'against_manager' => 'boolean',
+            ];
+
+            $messages = [
+                'title.required' => 'يرجى كتابة عنوان للموضوع.',
+                'title.min' => 'العنوان يجب ألا يقل عن 4 أحرف.',
+                'content.required' => 'يرجى كتابة التفاصيل والوقائع بوضوح.',
+                'content.min' => 'يرجى كتابة تفاصيل وافية (15 حرفاً على الأقل) لنتمكن من المتابعة الدقيقة.',
+                'priority.required' => 'يرجى تحديد درجة الأهمية.',
+            ];
+
+            $this->validate($rules, $messages);
+            $this->currentStep = 3;
+        }
+    }
+
+    public function previousStep(): void
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
+    }
+
+    public function goToStep(int $step): void
+    {
+        if ($step < $this->currentStep) {
+            $this->currentStep = $step;
+        } elseif ($step === 2 && $this->currentStep === 1) {
+            $this->nextStep();
+        } elseif ($step === 3 && $this->currentStep === 2) {
+            $this->nextStep();
         }
     }
 
@@ -130,7 +198,17 @@ class PublicGrievancePage extends Component
             'attachment.mimes' => 'صيغ الملفات المسموح بها: PDF, JPG, PNG, DOC, DOCX.',
         ];
 
-        $this->validate($rules, $messages);
+        try {
+            $this->validate($rules, $messages);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errorKeys = array_keys($e->errors());
+            if (in_array('type', $errorKeys) || in_array('submitter_name', $errorKeys)) {
+                $this->currentStep = 1;
+            } elseif (in_array('title', $errorKeys) || in_array('content', $errorKeys) || in_array('priority', $errorKeys)) {
+                $this->currentStep = 2;
+            }
+            throw $e;
+        }
 
         $attachmentPath = null;
         if ($this->attachment) {
@@ -159,6 +237,7 @@ class PublicGrievancePage extends Component
         $this->submittedTicketNumber = $grievance->ticket_number;
         $this->submittedGrievance = $grievance;
         $this->viewMode = 'success';
+        $this->currentStep = 1;
     }
 
     public function lookupTicket(): void
@@ -212,6 +291,7 @@ class PublicGrievancePage extends Component
         $this->submittedTicketNumber = null;
         $this->submittedGrievance = null;
         $this->viewMode = 'submit';
+        $this->currentStep = 1;
         $this->resetValidation();
     }
 

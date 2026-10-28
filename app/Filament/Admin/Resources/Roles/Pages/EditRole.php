@@ -31,6 +31,8 @@ class EditRole extends EditRecord
             $data[$field] = array_values(array_intersect($currentPerms, $groupKeys));
         }
 
+        $data['active_modules'] = \App\Services\PermissionModuleService::getActiveModulesForRecord($this->record);
+
         return $data;
     }
 
@@ -39,12 +41,22 @@ class EditRole extends EditRecord
         foreach (RoleForm::getPermissionGroups() as $group) {
             unset($data[$group['field']]);
         }
+        unset($data['active_modules']);
 
         return $data;
     }
 
     protected function afterSave(): void
     {
+        $modules = $this->data['active_modules'] ?? null;
+        if (!empty($modules)) {
+            if (is_string($modules)) {
+                $modules = json_decode($modules, true) ?: [];
+            }
+            \App\Services\PermissionModuleService::syncModulesToRecord($this->record, $modules);
+            return;
+        }
+
         $allPerms = [];
         foreach (RoleForm::getPermissionGroups() as $group) {
             $field = $group['field'];

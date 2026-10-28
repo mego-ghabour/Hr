@@ -19,6 +19,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'بوابة الموظف الذاتية' }} | {{ \App\Models\Setting::get('brand_name', 'نظام الموارد البشرية') }}</title>
 
+    <!-- PWA & Mobile Capabilities -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{ \App\Models\Setting::get('brand_name', 'Bwsla HR') }}">
+    <link rel="apple-touch-icon" href="/icons/icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+
     <!-- Dynamic Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,5 +119,16 @@
     </div>
 
     @livewireScripts
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('Bwsla HR PWA ServiceWorker registered:', reg.scope))
+                    .catch((err) => console.warn('Bwsla HR PWA ServiceWorker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
