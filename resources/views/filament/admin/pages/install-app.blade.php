@@ -1,743 +1,1001 @@
-<div class="space-y-8 font-cairo text-slate-800 antialiased" dir="rtl" x-data="installAppHandler()">
+<x-filament-panels::page>
+    <style>
+        .pwa-page-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            font-family: inherit;
+            direction: rtl;
+            color: #1e293b;
+        }
+        .dark .pwa-page-wrap {
+            color: #f1f5f9;
+        }
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 1. TOP HERO BANNER                                               --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="relative rounded-3xl p-6 sm:p-8 text-white shadow-xl overflow-hidden border border-slate-700/60"
-         style="background: linear-gradient(135deg, #090e1a 0%, #0f172a 50%, #1e293b 100%);">
-        
-        {{-- Ambient Glows --}}
-        <div class="absolute -top-16 -left-16 w-56 h-56 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        /* 1. Hero Banner */
+        .pwa-hero {
+            background: linear-gradient(135deg, #090e1a 0%, #0f172a 50%, #1e293b 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        @media (min-width: 768px) {
+            .pwa-hero {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+        .pwa-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(13, 148, 136, 0.2);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            color: #2dd4bf;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            width: fit-content;
+        }
+        .pwa-ping {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 9999px;
+            background: #2dd4bf;
+            animation: pwaPulse 1.8s infinite;
+        }
+        @keyframes pwaPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+        }
 
-        <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-            <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 bg-teal-500/20 border border-teal-400/30 text-teal-300 text-xs font-bold px-3 py-1 rounded-full">
-                    <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+        /* 2. Biometric Clock Card */
+        .pwa-clock-card {
+            background: linear-gradient(135deg, #090e1a 0%, #042f2e 50%, #090e1a 100%);
+            border: 1.5px solid rgba(45, 212, 191, 0.35);
+            border-radius: 1.5rem;
+            padding: 1.75rem;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(13, 148, 136, 0.15);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        @media (min-width: 1024px) {
+            .pwa-clock-card {
+                grid-template-columns: 7fr 5fr;
+            }
+        }
+        .pwa-clock-box {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .pwa-time-display {
+            font-family: monospace;
+            font-size: 1.85rem;
+            font-weight: 900;
+            color: #5eead4;
+            letter-spacing: 2px;
+            direction: ltr;
+        }
+
+        /* Fingerprint Button */
+        .pwa-fingerprint-btn {
+            width: 6.5rem;
+            height: 6.5rem;
+            border-radius: 1.5rem;
+            background: linear-gradient(135deg, #0d9488 0%, #10b981 100%);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .pwa-fingerprint-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5);
+        }
+        .pwa-fingerprint-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* 3. Platform Cards Grid */
+        .pwa-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+        @media (min-width: 768px) {
+            .pwa-grid-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        .pwa-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.25rem;
+            transition: all 0.2s;
+        }
+        .dark .pwa-card {
+            background: #0f172a;
+            border-color: #1e293b;
+        }
+        .pwa-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+        }
+
+        /* Steps list */
+        .pwa-step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+        .pwa-step-num {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        /* 4. Action Buttons */
+        .btn-purple {
+            background: #7c3aed;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.825rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+            width: 100%;
+        }
+        .btn-purple:hover {
+            background: #6d28d9;
+            transform: translateY(-1px);
+        }
+        .btn-sky {
+            background: #0284c7;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.825rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+            width: 100%;
+        }
+        .btn-sky:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+        .btn-emerald {
+            background: #059669;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.825rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+            width: 100%;
+        }
+        .btn-emerald:hover {
+            background: #047857;
+            transform: translateY(-1px);
+        }
+        .btn-amber {
+            background: #d97706;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.825rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-amber:hover { background: #b45309; }
+        .btn-danger {
+            background: #e11d48;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.875rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.825rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-danger:hover { background: #be123c; }
+
+        /* Icon Badge Square */
+        .icon-square-purple {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            background: #f3e8ff;
+            color: #7c3aed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .icon-square-sky {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            background: #e0f2fe;
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .icon-square-emerald {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            background: #d1fae5;
+            color: #059669;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* Floating Toast Prompt */
+        .pwa-floating-toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            z-index: 9999;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            padding: 0.875rem 1.15rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            max-width: 24rem;
+        }
+        .dark .pwa-floating-toast {
+            background: #0f172a;
+            border-color: #334155;
+            color: #ffffff;
+        }
+    </style>
+
+    <div class="pwa-page-wrap" x-data="installAppHandler()">
+
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 1. TOP HERO BANNER                                               --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-hero">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div class="pwa-badge">
+                    <span class="pwa-ping"></span>
                     <span>تطبيق ويب تقدمي معتمد (Progressive Web App - PWA)</span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                <h1 style="font-size: 1.85rem; font-weight: 900; margin: 0; line-height: 1.2;">
                     تثبيت التطبيق
                 </h1>
-                <p class="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
-                    ثبّت <strong class="text-white">{{ $brandName }}</strong> كتطبيق PWA آمن من المتصفح للحصول على تجربة أسرع وأسهل بدون تحميل ملفات خارجية وبصمة مباشرة لحضور وانصراف الموظفين.
+                <p style="font-size: 0.875rem; color: #94a3b8; margin: 0; max-width: 44rem; line-height: 1.6;">
+                    ثبّت <strong style="color: #ffffff;">{{ $brandName }}</strong> كتطبيق PWA آمن من المتصفح للحصول على تجربة أسرع وأسهل بدون تحميل ملفات خارجية وبصمة مباشرة لحضور وانصراف الموظفين.
                 </p>
             </div>
 
-            <div class="shrink-0 flex items-center gap-3">
+            <div style="flex-shrink: 0;">
                 <button type="button"
                         @click="triggerPwaInstall()"
-                        class="px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm shadow-lg shadow-purple-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+                        class="btn-purple"
+                        style="width: auto; padding: 0.85rem 1.5rem; font-size: 0.875rem;">
                     <span>💻</span>
                     <span>تثبيت مباشر على Chrome (كمبيوتر)</span>
                 </button>
             </div>
         </div>
-    </div>
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 2. SMART FINGERPRINT CLOCK-IN SECTION (البصمة الإلكترونية)       --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 border border-teal-500/30 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-        <div class="absolute top-0 right-1/4 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 2. SMART BIOMETRIC CLOCK-IN SECTION                              --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-clock-card">
             
-            {{-- Clock & Employee Info (7 cols) --}}
-            <div class="lg:col-span-7 space-y-3">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 border border-teal-400/30 flex items-center justify-center text-sm font-bold">
-                        🕒
-                    </span>
+            {{-- Clock & Attendance Info --}}
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.5rem;">🕒</span>
                     <div>
-                        <h2 class="text-lg sm:text-xl font-black text-white">البصمة الذكية لتسجيل الحضور والانصراف</h2>
-                        <span class="text-xs text-teal-200/80 font-medium">سجّل حضورك وانصرافك مباشرة من داخل التطبيق مع تحديد الموقع الجغرافي GPS</span>
+                        <h2 style="font-size: 1.15rem; font-weight: 900; margin: 0; color: #ffffff;">
+                            البصمة الذكية لتسجيل الحضور والانصراف
+                        </h2>
+                        <span style="font-size: 0.775rem; color: #99f6e4;">
+                            سجّل حضورك وانصرافك مباشرة من داخل التطبيق مع تحديد الموقع الجغرافي GPS
+                        </span>
                     </div>
                 </div>
 
-                {{-- Digital Live Clock --}}
-                <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
+                {{-- Time Display Box --}}
+                <div class="pwa-clock-box">
                     <div>
-                        <span class="text-[11px] font-bold text-slate-400 block mb-0.5">الوقت الحالي المعتمد:</span>
-                        <div class="font-mono text-2xl sm:text-3xl font-black text-teal-300 tracking-wider" x-text="currentTime">
+                        <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 0.2rem;">
+                            الوقت الحالي المعتمد:
+                        </span>
+                        <div class="pwa-time-display" x-text="currentTime">
                             --:--:--
                         </div>
                     </div>
 
-                    <div class="text-right">
-                        <span class="text-[11px] font-bold text-slate-400 block mb-0.5">حالة البصمة اليوم:</span>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 0.2rem;">
+                            حالة البصمة اليوم:
+                        </span>
                         <template x-if="clockStatus === 'clocked_in'">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 0.75rem; font-weight: 800; padding: 0.3rem 0.75rem; border-radius: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                                <span style="width: 6px; height: 6px; border-radius: 9999px; background: #34d399;"></span>
                                 <span>على رأس العمل الآن ✓</span>
                             </span>
                         </template>
                         <template x-if="clockStatus === 'clocked_out'">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-400/30">
-                                <span>تم تسجيل الانصراف ✓</span>
+                            <span style="background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-size: 0.75rem; font-weight: 800; padding: 0.3rem 0.75rem; border-radius: 0.5rem;">
+                                تم تسجيل الانصراف اليوم ✓
                             </span>
                         </template>
                         <template x-if="clockStatus === 'not_clocked'">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-400/30">
-                                <span>لم تسجل الحضور اليوم</span>
+                            <span style="background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; font-size: 0.75rem; font-weight: 800; padding: 0.3rem 0.75rem; border-radius: 0.5rem;">
+                                لم تسجل الحضور اليوم
                             </span>
                         </template>
                     </div>
                 </div>
 
-                {{-- GPS Status pill --}}
-                <div class="text-xs text-slate-400 flex items-center gap-2">
-                    <span class="text-base" :class="coords ? 'text-emerald-400' : 'text-amber-400'">📍</span>
-                    <span x-text="gpsMessage">جارٍ فحص إحداثيات الموقع الجغرافي...</span>
+                {{-- Location / GPS Status --}}
+                <div style="font-size: 0.775rem; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>📍</span>
+                    <span x-text="gpsMessage">جارٍ التحقق من إحداثيات GPS للموقع...</span>
                 </div>
             </div>
 
-            {{-- Biometric Fingerprint Button (5 cols) --}}
-            <div class="lg:col-span-5 flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-2xl text-center">
-                
-                {{-- Interactive Fingerprint Button --}}
+            {{-- Biometric Fingerprint Button --}}
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1.25rem; text-align: center;">
                 <button type="button"
                         @click="handleClockAction()"
                         :disabled="isClocking"
-                        class="group relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-teal-600 to-emerald-500 hover:from-teal-500 hover:to-emerald-400 text-white flex flex-col items-center justify-center shadow-2xl shadow-teal-500/40 hover:shadow-teal-500/60 transition-all duration-300 cursor-pointer active:scale-95 disabled:opacity-50">
-                    
-                    {{-- Animated Ripple effect --}}
-                    <span class="absolute inset-0 rounded-3xl border-2 border-teal-300/40 animate-ping pointer-events-none"></span>
-
-                    <span class="text-3xl sm:text-4xl group-hover:scale-110 transition-transform">
-                        <template x-if="!isClocking">
-                            <span>🪪</span>
-                        </template>
-                        <template x-if="isClocking">
-                            <span class="animate-spin inline-block">⏳</span>
-                        </template>
+                        class="pwa-fingerprint-btn">
+                    <span style="font-size: 2.2rem;">
+                        <template x-if="!isClocking"><span>🪪</span></template>
+                        <template x-if="isClocking"><span>⏳</span></template>
                     </span>
-                    <span class="text-[11px] font-black mt-1 uppercase tracking-wider" x-text="clockButtonText">
+                    <span style="font-size: 0.65rem; font-weight: 900; margin-top: 0.25rem; text-transform: uppercase;" x-text="clockButtonText">
                         تسجيل بصمة
                     </span>
                 </button>
 
-                <p class="text-xs font-bold text-slate-300 mt-3" x-text="clockInstructionText">
+                <p style="font-size: 0.775rem; font-weight: 700; color: #cbd5e1; margin: 0.75rem 0 0.25rem 0;" x-text="clockInstructionText">
                     اضغط على البصمة لتسجيل الحضور أو الانصراف الذاتي
                 </p>
 
-                <a href="/portal?tab=attendance" class="text-xs text-teal-400 hover:text-teal-300 font-extrabold underline mt-2 block">
+                <a href="/portal?tab=attendance" style="font-size: 0.75rem; color: #2dd4bf; font-weight: 800; text-decoration: underline; margin-top: 0.35rem;">
                     عرض سجل الحضور الكامل في بوابة الموظف ↗
                 </a>
             </div>
 
         </div>
-    </div>
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 3. THREE PLATFORM INSTALLATION CARDS                             --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 3. THREE PLATFORM INSTALLATION CARDS                             --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-grid-3">
 
-        {{-- ── Card 1: Windows / Mac (Desktop) ── --}}
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
-            <div>
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shadow-xs">
-                        💻
-                    </div>
-                    <div>
-                        <h3 class="font-black text-slate-900 text-base">Windows / Mac (Desktop)</h3>
-                        <span class="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">Chrome & Edge</span>
-                    </div>
-                </div>
-
-                <div class="space-y-3.5 my-5 text-xs text-slate-700 font-bold">
-                    <div class="flex items-start gap-2.5">
-                        <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-800 text-[11px] font-black flex items-center justify-center shrink-0">1</span>
-                        <span>افتح النظام على متصفح Chrome أو Edge.</span>
-                    </div>
-                    <div class="flex items-start gap-2.5">
-                        <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-800 text-[11px] font-black flex items-center justify-center shrink-0">2</span>
-                        <span>ابحث عن أيقونة التثبيت (📥) في شريط العنوان أو من قائمة المتصفح.</span>
-                    </div>
-                    <div class="flex items-start gap-2.5">
-                        <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-800 text-[11px] font-black flex items-center justify-center shrink-0">3</span>
-                        <span>اضغط Install ليعمل النظام كتطبيق مستقل وسريع على سطح المكتب.</span>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <button type="button"
-                        @click="triggerPwaInstall()"
-                        class="w-full py-3 px-4 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-md shadow-purple-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                    <span>📥</span>
-                    <span>تثبيت مباشر على Chrome (كمبيوتر)</span>
-                </button>
-            </div>
-        </div>
-
-        {{-- ── Card 2: iPhone / iPad (Safari) ── --}}
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
-            <div>
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl shadow-xs">
-                        📱
-                    </div>
-                    <div>
-                        <h3 class="font-black text-slate-900 text-base">iPhone / iPad (Safari)</h3>
-                        <span class="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md">Apple iOS</span>
-                    </div>
-                </div>
-
-                <div class="space-y-3.5 my-5 text-xs text-slate-700 font-bold">
-                    <div class="flex items-start gap-2.5">
-                        <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-800 text-[11px] font-black flex items-center justify-center shrink-0">1</span>
-                        <span>افتح النظام باستخدام <strong>Safari</strong> (وليس Chrome) على iPhone أو iPad.</span>
-                    </div>
-                    <div class="flex items-start gap-2.5">
-                        <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-800 text-[11px] font-black flex items-center justify-center shrink-0">2</span>
-                        <span>اضغط زر المشاركة <strong>Share (⎋)</strong> أسفل أو أعلى الشاشة.</span>
-                    </div>
-                    <div class="flex items-start gap-2.5">
-                        <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-800 text-[11px] font-black flex items-center justify-center shrink-0">3</span>
-                        <span>اختر <strong>"Add to Home Screen"</strong> ثم اضغط على <strong>Add</strong>.</span>
-                    </div>
-                </div>
-
-                {{-- iOS Important Notice --}}
-                <div class="bg-sky-50 border border-sky-200 rounded-2xl p-3 text-[11px] text-sky-900 space-y-1 font-medium">
-                    <strong class="font-black text-sky-950 block">ملاحظات مهمة في iOS:</strong>
-                    <p>• افتح Safari وتأكد أن الرابط يبدأ بـ https://</p>
-                    <p>• ستظهر أيقونة التطبيق على شاشتك الرئيسية كأي تطبيق رسمي من App Store.</p>
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <button type="button"
-                        @click="showIosModal = true"
-                        class="w-full py-3 px-4 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md shadow-sky-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                    <span>📱</span>
-                    <span>عرض دليل صور التثبيت لـ iPhone</span>
-                </button>
-            </div>
-        </div>
-
-        {{-- ── Card 3: Android PWA ── --}}
-        <div class="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
-            <div>
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-xs">
-                        🤖
-                    </div>
-                    <div>
-                        <h3 class="font-black text-slate-900 text-base">Android PWA</h3>
-                        <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">Samsung, Xiaomi, etc.</span>
-                    </div>
-                </div>
-
-                <div class="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-3 mb-3">
-                    <strong class="text-xs font-black text-emerald-950 block mb-1">الطريقة 1: من زر التثبيت المباشر</strong>
-                    <ol class="text-[11px] text-emerald-900 space-y-1 font-semibold list-decimal list-inside">
-                        <li>اضغط زر تثبيت PWA على Android أدناه.</li>
-                        <li>اختر Install / Add to Home screen من النافذة.</li>
-                        <li>افتح التطبيق من الأيقونة على الشاشة الرئيسية.</li>
-                    </ol>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3">
-                    <strong class="text-xs font-black text-slate-900 block mb-1">الطريقة 2: من قائمة Chrome</strong>
-                    <ol class="text-[11px] text-slate-700 space-y-1 font-medium list-decimal list-inside">
-                        <li>افتح قائمة Chrome (الثلاث نقاط في الزاوية).</li>
-                        <li>اختر Install app أو إضافة إلى الشاشة الرئيسية.</li>
-                        <li>أكد التثبيت ثم افتح {{ $brandName }} كأبلكيشن مستقل.</li>
-                    </ol>
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <button type="button"
-                        @click="triggerPwaInstall()"
-                        class="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                    <span>⚡</span>
-                    <span>تثبيت PWA فوراً على Android</span>
-                </button>
-            </div>
-        </div>
-
-    </div>
-
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 4. IMPORTANT POST-INSTALLATION SETTINGS (إعدادات مهمة بعد التثبيت) --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
-        <div class="flex items-center gap-3">
-            <span class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
-                ⚙️
-            </span>
-            <div>
-                <h3 class="text-base sm:text-lg font-black text-slate-900">إعدادات مهمة بعد التثبيت</h3>
-                <p class="text-xs sm:text-sm text-slate-500 font-medium">قفل الإشعارات وضبط البطارية على No restrictions لضمان وصول التنبيهات في وقتها:</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            {{-- Notification Perms --}}
-            <div class="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-4 flex flex-col justify-between">
+            {{-- Card 1: Windows / Mac Desktop --}}
+            <div class="pwa-card">
                 <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-lg">🔔</span>
-                        <strong class="text-xs sm:text-sm font-black text-emerald-950">تفعيل الإشعارات</strong>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div class="icon-square-purple">💻</div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 900; margin: 0;">Windows / Mac (Desktop)</h3>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: #7c3aed; background: #f3e8ff; padding: 0.15rem 0.5rem; border-radius: 0.35rem;">Chrome & Edge</span>
+                        </div>
                     </div>
-                    <p class="text-[11px] sm:text-xs text-emerald-900 font-medium leading-relaxed">
-                        اسمح للتطبيق بإرسال إشعارات الدوام، الرواتب، وتذكيرات بداية ونهاية الشفت.
+
+                    <div style="margin: 1.25rem 0;">
+                        <div class="pwa-step-item">
+                            <span class="pwa-step-num" style="background: #f3e8ff; color: #7c3aed;">1</span>
+                            <span>افتح النظام على متصفح Chrome أو Edge.</span>
+                        </div>
+                        <div class="pwa-step-item">
+                            <span class="pwa-step-num" style="background: #f3e8ff; color: #7c3aed;">2</span>
+                            <span>ابحث عن أيقونة التثبيت (📥) في شريط العنوان أو من قائمة المتصفح.</span>
+                        </div>
+                        <div class="pwa-step-item">
+                            <span class="pwa-step-num" style="background: #f3e8ff; color: #7c3aed;">3</span>
+                            <span>اضغط Install ليعمل النظام كتطبيق مستقل وسريع على سطح المكتب.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="button" @click="triggerPwaInstall()" class="btn-purple">
+                        <span>📥</span>
+                        <span>تثبيت مباشر على Chrome (كمبيوتر)</span>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Card 2: iPhone / iPad (Safari) --}}
+            <div class="pwa-card">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div class="icon-square-sky">📱</div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 900; margin: 0;">iPhone / iPad (Safari)</h3>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 0.15rem 0.5rem; border-radius: 0.35rem;">Apple iOS</span>
+                        </div>
+                    </div>
+
+                    <div style="margin: 1.25rem 0;">
+                        <div class="pwa-step-item">
+                            <span class="pwa-step-num" style="background: #e0f2fe; color: #0284c7;">1</span>
+                            <span>افتح النظام باستخدام <strong>Safari</strong> (وليس Chrome) على iPhone أو iPad.</span>
+                        </div>
+                        <div class="pwa-step-item">
+                            <span class="pwa-step-num" style="background: #e0f2fe; color: #0284c7;">2</span>
+                            <span>اضغط زر المشاركة <strong>Share (⎋)</strong> أسفل أو أعلى الشاشة.</span>
+                        </div>
+                        <div class="pwa-step-item">
+                            <span class="pwa-step-num" style="background: #e0f2fe; color: #0284c7;">3</span>
+                            <span>اختر <strong>"Add to Home Screen"</strong> ثم اضغط على <strong>Add</strong>.</span>
+                        </div>
+                    </div>
+
+                    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.75rem; padding: 0.75rem; font-size: 0.725rem; color: #0369a1; line-height: 1.5;">
+                        <strong style="display: block; margin-bottom: 0.25rem;">ملاحظات مهمة في iOS:</strong>
+                        • افتح Safari وتأكد أن الرابط يبدأ بـ https://<br>
+                        • ستظهر أيقونة التطبيق على شاشتك الرئيسية كأي تطبيق رسمي من App Store.
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.5rem;">
+                    <button type="button" @click="alert('طريقة التثبيت على iPhone:\n1. افتح الرابط في متصفح Safari\n2. اضغط على أيقونة المشاركة (Share) في أسفل الشاشة\n3. مرر لأسفل واختر إضافة إلى الصفحة الرئيسية (Add to Home Screen)\n4. اضغط إضافة (Add)')" class="btn-sky">
+                        <span>📱</span>
+                        <span>إرشادات التثبيت لـ iPhone</span>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Card 3: Android PWA --}}
+            <div class="pwa-card">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div class="icon-square-emerald">🤖</div>
+                        <div>
+                            <h3 style="font-size: 1rem; font-weight: 900; margin: 0;">Android PWA</h3>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: #059669; background: #d1fae5; padding: 0.15rem 0.5rem; border-radius: 0.35rem;">Samsung, Xiaomi, etc.</span>
+                        </div>
+                    </div>
+
+                    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                        <strong style="font-size: 0.775rem; color: #065f46; display: block; margin-bottom: 0.35rem;">الطريقة 1: من زر التثبيت المباشر</strong>
+                        <div style="font-size: 0.725rem; color: #065f46; line-height: 1.5;">
+                            1. اضغط زر تثبيت PWA على Android أدناه.<br>
+                            2. اختر Install / Add to Home screen من النافذة.<br>
+                            3. افتح التطبيق من الأيقونة على الشاشة الرئيسية.
+                        </div>
+                    </div>
+
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.75rem;">
+                        <strong style="font-size: 0.775rem; color: #1e293b; display: block; margin-bottom: 0.35rem;">الطريقة 2: من قائمة Chrome</strong>
+                        <div style="font-size: 0.725rem; color: #475569; line-height: 1.5;">
+                            1. افتح قائمة Chrome (الثلاث نقاط في الزاوية).<br>
+                            2. اختر Install app أو إضافة إلى الشاشة الرئيسية.<br>
+                            3. أكد التثبيت ثم افتح {{ $brandName }} كأبلكيشن مستقل.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.5rem;">
+                    <button type="button" @click="triggerPwaInstall()" class="btn-emerald">
+                        <span>⚡</span>
+                        <span>تثبيت PWA فوراً على Android</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 4. POST-INSTALLATION SETTINGS                                    --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-card" style="gap: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.5rem;">⚙️</span>
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 900; margin: 0;">إعدادات مهمة بعد التثبيت</h3>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 0.2rem 0 0 0;">
+                        قفل الإشعارات وضبط البطارية على No restrictions لضمان وصول التنبيهات في وقتها:
                     </p>
                 </div>
-                <div class="mt-3.5">
-                    <button type="button"
-                            @click="requestNotificationPerm()"
-                            class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+            </div>
+
+            <div class="pwa-grid-3">
+                {{-- Notifications --}}
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 1rem; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.85rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                            <span>🔔</span>
+                            <strong style="font-size: 0.85rem; color: #14532d;">تفعيل الإشعارات</strong>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #166534; margin: 0; line-height: 1.5;">
+                            اسمح للتطبيق بإرسال إشعارات الدوام، الرواتب، وتذكيرات بداية ونهاية الشفت.
+                        </p>
+                    </div>
+                    <button type="button" @click="requestNotificationPerm()" class="btn-emerald" style="padding: 0.55rem 1rem;">
                         <span x-text="notifButtonText">تفعيل الإشعارات الآن</span>
                     </button>
                 </div>
-            </div>
 
-            {{-- Battery Unrestricted --}}
-            <div class="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-lg">🔋</span>
-                        <strong class="text-xs sm:text-sm font-black text-amber-950">البطارية: No restrictions</strong>
+                {{-- Battery --}}
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 1rem; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.85rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                            <span>🔋</span>
+                            <strong style="font-size: 0.85rem; color: #78350f;">البطارية: No restrictions</strong>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #92400e; margin: 0; line-height: 1.5;">
+                            اختر "غير مقيد" في إعدادات بطارية الهاتف لمنع النظام من إيقاف بصمة وتنبيهات التطبيق في الخلفية.
+                        </p>
                     </div>
-                    <p class="text-[11px] sm:text-xs text-amber-900 font-medium leading-relaxed">
-                        اختر "غير مقيد" في إعدادات بطارية الهاتف لمنع النظام من إيقاف بصمة وتنبيهات التطبيق في الخلفية.
-                    </p>
-                </div>
-                <div class="mt-3.5">
-                    <button type="button"
-                            @click="showBatteryModal = true"
-                            class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                    <button type="button" @click="alert('إرشادات ضبط البطارية:\n1. اضغط مطولاً على أيقونة التطبيق في شاشة جهازك\n2. اختر معلومات التطبيق (App Info)\n3. ادخل على البطارية (Battery)\n4. اختر غير مقيد (Unrestricted / No restrictions)')" class="btn-amber" style="padding: 0.55rem 1rem;">
                         <span>فتح إعدادات البطارية</span>
                     </button>
                 </div>
-            </div>
 
-            {{-- Auto-start --}}
-            <div class="bg-sky-50/60 border border-sky-200 rounded-2xl p-4 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span class="text-lg">⚡</span>
-                        <strong class="text-xs sm:text-sm font-black text-sky-950">التشغيل عند فتح الموبايل</strong>
+                {{-- Autostart --}}
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 1rem; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; gap: 0.85rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                            <span>⚡</span>
+                            <strong style="font-size: 0.85rem; color: #0c4a6e;">التشغيل عند فتح الموبايل</strong>
+                        </div>
+                        <p style="font-size: 0.75rem; color: #0369a1; margin: 0; line-height: 1.5;">
+                            اسمح للتطبيق بالتشغيل التلقائي (Auto-launch / Autostart) ليكون جاهزاً فور فتح جهازك.
+                        </p>
                     </div>
-                    <p class="text-[11px] sm:text-xs text-sky-900 font-medium leading-relaxed">
-                        اسمح للتطبيق بالتشغيل التلقائي (Auto-launch / Autostart) ليكون جاهزاً فور فتح جهازك.
-                    </p>
-                </div>
-                <div class="mt-3.5">
-                    <button type="button"
-                            @click="showAutostartModal = true"
-                            class="w-full py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                    <button type="button" @click="alert('إرشادات التشغيل التلقائي (Auto-start):\n• في أجهزة Xiaomi / Oppo / Huawei:\nادخل إلى الإعدادات > التطبيقات > إدارة التشغيل التلقائي (Autostart) > وقم بتفعيل التطبيق.')" class="btn-sky" style="padding: 0.55rem 1rem;">
                         <span>فتح إعدادات التشغيل التلقائي</span>
                     </button>
                 </div>
             </div>
-
-        </div>
-    </div>
-
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 5. NOTIFICATIONS & SHIFT REMINDERS TEST ZONE                     --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-        <div>
-            <h3 class="text-base sm:text-lg font-black text-slate-900">الإشعارات والتذكيرات</h3>
-            <p class="text-xs sm:text-sm text-slate-500 font-medium">اختبر الإشعارات، شارة الأيقونة، وتذكيرات بداية ونهاية الشفت من مكان واحد:</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            {{-- Test Action Buttons (5 cols) --}}
-            <div class="lg:col-span-5 space-y-2.5">
-                <button type="button"
-                        @click="testDeviceNotification()"
-                        class="w-full py-3 px-4 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                    <span>🔔</span>
-                    <span>اختبار إشعار الجهاز</span>
-                </button>
-
-                <button type="button"
-                        @click="testAppBadge()"
-                        class="w-full py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                    <span>🔴</span>
-                    <span>تجربة شارة الأيقونة</span>
-                </button>
-
-                <button type="button"
-                        @click="testShiftReminder()"
-                        class="w-full py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                    <span>⏱️</span>
-                    <span>اختبار تذكير الشفت</span>
-                </button>
-
-                <button type="button"
-                        @click="testListNotification()"
-                        class="w-full py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-black text-xs sm:text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                    <span>📋</span>
-                    <span>اختبار إشعار القائمة</span>
-                </button>
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 5. NOTIFICATIONS & SHIFT REMINDERS ZONE                          --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-card" style="gap: 1.25rem;">
+            <div>
+                <h3 style="font-size: 1.1rem; font-weight: 900; margin: 0;">الإشعارات والتذكيرات</h3>
+                <p style="font-size: 0.8rem; color: #64748b; margin: 0.2rem 0 0 0;">
+                    اختبر الإشعارات، شارة الأيقونة، وتذكيرات بداية ونهاية الشفت من مكان واحد:
+                </p>
             </div>
 
-            {{-- Shift Reminders Settings Box (7 cols) --}}
-            <div class="lg:col-span-7 bg-slate-50/80 border border-slate-200 rounded-2xl p-5 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                    <label class="flex items-center gap-2.5 cursor-pointer">
-                        <input type="checkbox" x-model="shiftRemindersEnabled" class="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500 accent-teal-600">
-                        <strong class="text-xs sm:text-sm font-black text-slate-900">تفعيل تذكيرات الشفت التلقائية</strong>
-                    </label>
-                    <span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200">
-                        تذكير ذكي
-                    </span>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.25rem;">
+                @media (min-width: 1024px) {
+                    <div style="display: grid; grid-template-columns: 5fr 7fr; gap: 1.25rem; align-items: start;">
+                }
+                
+                {{-- 4 Test Buttons --}}
+                <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                    <button type="button" @click="testDeviceNotification()" class="btn-purple">
+                        <span>🔔</span>
+                        <span>اختبار إشعار الجهاز</span>
+                    </button>
+                    <button type="button" @click="testAppBadge()" style="background: #4f46e5; color: #ffffff; border: none; border-radius: 0.875rem; padding: 0.75rem 1.25rem; font-size: 0.825rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span>🔴</span>
+                        <span>تجربة شارة الأيقونة</span>
+                    </button>
+                    <button type="button" @click="testShiftReminder()" style="background: #0f172a; color: #ffffff; border: none; border-radius: 0.875rem; padding: 0.75rem 1.25rem; font-size: 0.825rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span>⏱️</span>
+                        <span>اختبار تذكير الشفت</span>
+                    </button>
+                    <button type="button" @click="testListNotification()" style="background: #1e293b; color: #ffffff; border: none; border-radius: 0.875rem; padding: 0.75rem 1.25rem; font-size: 0.825rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span>📋</span>
+                        <span>اختبار إشعار القائمة</span>
+                    </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">تذكير قبل بداية الشفت</label>
-                        <select class="w-full text-xs bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium">
-                            <option>10 دقائق قبل الشفت</option>
-                            <option>15 دقيقة قبل الشفت</option>
-                            <option>30 دقيقة قبل الشفت</option>
-                        </select>
+                {{-- Shift Reminders Box --}}
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; font-weight: 900; color: #0f172a;">
+                            <input type="checkbox" checked style="width: 1.1rem; height: 1.1rem; accent-color: #0d9488;">
+                            <span>تفعيل تذكيرات الشفت التلقائية</span>
+                        </label>
+                        <span style="font-size: 0.7rem; font-weight: 800; color: #0d9488; background: #f0fdfa; border: 1px solid #ccfbf1; padding: 0.15rem 0.5rem; border-radius: 0.35rem;">
+                            تذكير ذكي
+                        </span>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">تذكير قبل نهاية الشفت</label>
-                        <select class="w-full text-xs bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium">
-                            <option>10 دقائق قبل الانصراف</option>
-                            <option>15 دقيقة قبل الانصراف</option>
-                            <option>عند موعد الانصراف مباشرة</option>
-                        </select>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: #334155; display: block; margin-bottom: 0.3rem;">تذكير قبل بداية الشفت</label>
+                            <select style="width: 100%; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem;">
+                                <option>10 دقائق قبل الشفت</option>
+                                <option>15 دقيقة قبل الشفت</option>
+                                <option>30 دقيقة قبل الشفت</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; font-weight: 700; color: #334155; display: block; margin-bottom: 0.3rem;">تذكير قبل نهاية الشفت</label>
+                            <select style="width: 100%; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem;">
+                                <option>10 دقائق قبل الانصراف</option>
+                                <option>15 دقيقة قبل الانصراف</option>
+                                <option>عند موعد الانصراف مباشرة</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <div class="pt-2">
-                    <button type="button"
-                            @click="saveReminderSettings()"
-                            class="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <button type="button" @click="alert('✓ تم حفظ إعدادات تذكيرات الشفت بنجاح!')" class="btn-emerald" style="padding: 0.6rem 1rem; width: 100%;">
                         <span>💾</span>
                         <span>حفظ إعدادات التذكير</span>
                     </button>
                 </div>
-            </div>
 
+            </div>
         </div>
+
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 6. CLEAR PWA CACHE                                               --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-card" style="flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div>
+                <h4 style="font-size: 0.95rem; font-weight: 900; color: #881337; margin: 0 0 0.2rem 0;">مسح كاش التطبيق</h4>
+                <p style="font-size: 0.775rem; color: #64748b; margin: 0;">استخدمه إذا ظهرت نسخة قديمة بعد التحديث لتنظيف محتوى القديم.</p>
+            </div>
+            <button type="button" @click="clearAppCache()" class="btn-danger">
+                <span>🗑️</span>
+                <span>مسح الكاش وإعادة التحميل</span>
+            </button>
+        </div>
+
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- 7. IMPORTANT TIPS CHECKLIST                                      --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div class="pwa-card">
+            <h4 style="font-size: 0.95rem; font-weight: 900; margin: 0 0 0.85rem 0;">نصائح مهمة:</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.8rem; font-weight: 600; color: #334155;">
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <span style="color: #059669; font-weight: 900;">✓</span>
+                    <span>بعد تثبيت PWA سيظهر التطبيق كتطبيق مستقل ويمكن ضبط الإشعارات والبادج وإرشادات البطارية من هذه الصفحة.</span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <span style="color: #059669; font-weight: 900;">✓</span>
+                    <span>إذا ظهر محتوى قديم في صفحة التثبيت، استخدم زر مسح الكاش ثم افتح الصفحة من جديد.</span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <span style="color: #059669; font-weight: 900;">✓</span>
+                    <span>تأكد أنك تستخدم الرابط الرسمي للنظام عبر HTTPS لضمان عمل البصمة وجميع مزايا PWA بأعلى أمان.</span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <span style="color: #d97706; font-weight: 900;">⚠️</span>
+                    <span>في iPhone يجب استخدام Safari وليس Chrome أو أي متصفح آخر لتثبيت التطبيق على الشاشة الرئيسية.</span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                    <span style="color: #d97706; font-weight: 900;">⚠️</span>
+                    <span>في Android استخدم زر تثبيت PWA أو قائمة Chrome فقط للحصول على المزامنة السريعة.</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        {{-- FLOATING TOAST INSTALL PROMPT                                    --}}
+        {{-- ════════════════════════════════════════════════════════════════ --}}
+        <div x-show="showInstallToast" class="pwa-floating-toast">
+            <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: #0d9488; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                📲
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <strong style="font-size: 0.8rem; font-weight: 900; display: block; margin-bottom: 0.1rem;">ثبّت {{ $brandName }}</strong>
+                <span style="font-size: 0.7rem; color: #64748b; display: block;">وصول أسرع وبصمة مباشرة على جهازك</span>
+            </div>
+            <button type="button" @click="triggerPwaInstall()" style="background: #0d9488; color: white; border: none; padding: 0.4rem 0.85rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 800; cursor: pointer; white-space: nowrap;">
+                تثبيت
+            </button>
+            <button type="button" @click="showInstallToast = false" style="background: transparent; border: none; color: #94a3b8; font-size: 0.9rem; cursor: pointer; padding: 0.2rem;">
+                ✕
+            </button>
+        </div>
+
     </div>
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 6. CLEAR PWA CACHE (مسح كاش التطبيق)                             --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-            <h4 class="text-sm sm:text-base font-black text-rose-950">مسح كاش التطبيق</h4>
-            <p class="text-xs text-slate-500 font-medium mt-0.5">استخدمه إذا ظهرت نسخة قديمة أو لتحديث بيانات PWA المخزنة محلياً على جهازك.</p>
-        </div>
+    {{-- Alpine Handler Logic --}}
+    <script>
+        function installAppHandler() {
+            return {
+                deferredPrompt: null,
+                showInstallToast: true,
+                notifButtonText: 'تفعيل الإشعارات الآن',
+                currentTime: '--:--:--',
+                coords: null,
+                gpsMessage: 'جارٍ فحص إحداثيات GPS...',
+                isClocking: false,
+                clockStatus: 'not_clocked',
+                clockButtonText: 'تسجيل بصمة الحضور',
+                clockInstructionText: 'اضغط لتسجيل الحضور الذاتي بالبصمة والموقع',
 
-        <button type="button"
-                @click="clearAppCache()"
-                class="py-3 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs shadow-md shadow-rose-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap">
-            <span>🗑️</span>
-            <span>مسح الكاش وإعادة التحميل</span>
-        </button>
-    </div>
+                init() {
+                    this.updateClock();
+                    setInterval(() => this.updateClock(), 1000);
+                    this.fetchLocation();
+                    this.checkInitialStatus();
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 7. IMPORTANT TIPS CHECKLIST                                      --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-        <h4 class="text-sm sm:text-base font-black text-slate-900">نصائح مهمة:</h4>
-        <div class="space-y-3 text-xs sm:text-sm font-medium text-slate-700">
-            <div class="flex items-start gap-2.5">
-                <span class="text-emerald-600 text-base">✓</span>
-                <span>بعد تثبيت PWA سيظهر التطبيق كتطبيق مستقل ويمكن ضبط الإشعارات والبادج وإرشادات البطارية من هذه الصفحة.</span>
-            </div>
-            <div class="flex items-start gap-2.5">
-                <span class="text-emerald-600 text-base">✓</span>
-                <span>إذا ظهر محتوى قديم في صفحة التثبيت، استخدم زر مسح الكاش ثم افتح الصفحة من جديد.</span>
-            </div>
-            <div class="flex items-start gap-2.5">
-                <span class="text-emerald-600 text-base">✓</span>
-                <span>تأكد أنك تستخدم الرابط الرسمي للنظام عبر HTTPS لضمان عمل البصمة وجميع مزايا PWA بأعلى أمان.</span>
-            </div>
-            <div class="flex items-start gap-2.5">
-                <span class="text-amber-500 text-base">⚠️</span>
-                <span>في iPhone يجب استخدام Safari وليس Chrome أو أي متصفح آخر لتثبيت التطبيق على الشاشة الرئيسية.</span>
-            </div>
-            <div class="flex items-start gap-2.5">
-                <span class="text-amber-500 text-base">⚠️</span>
-                <span>في Android استخدم زر تثبيت PWA أو قائمة Chrome فقط للحصول على المزامنة السريعة.</span>
-            </div>
-        </div>
-    </div>
-
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- FLOATING TOAST INSTALL PROMPT SIMULATION / LIVE PROMPT           --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div x-show="showInstallToast"
-         x-transition
-         class="fixed bottom-6 left-6 z-50 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl p-4 shadow-2xl flex items-center gap-3.5 max-w-sm">
-        <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center text-lg font-bold shrink-0">
-            📲
-        </div>
-        <div class="min-w-0">
-            <strong class="text-xs font-black text-slate-900 block truncate">ثبّت {{ $brandName }}</strong>
-            <span class="text-[11px] text-slate-500 block truncate">وصول أسرع وبصمة مباشرة على جهازك</span>
-        </div>
-        <button type="button"
-                @click="triggerPwaInstall()"
-                class="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition whitespace-nowrap cursor-pointer">
-            تثبيت
-        </button>
-        <button type="button"
-                @click="showInstallToast = false"
-                class="text-slate-400 hover:text-slate-600 text-sm p-1">
-            ✕
-        </button>
-    </div>
-
-</div>
-
-{{-- Alpine.js Logic Handler --}}
-<script>
-    function installAppHandler() {
-        return {
-            deferredPrompt: null,
-            showInstallToast: true,
-            showIosModal: false,
-            showBatteryModal: false,
-            showAutostartModal: false,
-            shiftRemindersEnabled: true,
-            notifButtonText: 'تفعيل الإشعارات الآن',
-            currentTime: '--:--:--',
-            coords: null,
-            gpsMessage: 'جارٍ جلب إحداثيات GPS...',
-            isClocking: false,
-            clockStatus: 'not_clocked', // 'not_clocked', 'clocked_in', 'clocked_out'
-            clockButtonText: 'تسجيل بصمة الحضور',
-            clockInstructionText: 'اضغط لتسجيل الحضور الذاتي بالبصمة والموقع',
-
-            init() {
-                // Real-time Clock
-                this.updateClock();
-                setInterval(() => this.updateClock(), 1000);
-
-                // Fetch GPS coordinates
-                this.fetchLocation();
-
-                // Check attendance status
-                this.checkInitialStatus();
-
-                // Listen to native PWA install prompt
-                window.addEventListener('beforeinstallprompt', (e) => {
-                    e.preventDefault();
-                    this.deferredPrompt = e;
-                    this.showInstallToast = true;
-                });
-
-                // Check if notification permission is already granted
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    this.notifButtonText = 'الإشعارات مفعلة ✓';
-                }
-            },
-
-            updateClock() {
-                const now = new Date();
-                this.currentTime = now.toLocaleTimeString('ar-EG', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: true
-                });
-            },
-
-            fetchLocation() {
-                if ('geolocation' in navigator) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            this.coords = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            };
-                            this.gpsMessage = 'تم تحديد موقعك بدقة (' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4) + ')';
-                        },
-                        (error) => {
-                            this.gpsMessage = 'تعذر جلب الموقع الجغرافي: ' + (error.message || 'يرجى السماح بالوصول للموقع');
-                        },
-                        { enableHighAccuracy: true, timeout: 10000 }
-                    );
-                } else {
-                    this.gpsMessage = 'المتصفح لا يدعم تحديد الموقع الجغرافي';
-                }
-            },
-
-            checkInitialStatus() {
-                // If the user already clocked in today via widget, we sync
-                const saved = localStorage.getItem('bwsla_clock_status_' + new Date().toDateString());
-                if (saved) {
-                    this.clockStatus = saved;
-                    this.updateButtonLabels();
-                }
-            },
-
-            updateButtonLabels() {
-                if (this.clockStatus === 'clocked_in') {
-                    this.clockButtonText = 'تسجيل بصمة الانصراف';
-                    this.clockInstructionText = 'أنت مسجل حضورك الآن. اضغط عند انتهاء يوم العمل لتسجيل الانصراف.';
-                } else if (this.clockStatus === 'clocked_out') {
-                    this.clockButtonText = 'تم الانصراف اليوم';
-                    this.clockInstructionText = 'تم توثيق حضورك وانصرافك لهذا اليوم بنجاح.';
-                } else {
-                    this.clockButtonText = 'تسجيل بصمة الحضور';
-                    this.clockInstructionText = 'اضغط لتسجيل الحضور الذاتي بالبصمة والموقع.';
-                }
-            },
-
-            triggerPwaInstall() {
-                if (this.deferredPrompt) {
-                    this.deferredPrompt.prompt();
-                    this.deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            alert('تمت الموافقة على تثبيت التطبيق بنجاح!');
-                        }
-                        this.deferredPrompt = null;
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        this.deferredPrompt = e;
+                        this.showInstallToast = true;
                     });
-                } else {
-                    alert('للتثبيت السريع:\n• على الكمبيوتر: اضغط على أيقونة التثبيت (📥) في شريط العنوان أعلى المتصفح.\n• على Android: اضغط قائمة الثلاث نقاط واختر "تثبيت التطبيق".\n• على iPhone: اضغط زر المشاركة (Share) واختر "Add to Home Screen".');
-                }
-            },
 
-            handleClockAction() {
-                this.isClocking = true;
-
-                // Play soft vibration
-                if ('vibrate' in navigator) {
-                    navigator.vibrate([100, 50, 100]);
-                }
-
-                // Call backend API / Livewire widget or simulate instant attendance
-                setTimeout(() => {
-                    this.isClocking = false;
-                    const todayKey = 'bwsla_clock_status_' + new Date().toDateString();
-
-                    if (this.clockStatus === 'not_clocked') {
-                        this.clockStatus = 'clocked_in';
-                        localStorage.setItem(todayKey, 'clocked_in');
-                        this.updateButtonLabels();
-                        this.playSuccessBeep();
-                        alert('✓ تمت البصمة بنجاح!\nتم تسجيل حضورك اليوم في تمام الساعة ' + this.currentTime);
-                    } else if (this.clockStatus === 'clocked_in') {
-                        this.clockStatus = 'clocked_out';
-                        localStorage.setItem(todayKey, 'clocked_out');
-                        this.updateButtonLabels();
-                        this.playSuccessBeep();
-                        alert('✓ تم توثيق موعد الانصراف بنجاح!\nنتمنى لك يوماً سعيداً.');
-                    } else {
-                        alert('لقد قمت بتسجيل الحضور والانصراف مسبقاً لهذا اليوم.');
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        this.notifButtonText = 'الإشعارات مفعلة ✓';
                     }
-                }, 1200);
-            },
+                },
 
-            playSuccessBeep() {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
-                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.35);
-                } catch (e) {}
-            },
+                updateClock() {
+                    const now = new Date();
+                    this.currentTime = now.toLocaleTimeString('ar-EG', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: true
+                    });
+                },
 
-            requestNotificationPerm() {
-                if ('Notification' in window) {
-                    Notification.requestPermission().then((permission) => {
-                        if (permission === 'granted') {
-                            this.notifButtonText = 'الإشعارات مفعلة ✓';
-                            new Notification('Bwsla HR | إشعارات النظام', {
-                                body: 'تم تفعيل الإشعارات بنجاح. ستصلك تنبيهات الدوام والمستجدات فوراً!',
-                                icon: '/icons/icon.svg'
-                            });
+                fetchLocation() {
+                    if ('geolocation' in navigator) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                this.coords = {
+                                    lat: position.coords.latitude,
+                                    lng: position.coords.longitude
+                                };
+                                this.gpsMessage = 'تم تحديد موقعك بدقة (' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4) + ')';
+                            },
+                            (error) => {
+                                this.gpsMessage = 'تعذر جلب إحداثيات الموقع (GPS): ' + (error.message || 'يرجى تشغيل الـ GPS');
+                            },
+                            { enableHighAccuracy: true, timeout: 10000 }
+                        );
+                    } else {
+                        this.gpsMessage = 'المتصفح لا يدعم تحديد الموقع الجغرافي';
+                    }
+                },
+
+                checkInitialStatus() {
+                    const saved = localStorage.getItem('bwsla_clock_status_' + new Date().toDateString());
+                    if (saved) {
+                        this.clockStatus = saved;
+                        this.updateButtonLabels();
+                    }
+                },
+
+                updateButtonLabels() {
+                    if (this.clockStatus === 'clocked_in') {
+                        this.clockButtonText = 'تسجيل بصمة الانصراف';
+                        this.clockInstructionText = 'أنت مسجل حضورك الآن. اضغط عند نهاية الدوام لتسجيل الانصراف.';
+                    } else if (this.clockStatus === 'clocked_out') {
+                        this.clockButtonText = 'تم الانصراف اليوم';
+                        this.clockInstructionText = 'تم توثيق حضورك وانصرافك لهذا اليوم بنجاح.';
+                    } else {
+                        this.clockButtonText = 'تسجيل بصمة الحضور';
+                        this.clockInstructionText = 'اضغط لتسجيل الحضور الذاتي بالبصمة والموقع.';
+                    }
+                },
+
+                triggerPwaInstall() {
+                    if (this.deferredPrompt) {
+                        this.deferredPrompt.prompt();
+                        this.deferredPrompt.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                alert('✓ تم تثبيت التطبيق بنجاح!');
+                            }
+                            this.deferredPrompt = null;
+                        });
+                    } else {
+                        alert('خطوات التثبيت السريع على هذا الجهاز:\n• على الكمبيوتر: اضغط على أيقونة التثبيت (📥) في شريط عنوان المتصفح بالأعلى.\n• على Android: افتح قائمة خيارات Chrome (الثلاث نقاط) واختر "تثبيت التطبيق".\n• على iPhone: اضغط على زر المشاركة (Share) في Safari واختر "Add to Home Screen".');
+                    }
+                },
+
+                handleClockAction() {
+                    this.isClocking = true;
+                    if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
+
+                    setTimeout(() => {
+                        this.isClocking = false;
+                        const todayKey = 'bwsla_clock_status_' + new Date().toDateString();
+
+                        if (this.clockStatus === 'not_clocked') {
+                            this.clockStatus = 'clocked_in';
+                            localStorage.setItem(todayKey, 'clocked_in');
+                            this.updateButtonLabels();
+                            this.playSuccessBeep();
+                            alert('✓ تمت البصمة بنجاح!\nتم تسجيل حضورك اليوم في تمام الساعة ' + this.currentTime);
+                        } else if (this.clockStatus === 'clocked_in') {
+                            this.clockStatus = 'clocked_out';
+                            localStorage.setItem(todayKey, 'clocked_out');
+                            this.updateButtonLabels();
+                            this.playSuccessBeep();
+                            alert('✓ تم توثيق موعد الانصراف بنجاح!\nنتمنى لك يوماً سعيداً.');
                         } else {
-                            alert('لم يتم منح الإذن. يرجى تفعيل الإشعارات من إعدادات المتصفح.');
+                            alert('لقد قمت بتسجيل الحضور والانصراف مسبقاً لهذا اليوم.');
                         }
-                    });
-                }
-            },
+                    }, 1000);
+                },
 
-            testDeviceNotification() {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification('Bwsla HR | اختبار إشعار الجهاز', {
-                        body: 'الإشعارات تعمل بنجاح وبأعلى كفاءة على جهازك!',
-                        icon: '/icons/icon.svg',
-                        badge: '/icons/fingerprint.svg'
-                    });
-                } else {
-                    this.requestNotificationPerm();
-                }
-            },
+                playSuccessBeep() {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.35);
+                    } catch (e) {}
+                },
 
-            testAppBadge() {
-                if ('setAppBadge' in navigator) {
-                    navigator.setAppBadge(1).then(() => {
-                        alert('تم إرسال شارة التنبيه (Badge 1) لأيقونة التطبيق!');
-                        setTimeout(() => navigator.clearAppBadge(), 5000);
-                    });
-                } else {
-                    alert('شارة الأيقونة (App Badge) مدعومة عند تثبيت التطبيق على سطح المكتب أو الشاشة الرئيسية.');
-                }
-            },
+                requestNotificationPerm() {
+                    if ('Notification' in window) {
+                        Notification.requestPermission().then((permission) => {
+                            if (permission === 'granted') {
+                                this.notifButtonText = 'الإشعارات مفعلة ✓';
+                                new Notification('Bwsla HR | إشعارات النظام', {
+                                    body: 'تم تفعيل الإشعارات بنجاح. ستصلك تنبيهات الدوام والمهام فوراً!',
+                                    icon: '/icons/icon.svg'
+                                });
+                            } else {
+                                alert('يرجى تفعيل الإشعارات من إعدادات المتصفح للمتابعة.');
+                            }
+                        });
+                    }
+                },
 
-            testShiftReminder() {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification('⏰ تذكير بداية الشفت | Bwsla HR', {
-                        body: 'تذكير: موعد بدء فترة دوامك بعد 10 دقائق. يُرجى تسجيل بصمة الحضور في الوقت المحدد.',
-                        icon: '/icons/fingerprint.svg'
-                    });
-                } else {
-                    this.requestNotificationPerm();
-                }
-            },
+                testDeviceNotification() {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('Bwsla HR | اختبار إشعار الجهاز', {
+                            body: 'الإشعارات تعمل بنجاح وبأعلى كفاءة على جهازك!',
+                            icon: '/icons/icon.svg',
+                            badge: '/icons/fingerprint.svg'
+                        });
+                    } else {
+                        this.requestNotificationPerm();
+                    }
+                },
 
-            testListNotification() {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification('📋 تعميم إداري جديد | إدارة الموارد البشرية', {
-                        body: 'تم اعتماد جدول الإجازات ومسيرات الرواتب لشهر أكتوبر.',
-                        icon: '/icons/icon.svg'
-                    });
-                } else {
-                    this.requestNotificationPerm();
-                }
-            },
+                testAppBadge() {
+                    if ('setAppBadge' in navigator) {
+                        navigator.setAppBadge(1).then(() => {
+                            alert('تم إرسال شارة التنبيه (Badge 1) لأيقونة التطبيق!');
+                            setTimeout(() => navigator.clearAppBadge(), 5000);
+                        });
+                    } else {
+                        alert('شارة الأيقونة (App Badge) مدعومة عند تثبيت التطبيق على سطح المكتب أو شاشة الموبايل الرئيسية.');
+                    }
+                },
 
-            saveReminderSettings() {
-                alert('✓ تم حفظ إعدادات تذكيرات الشفت بنجاح!');
-            },
+                testShiftReminder() {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('⏰ تذكير بداية الشفت | Bwsla HR', {
+                            body: 'تذكير: موعد بدء فترة دوامك بعد 10 دقائق. يُرجى تسجيل بصمة الحضور في الوقت المحدد.',
+                            icon: '/icons/fingerprint.svg'
+                        });
+                    } else {
+                        this.requestNotificationPerm();
+                    }
+                },
 
-            clearAppCache() {
-                if ('caches' in window) {
-                    caches.keys().then((names) => {
-                        for (let name of names) caches.delete(name);
-                    });
+                testListNotification() {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('📋 تعميم إداري جديد | إدارة الموارد البشرية', {
+                            body: 'تم اعتماد جدول الإجازات ومسيرات الرواتب لشهر أكتوبر.',
+                            icon: '/icons/icon.svg'
+                        });
+                    } else {
+                        this.requestNotificationPerm();
+                    }
+                },
+
+                clearAppCache() {
+                    if ('caches' in window) {
+                        caches.keys().then((names) => {
+                            for (let name of names) caches.delete(name);
+                        });
+                    }
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then((registrations) => {
+                            for (let reg of registrations) reg.unregister();
+                        });
+                    }
+                    alert('تم مسح كاش التطبيق بنجاح. سيتم تحديث الصفحة الآن.');
+                    window.location.reload(true);
                 }
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then((registrations) => {
-                        for (let reg of registrations) reg.unregister();
-                    });
-                }
-                alert('تم مسح كاش التطبيق بالكامل. سيتم إعادة تحميل الصفحة الآن.');
-                window.location.reload(true);
-            }
-        };
-    }
-</script>
+            };
+        }
+    </script>
+</x-filament-panels::page>

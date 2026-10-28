@@ -20,6 +20,163 @@
     }
 @endphp
 
+<style>
+    .perm-modal-wrap {
+        font-family: inherit;
+        direction: rtl;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        user-select: none;
+    }
+    .perm-header-banner {
+        background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+        border-radius: 1.25rem;
+        padding: 1.25rem 1.5rem;
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+    .perm-info-banner {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        color: #0369a1;
+        border-radius: 0.875rem;
+        padding: 0.75rem 1rem;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 800;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .perm-actions-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0.35rem;
+    }
+    .perm-link-select-all {
+        background: transparent;
+        border: none;
+        color: #7c3aed;
+        font-size: 0.85rem;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: color 0.15s;
+    }
+    .perm-link-select-all:hover { color: #6d28d9; }
+    .perm-link-deselect-all {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: color 0.15s;
+    }
+    .perm-link-deselect-all:hover { color: #1e293b; }
+    
+    .perm-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        max-height: 440px;
+        overflow-y: auto;
+        padding: 0.25rem 0.35rem;
+    }
+    @media (min-width: 640px) {
+        .perm-grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    .perm-card-item {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .perm-card-item:hover {
+        border-color: #c4b5fd;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+        transform: translateY(-1px);
+    }
+    .perm-card-active {
+        border-color: #a78bfa !important;
+        background: #fbf9ff !important;
+    }
+    .perm-icon-box {
+        width: 2.65rem;
+        height: 2.65rem;
+        border-radius: 0.75rem;
+        background: #f3e8ff;
+        color: #7c3aed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .perm-toggle-track {
+        width: 48px;
+        height: 26px;
+        border-radius: 9999px;
+        transition: background-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        padding: 3px;
+        flex-shrink: 0;
+    }
+    .perm-toggle-track-on {
+        background-color: #10b981;
+        justify-content: flex-end;
+    }
+    .perm-toggle-track-off {
+        background-color: #cbd5e1;
+        justify-content: flex-start;
+    }
+    .perm-toggle-knob {
+        width: 20px;
+        height: 20px;
+        border-radius: 9999px;
+        background: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+        transition: all 0.2s ease;
+    }
+
+    /* Custom Scrollbar */
+    .perm-grid-2::-webkit-scrollbar {
+        width: 5px;
+    }
+    .perm-grid-2::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 9999px;
+    }
+    .perm-grid-2::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 9999px;
+    }
+    .perm-grid-2::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+
 <div x-data="{
     modules: @js($initialModules),
     allKeys: @js(array_keys($allModules)),
@@ -41,121 +198,73 @@
     }
 }"
 x-init="$wire.set('{{ $statePath }}', modules)"
-class="w-full -mt-2 -mx-2 sm:-mx-4 font-cairo select-none"
-dir="rtl">
+class="perm-modal-wrap">
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- MODAL TOP HEADER: PURPLE BRAND GRADIENT                          --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="rounded-2xl sm:rounded-3xl p-5 sm:p-6 mb-4 shadow-md text-white relative overflow-hidden"
-         style="background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);">
-        
-        {{-- Subtle background decoration --}}
-        <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-purple-400/20 rounded-full blur-lg pointer-events-none"></div>
-
-        <div class="relative z-10 flex items-center justify-between">
-            <div>
-                <h2 class="text-xl sm:text-2xl font-black tracking-tight leading-tight">
-                    {{ $brandName }}
-                </h2>
-                <p class="text-xs sm:text-sm font-bold text-purple-200 mt-0.5 opacity-90">
-                    {{ $targetTitle }}
-                </p>
-            </div>
-
-            <div class="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white text-lg font-bold shadow-xs">
-                🛡️
-            </div>
+    {{-- Top Brand Banner --}}
+    <div class="perm-header-banner">
+        <div>
+            <h2 style="font-size: 1.35rem; font-weight: 900; margin: 0; line-height: 1.2;">
+                {{ $brandName }}
+            </h2>
+            <p style="font-size: 0.8rem; font-weight: 700; color: #e9d5ff; margin: 0.2rem 0 0 0;">
+                {{ $targetTitle }}
+            </p>
+        </div>
+        <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+            🛡️
         </div>
     </div>
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- GUIDANCE INFO BANNER (LIGHT BLUE)                                --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="bg-sky-50 border border-sky-200 text-sky-800 rounded-2xl py-3 px-4 text-center text-xs sm:text-sm font-extrabold shadow-2xs mb-3">
+    {{-- Guidance Info Box --}}
+    <div class="perm-info-banner">
         حدد الصفحات التي يمكن لهذا الموظف الوصول إليها
     </div>
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- QUICK ACTION LINKS: SELECT ALL / DESELECT ALL                    --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="flex items-center justify-between px-2 py-1 mb-3">
-        <button type="button"
-                @click="selectAll"
-                class="text-xs sm:text-sm font-black text-purple-600 hover:text-purple-700 transition cursor-pointer flex items-center gap-1">
+    {{-- Select / Deselect All --}}
+    <div class="perm-actions-row">
+        <button type="button" @click="selectAll" class="perm-link-select-all">
             <span>✓</span>
             <span>تحديد الكل</span>
         </button>
 
-        <button type="button"
-                @click="deselectAll"
-                class="text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer flex items-center gap-1">
+        <button type="button" @click="deselectAll" class="perm-link-deselect-all">
             <span>✕</span>
             <span>إلغاء تحديد الكل</span>
         </button>
     </div>
 
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    {{-- 2-COLUMN GRID OF PERMISSION CARDS                                --}}
-    {{-- ════════════════════════════════════════════════════════════════ --}}
-    <div class="max-h-[460px] overflow-y-auto px-1 py-1 space-y-2.5 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-3 custom-scrollbar">
+    {{-- 2-Column Grid of Cards --}}
+    <div class="perm-grid-2">
         @foreach($allModules as $mKey => $m)
             <div @click="toggle('{{ $mKey }}')"
-                 class="group relative rounded-2xl p-3 sm:p-3.5 border-2 transition-all duration-200 flex items-center justify-between cursor-pointer select-none shadow-2xs hover:shadow-xs"
-                 :class="modules.includes('{{ $mKey }}') 
-                    ? 'border-purple-300 bg-purple-50/30' 
-                    : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/50'">
+                 class="perm-card-item"
+                 :class="modules.includes('{{ $mKey }}') ? 'perm-card-active' : ''">
 
-                {{-- Right Side (RTL Start): Icon Badge + Title --}}
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-lg sm:text-xl shrink-0 transition-colors shadow-2xs"
-                         :class="modules.includes('{{ $mKey }}')
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'bg-purple-50/70 text-purple-600 group-hover:bg-purple-100'">
+                {{-- Right Side (RTL Start): Icon + Title --}}
+                <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                    <div class="perm-icon-box">
                         {{ $m['icon'] }}
                     </div>
 
-                    <div class="min-w-0 text-right">
-                        <strong class="text-xs sm:text-sm font-black text-slate-900 block truncate leading-snug">
+                    <div style="min-w: 0; text-align: right;">
+                        <strong style="font-size: 0.875rem; font-weight: 900; color: #0f172a; display: block; line-height: 1.3;">
                             {{ $m['title'] }}
                         </strong>
-                        <span class="text-[10px] sm:text-[11px] font-medium text-slate-400 block truncate mt-0.5">
+                        <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">
                             {{ $m['description'] ?? '' }}
                         </span>
                     </div>
                 </div>
 
-                {{-- Left Side (RTL End): Smooth iOS Toggle Switch --}}
-                <div class="shrink-0 mr-3">
-                    <div class="relative w-12 h-6.5 rounded-full transition-colors duration-200 flex items-center p-0.5"
-                         :class="modules.includes('{{ $mKey }}') ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'">
-                        <span class="w-5 h-5 rounded-full bg-white shadow-md transition-all duration-200 transform"></span>
-                    </div>
+                {{-- Left Side (RTL End): Toggle Switch --}}
+                <div class="perm-toggle-track"
+                     :class="modules.includes('{{ $mKey }}') ? 'perm-toggle-track-on' : 'perm-toggle-track-off'">
+                    <span class="perm-toggle-knob"></span>
                 </div>
 
             </div>
         @endforeach
     </div>
 
-    {{-- Hidden Input for form submission safety --}}
     <input type="hidden" name="{{ $statePath }}" :value="JSON.stringify(modules)">
-
 </div>
-
-<style>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f8fafc;
-        border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-</style>
