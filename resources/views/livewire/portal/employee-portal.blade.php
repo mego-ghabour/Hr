@@ -1371,51 +1371,80 @@
             <!-- 8. EVALUATIONS TAB (التقييمات والاستبيانات) -->
             <!-- ========================================== -->
             @if($activeTab === 'evaluations')
-                <div class="space-y-6">
-                    <!-- Header Banner -->
-                    <div class="bg-gradient-to-r from-teal-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
-                        <div class="relative z-10">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white backdrop-blur-md mb-3 border border-white/10">
-                                <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                <span>تقييم الأداء والتغذية الراجعة المستمرة</span>
-                            </span>
-                            <h2 class="text-xl sm:text-2xl font-black text-white">التقييمات واستبيانات الرضا الوظيفي</h2>
-                            <p class="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
-                                هنا يمكنك تقييم أسلوب إدارة مديرك المباشر (Upward Feedback بسرية كاملة)، والمشاركة في استبيانات رضا الموظفين، والاطلاع على نتائج وملاحظات تقييم أدائك الوظيفي.
-                            </p>
+                <div class="space-y-6 animate-fadeIn">
+                    <!-- Header Banner with Performance Metrics -->
+                    <div class="bg-gradient-to-r from-teal-950 via-slate-900 to-emerald-950 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border border-teal-800/30">
+                        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div class="max-w-xl">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-teal-500/20 text-teal-300 backdrop-blur-md mb-3 border border-teal-400/30">
+                                    <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                    <span>نظام التقييم الدوري والتغذية الراجعة (360 Feedback)</span>
+                                </span>
+                                <h2 class="text-xl sm:text-2xl font-black text-white">التقييمات واستبيانات الأداء الوظيفي</h2>
+                                <p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+                                    هنا يمكنك متابعة نتائج تقييم أدائك الرسمي المعتمد من الإدارة، والمشاركة في تقييم أسلوب إدارة مديرك (بسرية تامة 🔒)، وتعبئة استبيانات بيئة العمل.
+                                </p>
+                            </div>
+
+                            <!-- Performance Score Pill -->
+                            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 text-center shrink-0 min-w-[180px]">
+                                <span class="text-[11px] font-bold text-teal-200 block mb-1">متوسط تقييم أدائي العام</span>
+                                <div class="text-3xl font-black text-amber-300 font-mono tracking-tight">
+                                    {{ $myAvgScore ? number_format((float)$myAvgScore, 2) : '—' }}
+                                    <span class="text-sm font-sans font-bold text-slate-300">/ 5.0 ⭐</span>
+                                </div>
+                                <span class="text-[10px] font-extrabold text-emerald-300 block mt-1">
+                                    {{ $myEvaluations->count() > 0 ? 'مستند إلى ' . $myEvaluations->count() . ' تقييم معتمد' : 'لا توجد تقييمات معتمدة بعد' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Section: Available Evaluation Forms -->
-                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-                        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center justify-between">
-                            <span>نماذج التقييم والاستبيانات المتاحة لك الآن</span>
-                            <span class="text-xs text-brand-600 font-bold font-mono">{{ $availableForms->count() }} نموذج</span>
-                        </h3>
+                    <!-- Section 1: Available Evaluation Forms to Fill -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900">النماذج والاستبيانات المتاحة للبدء فيها الآن</h3>
+                                <p class="text-xs text-slate-500 font-medium mt-0.5">اختر النموذج المطلوب لتعبئة التقييم واحتساب النتيجة آلياً</p>
+                            </div>
+                            <span class="text-xs bg-teal-50 border border-teal-200 text-teal-800 font-extrabold px-3 py-1 rounded-xl">
+                                {{ $availableForms->count() }} نموذج متاح
+                            </span>
+                        </div>
 
                         @if($availableForms->isEmpty())
-                            <div class="text-center py-8 text-slate-400 text-xs">
-                                لا توجد نماذج تقييم مفتوحة في الوقت الحالي.
+                            <div class="text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-slate-400 text-xs font-bold">
+                                📋 لا توجد نماذج تقييم مفتوحة في الوقت الحالي. سيتم إشعارك فور إطلاق استبيان أو دورة تقييمية جديدة.
                             </div>
                         @else
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @foreach($availableForms as $form)
-                                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 transition-all flex flex-col justify-between gap-4">
+                                    <div class="p-5 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/60 hover:shadow-md hover:border-teal-300 transition-all flex flex-col justify-between gap-4">
                                         <div>
                                             <div class="flex items-center justify-between gap-2 mb-2">
-                                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg {{ $form->type === 'employee_to_manager' ? 'bg-amber-100 text-amber-800' : 'bg-brand-100 text-brand-800' }}">
-                                                    {{ $form->type_label }}
+                                                @php
+                                                    $typeBadge = match($form->type) {
+                                                        'employee_to_manager' => ['bg' => 'bg-amber-100 text-amber-900 border-amber-200', 'label' => '🔒 تقييم سري للمدير المباشر'],
+                                                        'manager_to_employee' => ['bg' => 'bg-teal-100 text-teal-900 border-teal-200', 'label' => '👔 تقييم أداء موظف / وكيل'],
+                                                        default => ['bg' => 'bg-sky-100 text-sky-900 border-sky-200', 'label' => '📊 استبيان قياس رضا عام'],
+                                                    };
+                                                @endphp
+                                                <span class="text-[11px] font-black px-2.5 py-1 rounded-lg border {{ $typeBadge['bg'] }}">
+                                                    {{ $typeBadge['label'] }}
                                                 </span>
-                                                <span class="text-xs text-slate-400 font-mono">{{ count($form->questions ?? []) }} معيار</span>
+                                                <span class="text-xs text-slate-500 font-mono font-bold">{{ count($form->questions ?? []) }} معايير</span>
                                             </div>
-                                            <h4 class="text-sm font-black text-slate-900">{{ $form->title }}</h4>
-                                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ $form->description }}</p>
+                                            <h4 class="text-sm font-black text-slate-900 leading-snug">{{ $form->title }}</h4>
+                                            @if($form->description)
+                                                <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">{{ $form->description }}</p>
+                                            @endif
                                         </div>
 
-                                        <button wire:click="openEvaluationModal({{ $form->id }})" 
-                                                class="w-full py-2.5 px-4 bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm">
-                                            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                            <span>تعبئة وإرسال التقييم</span>
+                                        <button type="button"
+                                                wire:click="openEvaluationModal({{ $form->id }})" 
+                                                class="w-full py-2.5 px-4 bg-slate-900 hover:bg-teal-700 text-white text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-[0.99]">
+                                            <span>✍️</span>
+                                            <span>بدء تعبئة وإرسال التقييم</span>
                                         </button>
                                     </div>
                                 @endforeach
@@ -1423,59 +1452,134 @@
                         @endif
                     </div>
 
-                    <!-- Section: My Performance Reviews Received -->
-                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-                        <h3 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
-                            <span>سجل تقييمات أدائي الوظيفي (المعتمدة من الإدارة)</span>
-                            <span class="text-xs text-slate-400 font-mono">({{ $myEvaluations->count() }} تقييم)</span>
-                        </h3>
-
-                        @if($myEvaluations->isEmpty())
-                            <div class="text-center py-10 text-slate-400 text-xs">
-                                لم يتم اعتماد أي تقييم أداء رسمي لك حتى الآن. يتم التقييم بشكل دوري من قبل مديرك المباشر.
+                    <!-- Section 2: Evaluation Results & History (Where Results Live) -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 class="text-base font-black text-slate-900">سجل ونتائج التقييمات</h3>
+                                <p class="text-xs text-slate-500 font-medium mt-0.5">استعرض نتائج تقييمات أدائك المعتمدة من الإدارة أو التقييمات التي قمت بتقديمها</p>
                             </div>
-                        @else
-                            <div class="space-y-4">
-                                @foreach($myEvaluations as $rev)
-                                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/40 space-y-3">
-                                        <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
-                                            <div>
-                                                <h4 class="text-sm font-bold text-slate-900">{{ $rev->form?->title ?? 'تقييم أداء دوري' }}</h4>
-                                                <span class="text-xs text-slate-400">عن فترة: {{ $rev->period ?? $rev->created_at->format('Y-m') }}</span>
+
+                            <!-- Sub-tabs Switcher -->
+                            <div class="flex bg-slate-100 p-1 rounded-xl">
+                                <button type="button" 
+                                        wire:click="$set('evaluationsViewTab', 'received')"
+                                        class="px-3.5 py-1.5 rounded-lg text-xs font-black transition {{ $evaluationsViewTab === 'received' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                                    تقييمات أدائي المستلمة ({{ $myEvaluations->count() }})
+                                </button>
+                                <button type="button" 
+                                        wire:click="$set('evaluationsViewTab', 'submitted')"
+                                        class="px-3.5 py-1.5 rounded-lg text-xs font-black transition {{ $evaluationsViewTab === 'submitted' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                                    التقييمات المرسلة مني ({{ $submittedByMeEvaluations->count() }})
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab A: Received Appraisals -->
+                        @if($evaluationsViewTab === 'received')
+                            @if($myEvaluations->isEmpty())
+                                <div class="text-center py-12 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                                    <span class="text-3xl block mb-2">⭐</span>
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-700">لم يتم اعتماد أي تقييم أداء رسمي لك حتى الآن</h4>
+                                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">تتم التقييمات الرسمية دورياً من قِبل مديرك المباشر وإدارة الموارد البشرية، وستظهر نتيجتها وتفاصيلها هنا فور اعتمادها.</p>
+                                </div>
+                            @else
+                                <div class="space-y-4">
+                                    @foreach($myEvaluations as $rev)
+                                        <div class="p-5 sm:p-6 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all space-y-4">
+                                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+                                                <div>
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <span class="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md">
+                                                            {{ $rev->period ?? $rev->created_at->format('Y-m') }}
+                                                        </span>
+                                                        <span class="text-xs text-slate-400 font-medium">بتاريخ: {{ $rev->created_at->format('Y/m/d') }}</span>
+                                                    </div>
+                                                    <h4 class="text-sm sm:text-base font-black text-slate-900">{{ $rev->form?->title ?? 'تقييم أداء دوري' }}</h4>
+                                                </div>
+
+                                                <div class="flex items-center gap-3">
+                                                    <div class="text-left">
+                                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 font-black text-sm font-mono shadow-xs">
+                                                            <span>{{ number_format((float)$rev->score, 2) }}</span>
+                                                            <span class="text-amber-500">/ 5.0 ⭐</span>
+                                                        </span>
+                                                    </div>
+                                                    <button type="button"
+                                                            wire:click="viewEvaluationDetails({{ $rev->id }})"
+                                                            class="text-xs font-extrabold text-teal-700 hover:text-white bg-white hover:bg-teal-600 border border-teal-300 px-3 py-1.5 rounded-xl transition cursor-pointer shadow-xs">
+                                                        🔍 عرض تفاصيل المعايير
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div class="text-left">
-                                                <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-bold text-sm font-mono">
-                                                    <span>{{ number_format((float)$rev->score, 2) }}</span>
-                                                    <span class="text-amber-500">/ 5.0 ⭐</span>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                                @if($rev->strengths)
+                                                    <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                                                        <span class="font-black text-emerald-950 block mb-1">أبرز نقاط القوة والإنجازات:</span>
+                                                        <p class="text-emerald-900 leading-relaxed font-medium">{{ $rev->strengths }}</p>
+                                                    </div>
+                                                @endif
+                                                @if($rev->areas_for_improvement)
+                                                    <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+                                                        <span class="font-black text-amber-950 block mb-1">مجالات التطوير والتحسين:</span>
+                                                        <p class="text-amber-900 leading-relaxed font-medium">{{ $rev->areas_for_improvement }}</p>
+                                                    </div>
+                                                @endif
+                                            </div>
+
+                                            @if($rev->action_plan)
+                                                <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200 text-xs">
+                                                    <span class="font-black text-sky-950 block mb-1">خطة العمل والتطوير المعتمدة:</span>
+                                                    <p class="text-sky-900 leading-relaxed font-medium">{{ $rev->action_plan }}</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        @endif
+
+                        <!-- Tab B: Submitted Appraisals by Me -->
+                        @if($evaluationsViewTab === 'submitted')
+                            @if($submittedByMeEvaluations->isEmpty())
+                                <div class="text-center py-12 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">
+                                    <span class="text-3xl block mb-2">📝</span>
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-700">لم تقم بإرسال أي تقييمات بعد</h4>
+                                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">عند قيامك بتعبئة أي نموذج تقييم لمديرك أو استبيان عام، سيتم توثيقه وحفظه هنا.</p>
+                                </div>
+                            @else
+                                <div class="space-y-3">
+                                    @foreach($submittedByMeEvaluations as $subRev)
+                                        <div class="p-4 rounded-2xl border border-slate-200 bg-white flex flex-wrap items-center justify-between gap-3 text-xs">
+                                            <div>
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <span class="font-extrabold text-slate-900">{{ $subRev->form?->title ?? 'تقييم' }}</span>
+                                                    @if($subRev->is_anonymous)
+                                                        <span class="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-md text-[10px]">🔒 سري مجهول الهوية</span>
+                                                    @elseif($subRev->evaluatedEmployee)
+                                                        <span class="bg-teal-50 text-teal-800 font-bold px-2 py-0.5 rounded-md text-[10px]">المُقيَّم: {{ $subRev->evaluatedEmployee->full_name }}</span>
+                                                    @endif
+                                                </div>
+                                                <span class="text-slate-400">تاريخ الإرسال: {{ $subRev->created_at->format('Y/m/d H:i') }}</span>
+                                            </div>
+
+                                            <div class="flex items-center gap-3">
+                                                @if($subRev->score)
+                                                    <span class="font-mono font-black text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                                                        {{ number_format((float)$subRev->score, 2) }} / 5.0 ⭐
+                                                    </span>
+                                                @endif
+                                                <span class="px-2.5 py-1 rounded-lg font-bold {{ $subRev->status === 'reviewed' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600' }}">
+                                                    {{ $subRev->status === 'reviewed' ? 'معتمد رسمياً ✓' : 'تم الإرسال للإدارة' }}
                                                 </span>
                                             </div>
                                         </div>
-
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                                            @if($rev->strengths)
-                                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
-                                                    <span class="font-bold text-emerald-900 block mb-1">أبرز نقاط القوة:</span>
-                                                    <p class="text-emerald-800 leading-relaxed">{{ $rev->strengths }}</p>
-                                                </div>
-                                            @endif
-                                            @if($rev->areas_for_improvement)
-                                                <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-100">
-                                                    <span class="font-bold text-amber-900 block mb-1">نقاط التطوير والتحسين:</span>
-                                                    <p class="text-amber-800 leading-relaxed">{{ $rev->areas_for_improvement }}</p>
-                                                </div>
-                                            @endif
-                                        </div>
-
-                                        @if($rev->action_plan)
-                                            <div class="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs">
-                                                <span class="font-bold text-indigo-900 block mb-1">خطة العمل المقترحة:</span>
-                                                <p class="text-indigo-800 leading-relaxed">{{ $rev->action_plan }}</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         @endif
+
                     </div>
                 </div>
             @endif
@@ -1745,24 +1849,65 @@
 
     <!-- EVALUATION / SURVEY MODAL (تعبئة نموذج التقييم والاستبيان) -->
     @if($showEvaluationModal && $selectedForm)
-        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
             <div class="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 border border-slate-100 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-5">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
                     <div>
-                        <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-brand-50 text-brand-600">{{ $selectedForm->type_label }}</span>
+                        <span class="text-[11px] font-black px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 border border-teal-200/60">{{ $selectedForm->type_label }}</span>
                         <h3 class="text-base font-black text-slate-900 mt-1">{{ $selectedForm->title }}</h3>
                     </div>
-                    <button wire:click="closeEvaluationModal" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100">
+                    <button type="button" wire:click="closeEvaluationModal" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
-                @if($selectedForm->type === 'employee_to_manager')
-                    <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 mb-4 text-xs flex items-center gap-2">
-                        <span class="text-lg">🔒</span>
+                {{-- Evaluated Person Selection (When evaluating someone else) --}}
+                @if($selectedForm->type === 'manager_to_employee')
+                    <div class="p-4 rounded-2xl bg-teal-50 border border-teal-200 mb-4 text-xs">
+                        <label class="block font-black text-teal-950 mb-1.5">
+                            اختر الموظف / الوكيل الخاضع للتقييم <span class="text-rose-500">*</span>
+                        </label>
+                        <select wire:model="evaluatingEmployeeId" class="w-full text-xs font-bold bg-white border border-teal-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <option value="">— اختر الموظف من القائمة —</option>
+                            @foreach($allEmployees as $emp)
+                                @if(!$employee || $emp->id !== $employee->id)
+                                    <option value="{{ $emp->id }}">
+                                        {{ $emp->full_name }} ({{ $emp->job_title ?: 'موظف' }}) - {{ $emp->department?->name ?? 'بدون قسم' }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                @elseif($selectedForm->type === 'employee_to_manager')
+                    <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 mb-4 text-xs">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-black text-amber-950 flex items-center gap-1.5">
+                                <span>🔒</span>
+                                <span>تقييم سري للمدير المباشر (Upward Feedback)</span>
+                            </span>
+                            <span class="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-md">مجهول الهوية 100%</span>
+                        </div>
+                        <p class="text-amber-800 text-[11px] leading-relaxed mb-2">
+                            هويتك واسمك محجوبان بالكامل. يتم تجميع نتائج التقييم في مؤشرات عامة دون كشف صاحب التقييم.
+                        </p>
                         <div>
-                            <span class="font-bold text-amber-900 block">تقييم سري تماماً للمدير المباشر</span>
-                            <span class="text-amber-800 text-[11px]">يتم تجميع التقييمات في إحصاءات عامة ولن يظهر اسمك أو هويتك الشخصية لمديرك.</span>
+                            <label class="block font-bold text-amber-950 mb-1">المدير الخاضع للتقييم:</label>
+                            <select wire:model="evaluatingEmployeeId" class="w-full text-xs font-bold bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                @if($employee && $employee->manager)
+                                    <option value="{{ $employee->manager->id }}">
+                                        {{ $employee->manager->full_name }} (مديري المباشر المسجل)
+                                    </option>
+                                @else
+                                    <option value="">— اختر المدير —</option>
+                                @endif
+                                @foreach($allEmployees as $emp)
+                                    @if(!$employee || ($emp->id !== $employee->id && (!$employee->manager || $emp->id !== $employee->manager->id)))
+                                        <option value="{{ $emp->id }}">
+                                            {{ $emp->full_name }} ({{ $emp->job_title ?: 'إدارة' }})
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 @endif
@@ -1770,60 +1915,200 @@
                 <form wire:submit.prevent="submitPortalEvaluation" class="space-y-5">
                     @if(is_array($selectedForm->questions))
                         @foreach($selectedForm->questions as $idx => $q)
-                            @php $qKey = 'q_' . $idx; @endphp
-                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                                <label class="block text-xs font-bold text-slate-800">
+                            @php 
+                                $qKey = 'q_' . $idx; 
+                                $currentAnswer = $evaluation_answers[$qKey] ?? null;
+                            @endphp
+                            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                                <label class="block text-xs font-black text-slate-800">
                                     {{ $idx + 1 }}. {{ $q['label'] ?? '' }}
                                     @if($q['required'] ?? true) <span class="text-rose-500">*</span> @endif
                                 </label>
 
                                 @if(($q['type'] ?? '') === 'rating_5')
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        @foreach([5 => '5 - ممتاز ⭐', 4 => '4 - جيد جداً', 3 => '3 - جيد', 2 => '2 - مقبول', 1 => '1 - يحتاج تحسين'] as $starVal => $starLabel)
-                                            <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all {{ ($evaluation_answers[$qKey] ?? null) == $starVal ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100' }}">
-                                                <input type="radio" wire:model="evaluation_answers.{{ $qKey }}" value="{{ $starVal }}" class="sr-only">
-                                                <span>{{ $starLabel }}</span>
-                                            </label>
+                                    <div class="grid grid-cols-5 gap-1.5 sm:gap-2">
+                                        @foreach([
+                                            5 => ['num' => '5', 'label' => 'ممتاز'],
+                                            4 => ['num' => '4', 'label' => 'جيد جداً'],
+                                            3 => ['num' => '3', 'label' => 'جيد'],
+                                            2 => ['num' => '2', 'label' => 'مقبول'],
+                                            1 => ['num' => '1', 'label' => 'ضعيف'],
+                                        ] as $starVal => $starData)
+                                            <button type="button"
+                                                    wire:click="$set('evaluation_answers.{{ $qKey }}', {{ $starVal }})"
+                                                    class="py-2.5 px-1 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 {{ (int)$currentAnswer === $starVal ? 'bg-amber-400 text-slate-950 font-black border-amber-500 shadow-md ring-2 ring-amber-300' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100 font-bold' }}">
+                                                <span class="text-base font-black font-mono leading-none">{{ $starData['num'] }}</span>
+                                                <span class="text-[10px] leading-none">{{ $starData['label'] }}</span>
+                                            </button>
                                         @endforeach
                                     </div>
                                 @elseif(($q['type'] ?? '') === 'boolean')
-                                    <div class="flex items-center gap-3">
-                                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer">
-                                            <input type="radio" wire:model="evaluation_answers.{{ $qKey }}" value="1" class="text-brand-600">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button"
+                                                wire:click="$set('evaluation_answers.{{ $qKey }}', 1)"
+                                                class="py-2.5 px-4 rounded-xl border text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 {{ (string)$currentAnswer === '1' ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100' }}">
+                                            <span>✓</span>
                                             <span>نعم / محقق بالكامل</span>
-                                        </label>
-                                        <label class="flex items-center gap-1.5 text-xs font-bold cursor-pointer">
-                                            <input type="radio" wire:model="evaluation_answers.{{ $qKey }}" value="0" class="text-brand-600">
+                                        </button>
+                                        <button type="button"
+                                                wire:click="$set('evaluation_answers.{{ $qKey }}', 0)"
+                                                class="py-2.5 px-4 rounded-xl border text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 {{ (string)$currentAnswer === '0' ? 'bg-rose-600 text-white border-rose-700 shadow-sm' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100' }}">
+                                            <span>✕</span>
                                             <span>لا / غير محقق</span>
-                                        </label>
+                                        </button>
+                                    </div>
+                                @elseif(($q['type'] ?? '') === 'rating_10')
+                                    <div class="grid grid-cols-10 gap-1">
+                                        @for($i = 1; $i <= 10; $i++)
+                                            <button type="button"
+                                                    wire:click="$set('evaluation_answers.{{ $qKey }}', {{ $i }})"
+                                                    class="py-2 text-center rounded-lg border text-xs font-black font-mono transition cursor-pointer {{ (int)$currentAnswer === $i ? 'bg-teal-600 text-white border-teal-700 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100' }}">
+                                                {{ $i }}
+                                            </button>
+                                        @endfor
                                     </div>
                                 @else
-                                    <textarea wire:model="evaluation_answers.{{ $qKey }}" rows="2" placeholder="اكتب إجابتك أو ملاحظاتك هنا..." class="w-full text-xs font-medium rounded-xl border-slate-200 focus:border-brand-500"></textarea>
+                                    <textarea wire:model="evaluation_answers.{{ $qKey }}" rows="2" placeholder="اكتب إجابتك أو ملاحظاتك هنا..." class="w-full text-xs font-medium rounded-xl border-slate-300 focus:border-teal-500 focus:ring-teal-500 p-2.5"></textarea>
                                 @endif
                             </div>
                         @endforeach
                     @endif
 
-                    <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <div class="space-y-3 pt-3 border-t border-slate-100">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">أبرز الإيجابيات ونقاط القوة (اختياري)</label>
-                            <textarea wire:model="evaluation_strengths" rows="2" placeholder="ما هي النقاط الإيجابية البارزة؟" class="w-full text-xs font-medium rounded-xl border-slate-200"></textarea>
+                            <textarea wire:model="evaluation_strengths" rows="2" placeholder="ما هي النقاط الإيجابية البارزة؟" class="w-full text-xs font-medium rounded-xl border-slate-300 focus:border-teal-500 p-2.5"></textarea>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">مقترحات وفرص التحسين والتطوير (اختياري)</label>
-                            <textarea wire:model="evaluation_improvements" rows="2" placeholder="ما الذي يمكن تطويره أو تحسينه؟" class="w-full text-xs font-medium rounded-xl border-slate-200"></textarea>
+                            <textarea wire:model="evaluation_improvements" rows="2" placeholder="ما الذي يمكن تطويره أو تحسينه؟" class="w-full text-xs font-medium rounded-xl border-slate-300 focus:border-teal-500 p-2.5"></textarea>
                         </div>
                     </div>
 
                     <div class="pt-4 flex items-center justify-end gap-2 border-t border-slate-100">
-                        <button type="button" wire:click="closeEvaluationModal" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold">
+                        <button type="button" wire:click="closeEvaluationModal" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition cursor-pointer">
                             إلغاء
                         </button>
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white text-xs font-bold shadow-md">
-                            إرسال التقييم واحتساب النتيجة
+                        <button type="submit" 
+                                wire:loading.attr="disabled"
+                                class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-black shadow-md transition cursor-pointer flex items-center gap-2">
+                            <span wire:loading.remove wire:target="submitPortalEvaluation">🚀 إرسال التقييم واحتساب النتيجة</span>
+                            <span wire:loading wire:target="submitPortalEvaluation" class="inline-flex items-center gap-1.5">
+                                <span class="animate-spin">⏳</span>
+                                <span>جارٍ الحفظ والاحتساب...</span>
+                            </span>
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- EVALUATION DETAIL MODAL (عرض تفاصيل نتيجة التقييم) -->
+    @if($showEvaluationDetailModal && $viewingEvaluation)
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+            <div class="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 border border-slate-100 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+                    <div>
+                        <span class="text-[11px] font-extrabold bg-teal-50 text-teal-700 px-2.5 py-1 rounded-md border border-teal-200/60">
+                            نتيجة التقييم الرسمية
+                        </span>
+                        <h3 class="text-base font-black text-slate-900 mt-1">
+                            {{ $viewingEvaluation->form?->title ?? 'تقييم أداء' }}
+                        </h3>
+                        <span class="text-xs text-slate-400 font-medium">فترة التقييم: {{ $viewingEvaluation->period ?? $viewingEvaluation->created_at->format('Y/m') }}</span>
+                    </div>
+                    <button type="button" wire:click="closeEvaluationDetailModal" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="bg-gradient-to-r from-teal-950 to-slate-900 rounded-2xl p-5 text-white flex items-center justify-between mb-5 shadow-sm">
+                    <div>
+                        <span class="text-xs text-teal-200 block mb-0.5">الدرجة الإجمالية المحتسبة:</span>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-2xl font-black font-mono text-amber-300">{{ number_format((float)$viewingEvaluation->score, 2) }}</span>
+                            <span class="text-xs text-slate-300">من 5.0 ⭐</span>
+                        </div>
+                    </div>
+                    <div class="text-left">
+                        @php
+                            $scoreVal = (float)$viewingEvaluation->score;
+                            $ratingBadge = match(true) {
+                                $scoreVal >= 4.5 => ['label' => 'أداء متميز (Excellent)', 'bg' => 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'],
+                                $scoreVal >= 3.5 => ['label' => 'أداء جيد جداً (Very Good)', 'bg' => 'bg-teal-500/20 text-teal-300 border-teal-400/30'],
+                                $scoreVal >= 2.5 => ['label' => 'أداء مرضي (Satisfactory)', 'bg' => 'bg-amber-500/20 text-amber-300 border-amber-400/30'],
+                                default => ['label' => 'يحتاج تطوير وتحسين', 'bg' => 'bg-rose-500/20 text-rose-300 border-rose-400/30'],
+                            };
+                        @endphp
+                        <span class="inline-block px-3 py-1 rounded-xl text-xs font-black border {{ $ratingBadge['bg'] }}">
+                            {{ $ratingBadge['label'] }}
+                        </span>
+                        <span class="block text-[10px] text-slate-400 mt-1">الحالة: {{ $viewingEvaluation->status === 'reviewed' ? 'معتمد رسمياً ✓' : 'قيد المراجعة' }}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-5">
+                    <span class="text-xs font-black text-slate-700 block">تفاصيل درجات المعايير:</span>
+                    @if($viewingEvaluation->form && is_array($viewingEvaluation->form->questions))
+                        @foreach($viewingEvaluation->form->questions as $idx => $q)
+                            @php
+                                $qKey = 'q_' . $idx;
+                                $answer = $viewingEvaluation->answers[$qKey] ?? null;
+                                $type = $q['type'] ?? 'rating_5';
+                            @endphp
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-3 text-xs">
+                                <span class="font-bold text-slate-800 flex-1">{{ $idx + 1 }}. {{ $q['label'] ?? '' }}</span>
+                                <div>
+                                    @if($type === 'rating_5')
+                                        <span class="inline-flex items-center gap-1 font-mono font-black text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg">
+                                            {{ $answer ?? '-' }} / 5 ⭐
+                                        </span>
+                                    @elseif($type === 'rating_10')
+                                        <span class="inline-flex items-center gap-1 font-mono font-black text-teal-900 bg-teal-100 px-2.5 py-1 rounded-lg">
+                                            {{ $answer ?? '-' }} / 10
+                                        </span>
+                                    @elseif($type === 'boolean')
+                                        <span class="font-bold {{ $answer ? 'text-emerald-700 bg-emerald-100' : 'text-rose-700 bg-rose-100' }} px-2.5 py-1 rounded-lg">
+                                            {{ $answer ? 'محقق ✓' : 'غير محقق ✕' }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-600 italic">{{ $answer ?: 'لا توجد ملاحظات' }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
+
+                <div class="space-y-3 text-xs border-t border-slate-100 pt-4">
+                    @if($viewingEvaluation->strengths)
+                        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <strong class="font-bold text-emerald-950 block mb-1">أبرز نقاط القوة والإنجازات:</strong>
+                            <p class="text-emerald-900 leading-relaxed font-medium">{{ $viewingEvaluation->strengths }}</p>
+                        </div>
+                    @endif
+
+                    @if($viewingEvaluation->areas_for_improvement)
+                        <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+                            <strong class="font-bold text-amber-950 block mb-1">مجالات التحسين والتطوير:</strong>
+                            <p class="text-amber-900 leading-relaxed font-medium">{{ $viewingEvaluation->areas_for_improvement }}</p>
+                        </div>
+                    @endif
+
+                    @if($viewingEvaluation->action_plan)
+                        <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200">
+                            <strong class="font-bold text-sky-950 block mb-1">خطة العمل التطويرية:</strong>
+                            <p class="text-sky-900 leading-relaxed font-medium">{{ $viewingEvaluation->action_plan }}</p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="pt-5 border-t border-slate-100 mt-5 flex justify-end">
+                    <button type="button" wire:click="closeEvaluationDetailModal" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition cursor-pointer">
+                        إغلاق
+                    </button>
+                </div>
             </div>
         </div>
     @endif

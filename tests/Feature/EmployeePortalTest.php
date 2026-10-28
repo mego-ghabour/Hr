@@ -233,6 +233,66 @@ class EmployeePortalTest extends TestCase
             ->assertSet('activeTab', 'profile');
     }
 
+    public function test_employee_can_submit_and_view_evaluation(): void
+    {
+        $form = \App\Models\EvaluationForm::create([
+            'title' => 'تقييم الأداء الربعي',
+            'type' => 'manager_to_employee',
+            'target_type' => 'all',
+            'is_active' => true,
+            'questions' => [
+                ['id' => 'q_0', 'text' => 'جودة العمل ودقة الإنجاز', 'type' => 'rating_5'],
+                ['id' => 'q_1', 'text' => 'الالتزام بمواعيد التسليم', 'type' => 'rating_5'],
+            ],
+            'created_by' => $this->user->id,
+        ]);
+
+        $subordinate = Employee::create([
+            'department_id' => $this->department->id,
+            'first_name' => 'خالد',
+            'last_name' => 'سعيد',
+            'phone' => '0509999999',
+            'job_title' => 'مطور واجهات',
+            'salary' => 9000,
+            'hire_date' => '2025-02-01',
+            'status' => 'active',
+            'manager_id' => $this->employee->id,
+        ]);
+
+        $component = Livewire::actingAs($this->user)
+            ->test(EmployeePortal::class)
+            ->call('setTab', 'evaluations')
+            ->assertSet('activeTab', 'evaluations')
+            ->call('openEvaluationModal', $form->id)
+            ->assertSet('showEvaluationModal', true)
+            ->assertSet('selectedFormId', $form->id)
+            ->set('evaluatingEmployeeId', $subordinate->id)
+            ->set('evaluation_answers.q_0', 5)
+            ->set('evaluation_answers.q_1', 4)
+            ->set('evaluation_strengths', 'ممتاز في حل المشكلات')
+            ->call('submitPortalEvaluation')
+            ->assertSet('showEvaluationModal', false);
+
+        $this->assertDatabaseHas('evaluations', [
+            'evaluation_form_id' => $form->id,
+            'evaluator_id' => $this->user->id,
+            'evaluated_employee_id' => $subordinate->id,
+            'status' => 'submitted',
+        ]);
+
+        $eval = \App\Models\Evaluation::where('evaluated_employee_id', $subordinate->id)->first();
+        $this->assertNotNull($eval);
+        $this->assertEquals(4.5, (float)$eval->score);
+
+        // Test viewing evaluation breakdown
+        $component->call('viewEvaluationDetails', $eval->id)
+            ->assertSet('showEvaluationDetailModal', true)
+            ->assertSet('viewingEvaluationId', $eval->id)
+            ->assertSee('تقييم الأداء الربعي')
+            ->call('closeEvaluationDetailModal')
+            ->assertSet('showEvaluationDetailModal', false);
+    }
+
     public function test_employee_can_logout(): void
     {
         $response = $this->actingAs($this->user)->post('/portal/logout');

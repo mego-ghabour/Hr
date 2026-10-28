@@ -46,6 +46,9 @@ class EmployeePortal extends Component
     public array $evaluation_answers = [];
     public string $evaluation_strengths = '';
     public string $evaluation_improvements = '';
+    public bool $showEvaluationDetailModal = false;
+    public ?int $viewingEvaluationId = null;
+    public string $evaluationsViewTab = 'received'; // 'received' or 'submitted'
 
     // Leave request form
     public ?int $leave_type_id = null;
@@ -445,8 +448,13 @@ class EmployeePortal extends Component
                 $this->evaluatingEmployeeId = $this->employee?->manager_id;
             } elseif ($form->type === 'manager_to_employee') {
                 $this->evaluation_is_anonymous = false;
+                $firstSub = Employee::where('manager_id', $this->employee?->id)->first();
+                $this->evaluatingEmployeeId = $firstSub?->id ?? null;
+            } else {
+                $this->evaluation_is_anonymous = false;
                 $this->evaluatingEmployeeId = null;
             }
+
             if (is_array($form->questions)) {
                 foreach ($form->questions as $idx => $q) {
                     $this->evaluation_answers['q_' . $idx] = ($q['type'] ?? '') === 'rating_5' ? 5 : null;
@@ -463,6 +471,18 @@ class EmployeePortal extends Component
         $this->selectedFormId = null;
     }
 
+    public function viewEvaluationDetails(int $id): void
+    {
+        $this->viewingEvaluationId = $id;
+        $this->showEvaluationDetailModal = true;
+    }
+
+    public function closeEvaluationDetailModal(): void
+    {
+        $this->viewingEvaluationId = null;
+        $this->showEvaluationDetailModal = false;
+    }
+
     public function submitPortalEvaluation()
     {
         $user = Auth::user();
@@ -475,6 +495,22 @@ class EmployeePortal extends Component
         if (!$form) {
             $this->notify('نموذج التقييم غير موجود.', 'error');
             return;
+        }
+
+        if ($form->type !== 'general_survey' && empty($this->evaluatingEmployeeId)) {
+            $this->notify('يرجى تحديد الشخص (الموظف أو المدير) الخاضع للتقييم.', 'error');
+            return;
+        }
+
+        if (is_array($form->questions)) {
+            foreach ($form->questions as $idx => $q) {
+                $qKey = 'q_' . $idx;
+                $val = $this->evaluation_answers[$qKey] ?? null;
+                if (($q['required'] ?? true) && ($val === null || $val === '')) {
+                    $this->notify("يرجى الإجابة على المعيار رقم " . ($idx + 1) . ": " . ($q['label'] ?? ''), 'error');
+                    return;
+                }
+            }
         }
 
         $score = $form->calculateScore($this->evaluation_answers);
@@ -700,16 +736,37 @@ class EmployeePortal extends Component
 
         // Employee Evaluations (received)
         $myEvaluations = collect();
+        $myAvgScore = null;
         try {
             if ($employee && \Illuminate\Support\Facades\Schema::hasTable('evaluations')) {
-                $myEvaluations = Evaluation::with('form')
+                $myEvaluations = Evaluation::with(['form', 'evaluator'])
                     ->where('evaluated_employee_id', $employee->id)
                     ->where('status', '!=', 'draft')
                     ->latest()
                     ->get();
+                $myAvgScore = $myEvaluations->whereNotNull('score')->avg('score');
             }
         } catch (\Throwable) {
             $myEvaluations = collect();
+        }
+
+        // Evaluations submitted by me
+        $submittedByMeEvaluations = collect();
+        try {
+            if ($user && \Illuminate\Support\Facades\Schema::hasTable('evaluations')) {
+                $submittedByMeEvaluations = Evaluation::with(['form', 'evaluatedEmployee'])
+                    ->where('evaluator_id', $user->id)
+                    ->latest()
+                    ->get();
+            }
+        } catch (\Throwable) {
+            $submittedByMeEvaluations = collect();
+        }
+
+        // Single evaluation detail view
+        $viewingEvaluation = null;
+        if ($this->viewingEvaluationId) {
+            $viewingEvaluation = Evaluation::with(['form', 'evaluator', 'evaluatedEmployee'])->find($this->viewingEvaluationId);
         }
 
         $isGpsRequired = (bool) Setting::get('enable_gps_clockin', false);
@@ -744,6 +801,9 @@ class EmployeePortal extends Component
             'availableForms' => $availableForms,
             'selectedForm' => $selectedForm,
             'myEvaluations' => $myEvaluations,
+            'myAvgScore' => $myAvgScore,
+            'submittedByMeEvaluations' => $submittedByMeEvaluations,
+            'viewingEvaluation' => $viewingEvaluation,
         ]);
     }
 }

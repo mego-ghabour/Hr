@@ -89,6 +89,11 @@ class PublicGrievancePage extends Component
         }
     }
 
+    public function removeAttachment(): void
+    {
+        $this->attachment = null;
+    }
+
     public function submit(): void
     {
         // Re-check permission if user is not authenticated
@@ -221,6 +226,9 @@ class PublicGrievancePage extends Component
             'departments' => $departments,
             'isAuth' => Auth::check(),
             'authUser' => Auth::user(),
+            'brandName' => $this->brandName,
+            'brandLogo' => $this->brandLogo,
+            'primaryColor' => $this->primaryColor,
         ])->title('صندوق الشكاوى والمقترحات الرقمي | ' . $this->brandName);
     }
 }
