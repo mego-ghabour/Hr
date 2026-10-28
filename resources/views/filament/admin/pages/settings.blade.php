@@ -1332,7 +1332,7 @@
                                             onclick="if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){@this.setCompanyLocation(p.coords.latitude, p.coords.longitude);}, function(e){alert('تعذر الوصول للموقع الجغرافي: ' + e.message);})}else{alert('المتصفح لا يدعم Geolocation');}" 
                                             class="btn-action-outline" 
                                             style="padding: 0.45rem 1rem; font-size: 0.775rem;">
-                                        <x-filament::icon icon="heroicon-o-crosshair" style="width: 0.95rem; height: 0.95rem;" />
+                                        <x-filament::icon icon="heroicon-o-viewfinder-circle" style="width: 0.95rem; height: 0.95rem;" />
                                         <span>التقاط موقعي الحالي كمقر للشركة</span>
                                     </button>
                                 </div>

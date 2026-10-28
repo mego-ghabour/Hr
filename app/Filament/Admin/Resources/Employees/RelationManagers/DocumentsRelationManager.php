@@ -7,11 +7,14 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DocumentsRelationManager extends RelationManager
 {
@@ -19,19 +22,38 @@ class DocumentsRelationManager extends RelationManager
 
     protected static ?string $title = 'مستندات الموظف';
 
+    protected static ?string $modelLabel = 'مستند';
+
+    protected static ?string $pluralModelLabel = 'مستندات الموظف';
+
+    public static function getModelLabel(): ?string
+    {
+        return 'مستند';
+    }
+
+    public static function getPluralModelLabel(): ?string
+    {
+        return 'مستندات الموظف';
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return 'مستندات الموظف';
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                \Filament\Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->label('اسم المستند')
                     ->placeholder('مثال: الهوية الوطنية، عقد العمل، شهادة التخرج')
                     ->required()
                     ->maxLength(255),
-                \Filament\Forms\Components\DatePicker::make('expiry_date')
+                DatePicker::make('expiry_date')
                     ->label('تاريخ الانتهاء')
                     ->helperText('اتركه فارغاً إذا كان المستند ليس له تاريخ انتهاء.'),
-                \Filament\Forms\Components\FileUpload::make('file_path')
+                FileUpload::make('file_path')
                     ->label('الملف')
                     ->directory('employee-documents')
                     ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
@@ -59,7 +81,8 @@ class DocumentsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->label('إضافة مستند جديد'),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -69,6 +92,8 @@ class DocumentsRelationManager extends RelationManager
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('لا توجد مستندات')
+            ->emptyStateDescription('ابدأ برفع مستند جديد للموظف');
     }
 }

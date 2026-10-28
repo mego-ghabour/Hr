@@ -15,12 +15,32 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class LeaveBalancesRelationManager extends RelationManager
 {
     protected static string $relationship = 'leaveBalances';
 
     protected static ?string $title = 'أرصدة الإجازات';
+
+    protected static ?string $modelLabel = 'رصيد إجازة';
+
+    protected static ?string $pluralModelLabel = 'أرصدة الإجازات';
+
+    public static function getModelLabel(): ?string
+    {
+        return 'رصيد إجازة';
+    }
+
+    public static function getPluralModelLabel(): ?string
+    {
+        return 'أرصدة الإجازات';
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return 'أرصدة الإجازات';
+    }
     
     public function form(Schema $schema): Schema
     {
@@ -66,7 +86,8 @@ class LeaveBalancesRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                \Filament\Actions\CreateAction::make(),
+                \Filament\Actions\CreateAction::make()
+                    ->label('إضافة رصيد إجازة'),
             ])
             ->recordActions([
                 \Filament\Actions\EditAction::make(),
@@ -76,6 +97,8 @@ class LeaveBalancesRelationManager extends RelationManager
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('لا توجد أرصدة إجازات')
+            ->emptyStateDescription('ابدأ بإضافة رصيد إجازة للموظف');
     }
 }

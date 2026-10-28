@@ -22,47 +22,74 @@ class GrievanceSchema
     {
         return $schema
             ->components([
-                Section::make('تفاصيل الشكوى أو المقترح (Grievance Details)')
-                    ->description('كافة المعلومات المقدمة في الشكوى الرقمية بديلة السجلات الورقية.')
-                    ->icon('heroicon-o-inbox-arrow-down')
+                // 1. Core Grievance Content & Classification
+                Section::make('معلومات ونوع الشكوى أو المقترح')
+                    ->description('حدد تصنيف الطلب ودرجة الأهمية، وبيانات الموضوع والمحتوى بالتفصيل.')
+                    ->icon('heroicon-o-document-text')
                     ->schema([
-                        Grid::make(3)->schema([
-                            TextInput::make('ticket_number')
-                                ->label('رقم التذكرة / الشكوى')
-                                ->disabled()
-                                ->dehydrated(false)
-                                ->placeholder('يتم التوليد تلقائياً عند الحفظ')
-                                ->visible(fn ($record) => $record !== null),
-
+                        Grid::make(2)->schema([
                             Select::make('type')
-                                ->label('نوع الطلب / الشكوى')
+                                ->label('تصنيف الطلب / الشكوى')
                                 ->options([
-                                    'administrative' => 'إدارية / مالية (رواتب، إجازات، ساعات عمل)',
-                                    'workplace' => 'بيئة العمل والأدوات (أجهزة، تكييف، مستلزمات)',
-                                    'behavioral' => 'سلوكية / نزاع مهني (معاملة، سوء تفاهم)',
-                                    'suggestion' => 'فكرة أو مقترح تطويري للعمل',
-                                    'other' => 'أخرى',
+                                    'administrative' => '🏛️ إدارية أو مالية (رواتب، إجازات، ساعات عمل)',
+                                    'workplace' => '🏢 بيئة العمل والأدوات (مكاتب، أجهزة، تكييف)',
+                                    'behavioral' => '🤝 سلوكية أو نزاع مهني (معاملة، بيئة الفريق)',
+                                    'suggestion' => '💡 فكرة أو مقترح تطويري للعمل',
+                                    'other' => '📌 موضوع آخر',
                                 ])
                                 ->required()
                                 ->default('administrative')
                                 ->native(false),
 
                             Select::make('priority')
-                                ->label('مستوى الأهمية / الأولوية')
+                                ->label('مستوى الأهمية والاستعجال')
                                 ->options([
-                                    'low' => 'منخفضة',
-                                    'normal' => 'عادية',
-                                    'high' => 'عالية',
-                                    'urgent' => 'عاجلة جداً ⚠️',
+                                    'low' => '🟢 منخفضة (استفسار / مقترح عادي)',
+                                    'normal' => '🔵 عادية (طبيعية)',
+                                    'high' => '🟠 عالية (تؤثر على سير العمل)',
+                                    'urgent' => '🔴 عاجلة جداً (أمر حرج وطارئ ⚠️)',
                                 ])
                                 ->required()
                                 ->default('normal')
                                 ->native(false),
 
+                            TextInput::make('title')
+                                ->label('موضوع الشكوى / عنوان المقترح')
+                                ->placeholder('اكتب عنواناً موجزاً ومحدداً يلخص الموضوع...')
+                                ->required()
+                                ->maxLength(255)
+                                ->columnSpanFull(),
+
+                            Textarea::make('content')
+                                ->label('التفاصيل والوقائع الكاملة')
+                                ->placeholder('يرجى ذكر الوقائع والتواريخ وأي تفاصيل داعمة للموضوع بوضوح وأمانة لمساعدة فريق المتابعة...')
+                                ->required()
+                                ->rows(5)
+                                ->columnSpanFull(),
+
+                            FileUpload::make('attachment_path')
+                                ->label('المرفقات والوثائق المؤيدة (اختياري)')
+                                ->directory('grievance-attachments')
+                                ->downloadable()
+                                ->openable()
+                                ->maxSize(10240)
+                                ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                ->helperText('الملفات المدعومة: صور، مستندات PDF أو Word بحد أقصى 10 ميجابايت.')
+                                ->columnSpanFull(),
+                        ]),
+                    ]),
+
+                // 2. Privacy & Submitter Governance
+                Section::make('الخصوصية وهوية مقدم الطلب')
+                    ->description('معايير الحوكمة والسرية وحماية مقدم الشكوى من أي تعارض مصالح.')
+                    ->icon('heroicon-o-shield-check')
+                    ->schema([
+                        Grid::make(2)->schema([
                             Toggle::make('is_anonymous')
-                                ->label('شكوى سرية تماماً (إخفاء هوية الموظف) 🔒')
-                                ->helperText('عند التفعيل، لن يظهر اسم الموظف ويُسجل كـ "مجهول الهوية" لضمان الأمان والحيادية.')
+                                ->label('شكوى سرية ومجهولة الهوية 🔒')
+                                ->helperText('عند التفعيل، تُحجب هوية الموظف بالكامل لضمان الأمان والحيادية التامة.')
                                 ->default(false)
+                                ->onColor('success')
                                 ->live(),
 
                             Select::make('employee_id')
@@ -71,8 +98,15 @@ class GrievanceSchema
                                 ->searchable()
                                 ->preload()
                                 ->disabled(fn (Get $get) => (bool)$get('is_anonymous'))
-                                ->helperText(fn (Get $get) => $get('is_anonymous') ? 'معطل لأن الشكوى سرية مجهولة الهوية.' : '')
+                                ->helperText(fn (Get $get) => $get('is_anonymous') ? 'معطل لأن الشكوى محددة كسرية مجهولة الهوية.' : 'اختر الموظف صاحب الشكوى أو اتركه فارغاً.')
                                 ->native(false),
+
+                            Toggle::make('against_manager')
+                                ->label('الشكوى متعلقة بالإدارة المباشرة ⚠️')
+                                ->helperText('عند تفعيل هذا الخيار، يتم حجب الشكوى فوراً عن المدير المباشر وتوجيهها حصراً لإدارة الموارد البشرية والإدارة العليا لمنع أي تعارض مصالح.')
+                                ->onColor('danger')
+                                ->default(false)
+                                ->columnSpanFull(),
 
                             TextInput::make('submitter_name')
                                 ->label('اسم مقدم الشكوى (مُقدّم من الرابط الخارجي)')
@@ -81,47 +115,30 @@ class GrievanceSchema
                                 ->visible(fn ($record) => ! empty($record?->submitter_name)),
 
                             TextInput::make('submitter_contact')
-                                ->label('معلومات الاتصال (الهاتف / البريد)')
+                                ->label('بيانات الاتصال (الهاتف / البريد من الرابط الخارجي)')
                                 ->disabled()
                                 ->dehydrated(false)
                                 ->visible(fn ($record) => ! empty($record?->submitter_contact)),
-
-                            Toggle::make('against_manager')
-                                ->label('الشكوى متعلقة بالإدارة المباشرة ⚠️')
-                                ->helperText('في حال تفعيل هذا الخيار، يتم حجب الشكوى عن المدير المباشر وتوجيهها حصراً لإدارة الـ HR.')
-                                ->default(false),
-
-                            TextInput::make('title')
-                                ->label('موضوع الشكوى / المقترح')
-                                ->required()
-                                ->maxLength(255)
-                                ->columnSpanFull(),
-
-                            Textarea::make('content')
-                                ->label('تفاصيل الشكوى / المقترح الكاملة')
-                                ->required()
-                                ->rows(5)
-                                ->columnSpanFull(),
-
-                            FileUpload::make('attachment_path')
-                                ->label('المرفقات / المستندات المؤيدة')
-                                ->directory('grievance-attachments')
-                                ->downloadable()
-                                ->openable()
-                                ->maxSize(10240)
-                                ->columnSpanFull(),
                         ]),
                     ]),
 
-                Section::make('معالجة الشكوى وقرارات الموارد البشرية (HR Resolution)')
-                    ->icon('heroicon-o-shield-check')
+                // 3. HR Investigation & Resolution (Visible when editing)
+                Section::make('معالجة الشكوى وقرارات الموارد البشرية')
+                    ->description('توثيق الإجراءات الإدارية، المحقق المسؤول، وقرار الحل النهائي.')
+                    ->icon('heroicon-o-check-badge')
+                    ->visible(fn ($record) => $record !== null)
                     ->schema([
                         Grid::make(3)->schema([
+                            TextInput::make('ticket_number')
+                                ->label('رقم التذكرة / الشكوى')
+                                ->disabled()
+                                ->dehydrated(false),
+
                             Select::make('status')
                                 ->label('حالة الشكوى')
                                 ->options([
                                     'new' => 'جديدة (غير معالجة)',
-                                    'in_progress' => 'قيد المراجعة والتحقيق',
+                                    'in_progress' => 'قيد المراجعة والتحقيق ⏳',
                                     'resolved' => 'تم الحل والمعالجة بنجاح ✓',
                                     'rejected' => 'مرفوضة / مغلقة دون إجراء',
                                 ])

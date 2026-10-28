@@ -29,43 +29,50 @@ class OrganizationChart extends Page
     {
         return 'الهيكل التنظيمي للشركة';
     }
-    
-
 
     protected string $view = 'filament.admin.pages.organization-chart';
+
+    protected function getViewData(): array
+    {
+        return [
+            'employeesData' => $this->getEmployeesData(),
+        ];
+    }
 
     public function getEmployeesData(): array
     {
         $employees = Employee::with('department')->get();
         $data = [];
         
-        // Ensure there is a root node (Company) if no employees have manager_id = null
-        // Or we just rely on whoever has manager_id = null as roots.
-        
-        // We will create a virtual root node if needed, but let's assume CEO has null.
-        // Actually, d3-org-chart requires a single root usually, or handles multiple if told so.
-        // Let's create a single virtual root node just in case.
-        
         $data[] = [
             'id' => 'root',
             'parentId' => '',
             'name' => 'إدارة الشركة',
             'positionName' => 'الإدارة العليا',
-            'imageUrl' => url('https://ui-avatars.com/api/?name=Company&color=FFFFFF&background=111827'),
+            'imageUrl' => 'https://ui-avatars.com/api/?name=Company&color=FFFFFF&background=111827',
         ];
         
+        $validIds = $employees->pluck('id')->map(fn($id) => (string)$id)->flip()->toArray();
+
         foreach ($employees as $employee) {
-            // If manager_id is null, attach to root
-            $parentId = $employee->manager_id ? (string)$employee->manager_id : 'root';
+            $empId = (string)$employee->id;
+            $mgrId = $employee->manager_id ? (string)$employee->manager_id : null;
+
+            // Ensure parent exists and avoid self-referencing loops
+            if ($mgrId && isset($validIds[$mgrId]) && $mgrId !== $empId) {
+                $parentId = $mgrId;
+            } else {
+                $parentId = 'root';
+            }
             
             $imageUrl = $employee->avatar_url 
                 ? Storage::disk('public')->url($employee->avatar_url) 
-                : url('https://ui-avatars.com/api/?name=' . urlencode($employee->first_name . ' ' . $employee->last_name) . '&color=7F9CF5&background=EBF4FF');
+                : 'https://ui-avatars.com/api/?name=' . urlencode($employee->first_name . ' ' . $employee->last_name) . '&color=7F9CF5&background=EBF4FF';
                 
             $data[] = [
-                'id' => (string)$employee->id,
+                'id' => $empId,
                 'parentId' => $parentId,
-                'name' => $employee->first_name . ' ' . $employee->last_name,
+                'name' => trim($employee->first_name . ' ' . $employee->last_name),
                 'positionName' => $employee->job_title ?: 'موظف',
                 'department' => $employee->department ? $employee->department->name : '',
                 'imageUrl' => $imageUrl,
