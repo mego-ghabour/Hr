@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الوظائف المتاحة - {{ \App\Models\Setting::get('brand_name', 'نظام إدارة الموارد البشرية') }}</title>
+    <title>الوظائف المتاحة - {{ \App\Models\Setting::get('brand_name', 'فكرتك HR') }}</title>
     
     @php
-        $primaryColor = \App\Models\Setting::get('primary_color', '#0d9488');
+        $primaryColor = \App\Models\Setting::get('brand_primary_color', \App\Models\Setting::get('primary_color', '#0d9488'));
         $logo = \App\Models\Setting::get('logo');
-        $brandName = \App\Models\Setting::get('brand_name', 'نظام إدارة الموارد البشرية');
+        $brandName = trim(\App\Models\Setting::get('brand_name', 'فكرتك HR'));
+        $logoUrl = $logo ? (str_starts_with($logo, 'http') || str_starts_with($logo, '/') ? $logo : \Illuminate\Support\Facades\Storage::disk('public')->url($logo)) : null;
     @endphp
 
     <!-- Social Media Sharing Meta Tags (Open Graph) -->
@@ -16,8 +17,8 @@
     <meta property="og:description" content="تصفح أحدث الوظائف الشاغرة لدينا وقدم سيرتك الذاتية الآن للانضمام إلى فريق العمل.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    @if($logo)
-        <meta property="og:image" content="{{ str_starts_with($logo, 'http') || str_starts_with($logo, '/') ? $logo : \Illuminate\Support\Facades\Storage::disk('public')->url($logo) }}">
+    @if($logoUrl)
+        <meta property="og:image" content="{{ $logoUrl }}">
     @endif
     <meta name="twitter:card" content="summary_large_image">
     
@@ -56,14 +57,11 @@
             font-family: 'Cairo', sans-serif;
             background-color: #f8fafc;
         }
-        .hero-gradient {
-            background: linear-gradient(135deg, {{ $primaryColor }} 0%, color-mix(in srgb, {{ $primaryColor }} 70%, black) 100%);
-        }
         .filter-btn {
             background-color: {{ $primaryColor }};
         }
         .filter-btn:hover {
-            background-color: color-mix(in srgb, {{ $primaryColor }} 85%, black);
+            background-color: color-mix(in srgb, {{ $primaryColor }} 88%, black);
         }
         .brand-focus:focus {
             border-color: {{ $primaryColor }};
@@ -72,49 +70,100 @@
         }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 antialiased py-8 px-4 sm:px-6 lg:px-8">
+<body class="min-h-screen text-slate-800 antialiased flex flex-col justify-between selection:bg-teal-100 selection:text-teal-900">
 
-    <div class="max-w-5xl mx-auto">
-        <!-- Hero Header -->
-        <div class="hero-gradient text-white rounded-3xl shadow-xl p-8 sm:p-12 mb-8 text-center relative overflow-hidden border border-white/10">
-            <!-- Background glow accents -->
-            <div class="absolute -top-24 -right-24 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-black/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 flex flex-col items-center justify-center">
-                @if($logo)
-                    <img src="{{ str_starts_with($logo, 'http') || str_starts_with($logo, '/') ? $logo : \Illuminate\Support\Facades\Storage::disk('public')->url($logo) }}" alt="Logo" class="h-16 mb-4 object-contain drop-shadow">
+    <!-- Top Navigation Header -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $brandName }}" class="h-8 sm:h-9 w-auto object-contain max-w-[130px]">
                 @else
-                    <div class="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-black text-2xl shadow-sm mb-4 border border-white/20">
-                        HR
+                    <div class="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center text-white font-black text-sm shadow-sm">
+                        {{ mb_substr($brandName, 0, 1) }}
                     </div>
                 @endif
-                <span class="inline-block px-3.5 py-1 bg-white/20 text-white text-xs font-bold rounded-full mb-3 backdrop-blur-xs border border-white/20">
-                    بوابة التوظيف الرسمية
-                </span>
-                <h1 class="text-3xl sm:text-5xl font-black tracking-tight mb-3">الوظائف والفرص الشاغرة</h1>
-                <p class="text-white/90 text-base sm:text-lg max-w-xl mx-auto">انضم إلى فريق عملنا واكتشف بيئة عمل تُلهمك للنمو والإبداع</p>
+                <div>
+                    <span class="block text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">{{ $brandName }}</span>
+                    <span class="block text-[10px] sm:text-[11px] font-semibold text-teal-700">بوابة التوظيف الرسمية</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <a href="{{ route('complaints.public') }}" 
+                   class="text-xs font-bold text-slate-700 hover:text-teal-800 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/60 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5">
+                    <span>🛡️</span>
+                    <span class="hidden sm:inline">صندوق الشكاوى والمقترحات</span>
+                    <span class="sm:hidden">الشكاوى</span>
+                </a>
+                <a href="{{ route('portal.login') }}" 
+                   class="text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shadow-teal-600/20">
+                    <span>👤</span>
+                    <span>دخول الموظفين</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+        <!-- Modern Hero Header (Clean, Light & High Contrast) -->
+        <div class="relative bg-gradient-to-b from-white via-slate-50/80 to-teal-50/30 border border-slate-200/90 rounded-3xl shadow-sm p-6 sm:p-10 mb-8 text-center overflow-hidden">
+            <!-- Subtle ambient glow background decoration -->
+            <div class="absolute -top-24 -right-24 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col items-center justify-center">
+                <!-- Logo inside clean crisp white container with subtle shadow (Ensures clear visibility for dark logos) -->
+                <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-md shadow-slate-200/60 border border-slate-100 mb-4 inline-flex items-center justify-center transition-transform hover:scale-105 duration-200">
+                    @if($logoUrl)
+                        <img src="{{ $logoUrl }}" 
+                             alt="{{ $brandName }}" 
+                             class="h-12 sm:h-16 w-auto object-contain max-w-[220px]">
+                    @else
+                        <div class="h-12 w-12 rounded-xl bg-teal-600 flex items-center justify-center text-white font-black text-xl">
+                            {{ mb_substr($brandName, 0, 1) }}
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Status Badge -->
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 bg-teal-50/90 border border-teal-200/70 text-teal-800 text-xs font-bold rounded-full mb-3 shadow-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                    </span>
+                    <span>بوابة استقطاب الكفاءات &bull; {{ $jobs->count() }} {{ $jobs->count() === 1 ? 'وظيفة متاحة' : 'وظائف متاحة' }}</span>
+                </div>
+
+                <!-- Titles -->
+                <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight mb-2.5">
+                    الوظائف والفرص الشاغرة
+                </h1>
+                <p class="text-slate-600 text-xs sm:text-base max-w-xl mx-auto font-medium leading-relaxed">
+                    انضم إلى فريق عملنا المتميز في <span class="font-bold text-slate-900">{{ $brandName }}</span> واكتشف بيئة عمل تُلهمك للنمو والإبداع
+                </p>
             </div>
         </div>
 
         <!-- Filters Section -->
-        <form method="GET" action="{{ route('jobs.list') }}" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 mb-8 flex flex-col md:flex-row gap-4 items-end">
+        <form method="GET" action="{{ route('jobs.list') }}" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5 mb-8 flex flex-col md:flex-row gap-3.5 items-end">
             <!-- Search -->
             <div class="w-full md:w-2/5">
-                <label class="block text-xs font-bold text-slate-600 mb-1.5">البحث بالكلمات المفتاحية</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">البحث بالكلمات المفتاحية</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
-                    <input type="text" name="search" value="{{ request('search') }}" class="brand-focus block w-full rounded-xl border border-slate-200 pl-4 pr-10 py-2.5 text-sm bg-slate-50/50 transition-all" placeholder="المسمى الوظيفي، الكلمات المفتاحية...">
+                    <input type="text" name="search" value="{{ request('search') }}" class="brand-focus block w-full rounded-xl border border-slate-200 pl-4 pr-10 py-2.5 text-xs sm:text-sm bg-slate-50/50 transition-all font-medium text-slate-900" placeholder="المسمى الوظيفي، الكلمات المفتاحية...">
                 </div>
             </div>
             
             <!-- Department -->
             <div class="w-full md:w-1/4">
-                <label class="block text-xs font-bold text-slate-600 mb-1.5">القسم / الإدارة</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">القسم / الإدارة</label>
                 <div class="relative">
-                    <select name="department_id" class="brand-focus block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-slate-50/50 appearance-none transition-all cursor-pointer">
+                    <select name="department_id" class="brand-focus block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-xs sm:text-sm bg-slate-50/50 appearance-none transition-all cursor-pointer font-medium text-slate-900">
                         <option value="">جميع الأقسام</option>
                         @foreach($departments as $dept)
                             <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
@@ -128,9 +177,9 @@
 
             <!-- Location -->
             <div class="w-full md:w-1/4">
-                <label class="block text-xs font-bold text-slate-600 mb-1.5">مقر العمل</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">مقر العمل</label>
                 <div class="relative">
-                    <select name="location_id" class="brand-focus block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm bg-slate-50/50 appearance-none transition-all cursor-pointer">
+                    <select name="location_id" class="brand-focus block w-full rounded-xl border border-slate-200 px-4 py-2.5 text-xs sm:text-sm bg-slate-50/50 appearance-none transition-all cursor-pointer font-medium text-slate-900">
                         <option value="">جميع المقرات</option>
                         @foreach($locations as $loc)
                             <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
@@ -144,81 +193,80 @@
 
             <!-- Submit -->
             <div class="w-full md:w-auto">
-                <button type="submit" class="filter-btn w-full md:w-auto text-white font-bold py-2.5 px-7 rounded-xl transition-all shadow hover:shadow-md flex justify-center items-center gap-2 cursor-pointer">
+                <button type="submit" class="filter-btn w-full md:w-auto text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-xs hover:shadow flex justify-center items-center gap-2 cursor-pointer text-xs sm:text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                    تصفية
+                    <span>تصفية</span>
                 </button>
             </div>
         </form>
 
         <!-- Job Listings -->
         @if($jobs->isEmpty())
-            <div class="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-sm">
-                <div class="w-20 h-20 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
-                    <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="bg-white rounded-3xl p-10 sm:p-14 text-center border border-slate-200/80 shadow-sm">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-800 mb-1">لا توجد وظائف معلنة حالياً تطابق بحثك</h3>
-                <p class="text-slate-500 text-sm">يمكنك تجربة تغيير شروط التصفية أو العودة لاحقاً لمتابعة الوظائف الجديدة.</p>
+                <h3 class="text-lg sm:text-xl font-bold text-slate-800 mb-1">لا توجد وظائف معلنة حالياً تطابق بحثك</h3>
+                <p class="text-slate-500 text-xs sm:text-sm">يمكنك تجربة تغيير شروط التصفية أو العودة لاحقاً لمتابعة الوظائف الجديدة.</p>
                 @if(request('search') || request('department_id') || request('location_id'))
-                    <a href="{{ route('jobs.list') }}" class="inline-block mt-4 text-sm font-bold underline" style="color: {{ $primaryColor }}">
+                    <a href="{{ route('jobs.list') }}" class="inline-block mt-4 text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 underline">
                         إعادة ضبط التصفية وعرض كافة الوظائف
                     </a>
                 @endif
             </div>
         @else
-            <div class="grid gap-6 md:grid-cols-2">
+            <div class="grid gap-5 md:grid-cols-2">
                 @foreach($jobs as $job)
                     @php
                         $jobColor = $job->brand_color ?: $primaryColor;
                     @endphp
-                    <div class="bg-white rounded-3xl shadow-sm hover:shadow-xl border border-slate-200/80 p-7 flex flex-col h-full hover:-translate-y-1 transition-all duration-300 relative group overflow-hidden">
+                    <div class="bg-white rounded-3xl shadow-xs hover:shadow-xl border border-slate-200/80 p-6 sm:p-7 flex flex-col h-full hover:-translate-y-1 transition-all duration-300 relative group overflow-hidden">
                         
                         <!-- Top Accent Bar using Job's Brand Color -->
                         <div class="absolute top-0 right-0 left-0 h-1.5 transition-all duration-300"
                              style="background: linear-gradient(to right, {{ $jobColor }}, color-mix(in srgb, {{ $jobColor }} 60%, white));"></div>
                         
-                        <div class="mb-5">
-                            <h2 class="text-xl sm:text-2xl font-black text-slate-900 mb-3 transition-colors"
+                        <div class="mb-4">
+                            <h2 class="text-lg sm:text-xl font-black text-slate-900 mb-2.5 transition-colors"
                                 onmouseover="this.style.color='{{ $jobColor }}'"
                                 onmouseout="this.style.color=''">
                                 {{ $job->title }}
                             </h2>
                             <div class="flex flex-wrap gap-2 text-xs font-semibold">
                                 @if($job->department)
-                                    <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border font-bold"
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border font-bold"
                                           style="background-color: color-mix(in srgb, {{ $jobColor }} 8%, white); color: {{ $jobColor }}; border-color: color-mix(in srgb, {{ $jobColor }} 25%, white);">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                                         {{ $job->department->name }}
                                     </span>
                                 @endif
                                 @if($job->location)
-                                    <span class="inline-flex items-center gap-1 bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg border border-slate-200">
+                                    <span class="inline-flex items-center gap-1 bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-200">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                         {{ $job->location->name }}
                                     </span>
                                 @endif
-                                <span class="inline-flex items-center gap-1 bg-slate-50 text-slate-400 px-3 py-1.5 rounded-lg border border-slate-200 font-mono">
+                                <span class="inline-flex items-center gap-1 bg-slate-50 text-slate-400 px-2.5 py-1 rounded-lg border border-slate-200 font-mono text-[11px]">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     {{ $job->created_at->locale('ar')->diffForHumans(['parts' => 1]) }}
                                 </span>
                             </div>
                         </div>
                         
-                        <div class="prose prose-sm text-slate-500 mb-6 flex-grow leading-relaxed line-clamp-3 text-xs sm:text-sm">
+                        <div class="prose prose-sm text-slate-500 mb-5 flex-grow leading-relaxed line-clamp-3 text-xs sm:text-sm">
                             {!! strip_tags($job->description) !!}
                         </div>
                         
                         <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-xs font-bold" style="color: {{ $jobColor }};">
+                            <span class="text-xs font-extrabold flex items-center gap-1" style="color: {{ $jobColor }};">
+                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $jobColor }};"></span>
                                 متاح التقديم الآن
                             </span>
                             <a href="{{ route('jobs.apply', $job->id) }}" 
-                               class="inline-flex items-center gap-2 text-white font-bold py-2.5 px-5 rounded-xl transition-all duration-200 shadow hover:shadow-lg cursor-pointer"
-                               style="background: linear-gradient(135deg, {{ $jobColor }}, color-mix(in srgb, {{ $jobColor }} 85%, black));"
-                               onmouseover="this.style.opacity='0.9'"
-                               onmouseout="this.style.opacity='1'">
+                               class="inline-flex items-center gap-2 text-white font-bold py-2 px-4 sm:px-5 rounded-xl transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer text-xs sm:text-sm"
+                               style="background: linear-gradient(135deg, {{ $jobColor }}, color-mix(in srgb, {{ $jobColor }} 85%, black));">
                                 <span>التقديم على الوظيفة</span>
                                 <svg class="w-4 h-4 rtl:rotate-180 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -230,9 +278,22 @@
             </div>
         @endif
 
-        <footer class="text-center mt-12 text-xs text-slate-400">
-            جميع الحقوق محفوظة &copy; {{ date('Y') }} - {{ $brandName }}
-        </footer>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-500 mt-8">
+        <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $brandName }}" class="h-6 w-auto object-contain opacity-75">
+                @endif
+                <span class="font-bold text-slate-700">{{ $brandName }}</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+                جميع الحقوق محفوظة &copy; {{ date('Y') }} &bull; بوابة الموارد البشرية والتوظيف الذكية
+            </p>
+        </div>
+    </footer>
+
 </body>
 </html>

@@ -1,7 +1,7 @@
 {
-  "name": "Bwsla HR - نظام إدارة الموارد البشرية",
-  "short_name": "Bwsla HR",
-  "description": "تطبيق إدارة الموارد البشرية، البصمة الذكية، والخدمات الذاتية للموظفين",
+  "name": "فكرتك HR - نظام إدارة الموارد البشرية",
+  "short_name": "فكرتك",
+  "description": "تطبيق فكرتك لإدارة الموارد البشرية، البصمة الذكية، والخدمات الذاتية للموظفين",
   "start_url": "/portal",
   "scope": "/",
   "display": "standalone",
@@ -12,16 +12,21 @@
   "lang": "ar",
   "icons": [
     {
-      "src": "/icons/icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/fingerprint.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ],
   "shortcuts": [
@@ -32,9 +37,9 @@
       "url": "/portal?tab=attendance",
       "icons": [
         {
-          "src": "/icons/fingerprint.svg",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
-          "type": "image/svg+xml"
+          "type": "image/png"
         }
       ]
     },
@@ -45,9 +50,9 @@
       "url": "/portal",
       "icons": [
         {
-          "src": "/icons/icon.svg",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
-          "type": "image/svg+xml"
+          "type": "image/png"
         }
       ]
     },
@@ -58,9 +63,9 @@
       "url": "/complaints",
       "icons": [
         {
-          "src": "/icons/icon.svg",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
-          "type": "image/svg+xml"
+          "type": "image/png"
         }
       ]
     }

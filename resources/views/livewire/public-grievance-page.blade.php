@@ -175,11 +175,11 @@
                             {{-- Step 3 Button --}}
                             <button type="button"
                                     class="flex items-center gap-2 sm:gap-3.5 p-2 sm:p-3 rounded-2xl text-right transition-all {{ $currentStep === 3 ? 'bg-teal-50/80 border border-teal-200/80 text-teal-950 shadow-xs' : 'text-slate-400' }}">
-                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-xs sm:text-sm font-black shrink-0 transition-all {{ $currentStep === 3 ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 ring-2 ring-teal-600/30' : 'bg-slate-100 text-slate-400 border border-slate-200') }}">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-xs sm:text-sm font-black shrink-0 transition-all {{ $currentStep === 3 ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 ring-2 ring-teal-600/30' : 'bg-slate-100 text-slate-400 border border-slate-200' }}">
                                     3
                                 </div>
                                 <div class="min-w-0">
-                                    <span class="text-[10px] sm:text-xs font-bold block {{ $currentStep === 3 ? 'text-teal-700' : 'text-slate-400') }}">
+                                    <span class="text-[10px] sm:text-xs font-bold block {{ $currentStep === 3 ? 'text-teal-700' : 'text-slate-400' }}">
                                         الخطوة 3
                                     </span>
                                     <strong class="text-xs sm:text-sm font-extrabold truncate block">

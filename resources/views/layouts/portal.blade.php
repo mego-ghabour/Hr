@@ -24,9 +24,9 @@
     <meta name="theme-color" content="#0d9488">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="{{ \App\Models\Setting::get('brand_name', 'Bwsla HR') }}">
-    <link rel="apple-touch-icon" href="/icons/icon.svg">
-    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <meta name="apple-mobile-web-app-title" content="{{ trim(\App\Models\Setting::get('brand_name', 'فكرتك HR')) }}">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
 
     <!-- Dynamic Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

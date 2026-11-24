@@ -1,10 +1,11 @@
-// Service Worker for Bwsla HR PWA
-const CACHE_NAME = 'bwsla-hr-cache-v1';
+// Service Worker for Fkretk HR PWA
+const CACHE_NAME = 'fkretk-hr-cache-v2';
 const OFFLINE_URLS = [
   '/',
   '/manifest.json',
-  '/icons/icon.svg',
-  '/icons/fingerprint.svg'
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,8 +38,8 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Let Livewire & POST pass through directly
   const url = new URL(event.request.url);
+  // Pass Livewire, Filament and API requests directly
   if (url.pathname.includes('/livewire/') || url.pathname.includes('/filament/')) {
     return;
   }
@@ -46,13 +47,12 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // Cache static assets (css, js, images, fonts)
         if (
           networkResponse &&
           networkResponse.status === 200 &&
           (url.pathname.startsWith('/icons/') ||
-           url.pathname.endsWith('.svg') ||
            url.pathname.endsWith('.png') ||
+           url.pathname.endsWith('.svg') ||
            url.pathname.endsWith('.woff2') ||
            url.pathname.includes('fonts.googleapis.com'))
         ) {
@@ -72,10 +72,10 @@ self.addEventListener('fetch', (event) => {
 // Push notification listener
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'Bwsla HR | تنبيه جديد',
+    title: 'فكرتك HR | تنبيه جديد',
     body: 'لديك إشعار عمل جديد من إدارة الموارد البشرية',
-    icon: '/icons/icon.svg',
-    badge: '/icons/fingerprint.svg',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     data: { url: '/portal?tab=attendance' }
   };
 
