@@ -2,6 +2,15 @@
 
 namespace App\Filament\Actions;
 
+use App\Actions\Talent\RecordInterviewCaseAction;
+use App\Enums\InterviewAttendance;
+use App\Enums\InterviewStage;
+use App\Enums\ReapplyEligibility;
+use App\Enums\TalentDecisionOutcome;
+use App\Enums\TalentDecisionReason;
+use App\Enums\TalentNoteCategory;
+use App\Models\JobPosting;
+use App\Models\Setting;
 use App\Models\Talent;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
@@ -11,7 +20,9 @@ use App\Models\TalentStatus;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -179,10 +190,11 @@ class TalentActions
                 }
 
                 // 6. Log note on talent record
-                $currencySymbol = \App\Models\Setting::currencySymbol();
+                $currencySymbol = Setting::currencySymbol();
                 $record->notes()->create([
                     'user_id' => Auth::id(),
-                    'content' => "تم تعيين المرشح رسمياً كموظف جديد برقم: EMP-{$employee->id} براتب: " . number_format($employee->salary, 2) . " {$currencySymbol} وتجهيز رصيد إجازاته.",
+                    'category' => TalentNoteCategory::GENERAL->value,
+                    'body' => "تم تعيين المرشح رسمياً كموظف جديد برقم: EMP-{$employee->id} براتب: " . number_format($employee->salary, 2) . " {$currencySymbol} وتجهيز رصيد إجازاته.",
                 ]);
 
                 Notification::make()
@@ -195,6 +207,299 @@ class TalentActions
                             ->button()
                             ->url(\App\Filament\Admin\Resources\Employees\EmployeeResource::getUrl('edit', ['record' => $employee->id])),
                     ])
+                    ->send();
+            });
+    }
+
+    /**
+     * Resolve the target Talent from either a record-bound action or Kanban arguments.
+     */
+    private static function resolveTargetTalent(?Talent $record, array $arguments = []): ?Talent
+    {
+        if ($record instanceof Talent) {
+            return $record;
+        }
+
+        $talentId = $arguments['talentId'] ?? null;
+
+        return $talentId ? Talent::find((int) $talentId) : null;
+    }
+
+    private static function formatRejectionEmailDefaults(Talent $talent): array
+    {
+        $brand = (string) Setting::get('brand_name', 'فريق التوظيف');
+        $subjectTpl = (string) Setting::get('email_template_reject_subject', 'تحديث بخصوص التقديم - {brand}');
+        $bodyTpl = (string) Setting::get(
+            'email_template_reject_body',
+            "عزيزي/عزيزتي {name}،\n\nنشكرك على اهتمامك بالانضمام إلينا. نود إعلامك بأنه لم يقع الاختيار عليك في هذه المرحلة.\n\nنتمنى لك كل التوفيق.\n{brand}"
+        );
+
+        $replace = [
+            '{name}' => $talent->full_name,
+            '{brand}' => $brand,
+        ];
+
+        return [
+            'subject' => strtr($subjectTpl, $replace),
+            'body' => strtr($bodyTpl, $replace),
+        ];
+    }
+
+    /**
+     * Unified action for recording interview feedback, rejection/not-suitable decisions, and full case summary.
+     * Reused across Default View (Table & ViewTalent) and Kanban Board.
+     */
+    public static function makeRecordInterviewCaseAction(string $name = 'recordInterviewCase', ?callable $afterSaveCallback = null): Action
+    {
+        return Action::make($name)
+            ->label('تسجيل مقابلة / قرار')
+            ->icon('heroicon-m-clipboard-document-check')
+            ->color('warning')
+            ->modalWidth('3xl')
+            ->modalHeading(function (?Talent $record, array $arguments = []): string {
+                $talent = self::resolveTargetTalent($record, $arguments);
+                if (! $talent) {
+                    return 'تسجيل نتيجة مقابلة وتوضيح الكيس';
+                }
+
+                return 'تقييم وحسم كيس المرشح: ' . $talent->full_name;
+            })
+            ->modalDescription('وثّق تفاصيل المقابلة، سبب عدم القبول أو عدم الملاءمة، والملخص الكامل للحالة للرجوع إليه مستقبلاً.')
+            ->modalSubmitActionLabel('حفظ المقابلة وقرار الكيس')
+            ->authorize(function (?Talent $record, array $arguments = []): bool {
+                $user = Auth::user();
+                if (! $user) {
+                    return false;
+                }
+
+                $talent = self::resolveTargetTalent($record, $arguments);
+
+                return ($talent && $user->can('update', $talent))
+                    || $user->can('update_talent')
+                    || $user->can('manage_reviews')
+                    || $user->can('manage_notes');
+            })
+            ->fillForm(function (?Talent $record, array $arguments = []): array {
+                $talent = self::resolveTargetTalent($record, $arguments);
+                $targetStatusId = $arguments['targetStatusId'] ?? null;
+                $targetStatus = $targetStatusId ? TalentStatus::find((int) $targetStatusId) : null;
+
+                $suggestedOutcome = $targetStatus?->suggestDecisionOutcome()?->value
+                    ?? $talent?->decision_outcome?->value;
+
+                $defaultStatusId = $targetStatus?->id ?? $talent?->status_id;
+
+                $emailDefaults = $talent
+                    ? self::formatRejectionEmailDefaults($talent)
+                    : ['subject' => '', 'body' => ''];
+
+                return [
+                    'interview_stage' => InterviewStage::HR_SCREENING->value,
+                    'attendance_status' => $suggestedOutcome === TalentDecisionOutcome::NO_SHOW->value
+                        ? InterviewAttendance::NO_SHOW->value
+                        : InterviewAttendance::ATTENDED->value,
+                    'decision_outcome' => $suggestedOutcome,
+                    'decision_reason' => $talent?->decision_reason?->value,
+                    'status_id' => $defaultStatusId,
+                    'reapply_eligibility' => $talent?->reapply_eligibility?->value,
+                    'recommended_job_posting_id' => $talent?->recommended_job_posting_id,
+                    'interview_salary_expectation' => $talent?->interview_salary_expectation ?? $talent?->expected_salary,
+                    'decision_summary' => $talent?->decision_summary,
+                    'has_candidate_email' => filled($talent?->email),
+                    'send_rejection_email' => false,
+                    'rejection_email_subject' => $emailDefaults['subject'],
+                    'rejection_email_body' => $emailDefaults['body'],
+                ];
+            })
+            ->form([
+                Hidden::make('has_candidate_email'),
+                Section::make('سياق المقابلة والحضور')
+                    ->columns(3)
+                    ->schema([
+                        Select::make('interview_stage')
+                            ->label('مرحلة المقابلة')
+                            ->options(InterviewStage::class)
+                            ->required()
+                            ->native(false),
+
+                        Select::make('attendance_status')
+                            ->label('حالة الحضور')
+                            ->options(InterviewAttendance::class)
+                            ->required()
+                            ->live()
+                            ->native(false)
+                            ->afterStateUpdated(function (?string $state, callable $set): void {
+                                if ($state === InterviewAttendance::NO_SHOW->value) {
+                                    $set('decision_outcome', TalentDecisionOutcome::NO_SHOW->value);
+                                    $set('decision_reason', TalentDecisionReason::NO_SHOW->value);
+                                    $status = TalentStatus::findStatusForOutcome(TalentDecisionOutcome::NO_SHOW);
+                                    if ($status) {
+                                        $set('status_id', $status->id);
+                                    }
+                                }
+                            }),
+
+                        Select::make('rating')
+                            ->label('التقييم العام')
+                            ->options([
+                                5 => '5 - ممتاز',
+                                4 => '4 - جيد جداً',
+                                3 => '3 - جيد',
+                                2 => '2 - مقبول',
+                                1 => '1 - ضعيف',
+                            ])
+                            ->native(false),
+                    ]),
+
+                Section::make('القرار وتوضيح الكيس بالكامل')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('decision_outcome')
+                            ->label('النتيجة / القرار')
+                            ->options(TalentDecisionOutcome::class)
+                            ->required()
+                            ->live()
+                            ->native(false)
+                            ->afterStateUpdated(function (?string $state, callable $set): void {
+                                $outcome = $state ? TalentDecisionOutcome::tryFrom($state) : null;
+                                if (! $outcome) {
+                                    return;
+                                }
+
+                                if ($outcome === TalentDecisionOutcome::NO_SHOW) {
+                                    $set('decision_reason', TalentDecisionReason::NO_SHOW->value);
+                                } elseif ($outcome === TalentDecisionOutcome::WITHDRAWN) {
+                                    $set('decision_reason', TalentDecisionReason::CANDIDATE_WITHDREW->value);
+                                } elseif ($outcome === TalentDecisionOutcome::RECOMMENDED) {
+                                    $set('decision_reason', null);
+                                }
+
+                                $suggestedStatus = TalentStatus::findStatusForOutcome($outcome);
+                                if ($suggestedStatus) {
+                                    $set('status_id', $suggestedStatus->id);
+                                }
+                            }),
+
+                        Select::make('decision_reason')
+                            ->label('السبب الرئيسي')
+                            ->options(TalentDecisionReason::class)
+                            ->searchable()
+                            ->native(false)
+                            ->visible(fn (Get $get): bool => $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value)
+                            ->required(fn (Get $get): bool => in_array($get('decision_outcome'), [
+                                TalentDecisionOutcome::NOT_SUITABLE->value,
+                                TalentDecisionOutcome::REJECTED->value,
+                                TalentDecisionOutcome::NO_SHOW->value,
+                                TalentDecisionOutcome::WITHDRAWN->value,
+                            ], true)),
+
+                        Select::make('status_id')
+                            ->label('تحديث حالة المرشح إلى')
+                            ->options(fn () => TalentStatus::orderBy('order_column')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->helperText('اختر المرحلة الجديدة للمرشح في الجدول والكانبان.'),
+
+                        Select::make('reapply_eligibility')
+                            ->label('إمكانية إعادة التقديم مستقبلاً')
+                            ->options(ReapplyEligibility::class)
+                            ->native(false)
+                            ->visible(fn (Get $get): bool => $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value),
+
+                        Select::make('recommended_job_posting_id')
+                            ->label('ترشيح لوظيفة أخرى بديلة (اختياري)')
+                            ->options(fn () => JobPosting::where('is_active', true)->orderBy('title')->pluck('title', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->visible(fn (Get $get): bool => $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value),
+
+                        TextInput::make('interview_salary_expectation')
+                            ->label('الراتب المطلوب في المقابلة')
+                            ->numeric()
+                            ->prefix(fn () => Setting::currencySymbol())
+                            ->nullable(),
+
+                        TextInput::make('notice_period')
+                            ->label('فترة الإشعار / الإتاحة الفعلية')
+                            ->placeholder('مثال: شهر واحد / متاح فوراً')
+                            ->maxLength(120),
+
+                        Textarea::make('strengths')
+                            ->label('نقاط القوة')
+                            ->rows(2)
+                            ->placeholder('أبرز المميزات التي ظهرت في المقابلة...'),
+
+                        Textarea::make('weaknesses')
+                            ->label('نقاط الضعف / الفجوات')
+                            ->rows(2)
+                            ->placeholder('الفجوات الفنية أو الإدارية أو التحفظات...'),
+
+                        Textarea::make('decision_summary')
+                            ->label('توضيح الكيس بالكامل (ملخص الحالة)')
+                            ->rows(4)
+                            ->columnSpanFull()
+                            ->placeholder('اشرح الكيس كاملة بوضوح: ما دار في المقابلة، سبب عدم القبول أو عدم الملاءمة، وأي سياق يفيد الفريق مستقبلاً...')
+                            ->required(fn (Get $get): bool => in_array($get('decision_outcome'), [
+                                TalentDecisionOutcome::NOT_SUITABLE->value,
+                                TalentDecisionOutcome::REJECTED->value,
+                                TalentDecisionOutcome::NO_SHOW->value,
+                                TalentDecisionOutcome::WITHDRAWN->value,
+                            ], true)),
+                    ]),
+
+                Section::make('إشعار المرشح بالبريد الإلكتروني (اختياري)')
+                    ->collapsible()
+                    ->collapsed(true)
+                    ->visible(function (Get $get): bool {
+                        if (! (bool) $get('has_candidate_email')) {
+                            return false;
+                        }
+
+                        return in_array($get('decision_outcome'), [
+                            TalentDecisionOutcome::NOT_SUITABLE->value,
+                            TalentDecisionOutcome::REJECTED->value,
+                            TalentDecisionOutcome::NO_SHOW->value,
+                        ], true);
+                    })
+                    ->schema([
+                        Toggle::make('send_rejection_email')
+                            ->label('إرسال إيميل اعتذار لطيف للمرشح الآن')
+                            ->default(false)
+                            ->live(),
+                        TextInput::make('rejection_email_subject')
+                            ->label('عنوان الإيميل')
+                            ->visible(fn (Get $get): bool => (bool) $get('send_rejection_email'))
+                            ->required(fn (Get $get): bool => (bool) $get('send_rejection_email')),
+                        Textarea::make('rejection_email_body')
+                            ->label('نص الرسالة')
+                            ->rows(4)
+                            ->visible(fn (Get $get): bool => (bool) $get('send_rejection_email'))
+                            ->required(fn (Get $get): bool => (bool) $get('send_rejection_email')),
+                    ]),
+            ])
+            ->action(function (array $data, ?Talent $record, array $arguments = []) use ($afterSaveCallback): void {
+                $talent = self::resolveTargetTalent($record, $arguments);
+                if (! $talent) {
+                    Notification::make()
+                        ->title('تعذر العثور على المرشح')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                app(RecordInterviewCaseAction::class)->execute($talent, $data, Auth::user());
+
+                if ($afterSaveCallback) {
+                    $afterSaveCallback($talent->fresh());
+                }
+
+                Notification::make()
+                    ->title('تم توثيق المقابلة وحفظ الكيس بنجاح')
+                    ->body("تم تسجيل القرار وتحديث ملف المرشح {$talent->full_name}.")
+                    ->success()
                     ->send();
             });
     }

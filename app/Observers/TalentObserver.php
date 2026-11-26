@@ -37,7 +37,19 @@ class TalentObserver
     
     public function updating(Talent $talent): void
     {
+        $decisionDirty = $talent->isDirty(['decision_outcome', 'decision_reason', 'decision_summary']);
+
         $normalizedData = $this->normalizationService->normalize($talent->toArray());
         $talent->fill($normalizedData);
+
+        if ($decisionDirty && $talent->hasCaseDecision()) {
+            if (Auth::check() && ! $talent->isDirty('decision_by')) {
+                $talent->decision_by = Auth::id();
+            }
+
+            if (! $talent->isDirty('decision_at')) {
+                $talent->decision_at = now();
+            }
+        }
     }
 }

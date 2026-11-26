@@ -295,6 +295,45 @@ class TalentResource extends Resource
                             ->rows(4)
                             ->columnSpanFull(),
                     ]),
+                            ]),
+
+                        \Filament\Schemas\Components\Tabs\Tab::make('المقابلة وقرار الكيس')
+                            ->icon('heroicon-o-clipboard-document-check')
+                            ->components([
+                                Section::make('قرار المقابلة وتفاصيل عدم القبول / عدم الملاءمة')
+                                    ->description('يمكنك توثيق القرار النهائي والسبب وملخص الحالة بالكامل للمرشح (اختياري للمرشحين الجدد).')
+                                    ->columns(2)
+                                    ->components([
+                                        Select::make('decision_outcome')
+                                            ->label('نتيجة المقابلة / القرار')
+                                            ->options(\App\Enums\TalentDecisionOutcome::class)
+                                            ->live()
+                                            ->native(false),
+                                        Select::make('decision_reason')
+                                            ->label('السبب الرئيسي')
+                                            ->options(\App\Enums\TalentDecisionReason::class)
+                                            ->searchable()
+                                            ->native(false),
+                                        Select::make('reapply_eligibility')
+                                            ->label('إمكانية إعادة التقديم مستقبلاً')
+                                            ->options(\App\Enums\ReapplyEligibility::class)
+                                            ->native(false),
+                                        Select::make('recommended_job_posting_id')
+                                            ->label('ترشيح لوظيفة بديلة (اختياري)')
+                                            ->relationship('recommendedJobPosting', 'title')
+                                            ->searchable()
+                                            ->preload()
+                                            ->native(false),
+                                        TextInput::make('interview_salary_expectation')
+                                            ->label('الراتب المطلوب أثناء المقابلة')
+                                            ->numeric()
+                                            ->prefix(fn () => \App\Models\Setting::currencySymbol()),
+                                        Textarea::make('decision_summary')
+                                            ->label('ملخص الكيس بالكامل')
+                                            ->placeholder('اشرح الكيس كاملة، ما دار في المقابلة، وسبب القرار...')
+                                            ->rows(4)
+                                            ->columnSpanFull(),
+                                    ]),
                             ])
                     ])
             ]);
@@ -344,6 +383,12 @@ class TalentResource extends Resource
                     ->label('الحالة')
                     ->badge()
                     ->color(fn ($record) => $record->status?->color ?? 'primary')
+                    ->toggleable(),
+                TextColumn::make('decision_outcome')
+                    ->label('قرار المقابلة / الكيس')
+                    ->badge()
+                    ->placeholder('لم يُحسم بعد')
+                    ->description(fn (Talent $record): ?string => $record->decision_reason?->getLabel())
                     ->toggleable(),
                 TextColumn::make('seniority_level')
                     ->label('مستوى الخبرة')
@@ -397,6 +442,15 @@ class TalentResource extends Resource
                 SelectFilter::make('status_id')
                     ->label('الحالة')
                     ->relationship('status', 'name'),
+                SelectFilter::make('decision_outcome')
+                    ->label('قرار المقابلة / الكيس')
+                    ->options(\App\Enums\TalentDecisionOutcome::class),
+                SelectFilter::make('decision_reason')
+                    ->label('سبب الرفض / عدم الملاءمة')
+                    ->options(\App\Enums\TalentDecisionReason::class),
+                SelectFilter::make('reapply_eligibility')
+                    ->label('إمكانية إعادة التقديم')
+                    ->options(\App\Enums\ReapplyEligibility::class),
                 SelectFilter::make('department_id')
                     ->label('القسم')
                     ->relationship('department', 'name'),
@@ -459,6 +513,7 @@ class TalentResource extends Resource
                     ->label('المحذوفين'),
             ])
             ->actions([
+                \App\Filament\Actions\TalentActions::makeRecordInterviewCaseAction(),
                 \App\Filament\Actions\TalentActions::makeHireAsEmployeeAction(),
                 CommunicationActions::makeWhatsAppAction(),
                 CommunicationActions::makeEmailAction(),
@@ -560,7 +615,7 @@ class TalentResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['department', 'location', 'source', 'status', 'tags', 'assignedRecruiter'])
+            ->with(['department', 'location', 'source', 'status', 'tags', 'assignedRecruiter', 'recommendedJobPosting', 'decisionBy'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

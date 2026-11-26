@@ -2,11 +2,14 @@
 
 namespace App\Filament\Admin\Resources\TalentResource\Pages;
 
+use App\Filament\Actions\TalentActions;
 use App\Filament\Admin\Resources\TalentResource;
 use App\Models\Talent;
 use App\Models\TalentStatus;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class TalentKanbanBoard extends Page
 {
@@ -96,12 +99,43 @@ class TalentKanbanBoard extends Page
         $this->talents = $query->get();
     }
 
+    public function recordCaseAction(): Action
+    {
+        return TalentActions::makeRecordInterviewCaseAction(
+            name: 'recordCase',
+            afterSaveCallback: fn () => $this->loadBoard(),
+        );
+    }
+
     public function updateTalentStatus($talentId, $statusId)
     {
         $talent = Talent::find($talentId);
-        if ($talent && $talent->status_id != $statusId) {
-            $talent->update(['status_id' => $statusId]);
+        $targetStatus = TalentStatus::find($statusId);
+
+        if (! $talent || ! $targetStatus) {
+            $this->loadBoard();
+            return;
         }
+
+        $user = Auth::user();
+        if (! $user || (! $user->can('update', $talent) && ! $user->can('update_talent') && ! $user->can('manage_reviews'))) {
+            $this->loadBoard();
+            return;
+        }
+
+        if ((int) $talent->status_id !== (int) $targetStatus->id) {
+            if ($targetStatus->isNegativeOrHoldStatus()) {
+                $this->loadBoard();
+                $this->mountAction('recordCase', [
+                    'talentId' => $talent->id,
+                    'targetStatusId' => $targetStatus->id,
+                ]);
+                return;
+            }
+
+            $talent->update(['status_id' => $targetStatus->id]);
+        }
+
         $this->loadBoard();
     }
 }

@@ -97,8 +97,9 @@ class CommunicationActions
 
                 // تسجيل الملاحظة
                 $record->notes()->create([
-                    'user_id' => Auth::id(),
-                    'body'    => "📱 تم التواصل واتساب:\n" . $data['message'],
+                    'user_id'  => Auth::id(),
+                    'category' => \App\Enums\TalentNoteCategory::COMMUNICATION->value,
+                    'body'     => "📱 تم التواصل واتساب:\n" . $data['message'],
                 ]);
 
                 Notification::make()
@@ -198,8 +199,9 @@ class CommunicationActions
 
                 // تسجيل الملاحظة
                 $record->notes()->create([
-                    'user_id' => Auth::id(),
-                    'body'    => "📧 تم إرسال إيميل: [{$data['subject']}]\n{$data['body']}",
+                    'user_id'  => Auth::id(),
+                    'category' => \App\Enums\TalentNoteCategory::COMMUNICATION->value,
+                    'body'     => "📧 تم إرسال إيميل: [{$data['subject']}]\n{$data['body']}",
                 ]);
 
                 Notification::make()
