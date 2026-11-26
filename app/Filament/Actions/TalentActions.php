@@ -230,6 +230,20 @@ class TalentActions
         return $talentId ? Talent::find((int) $talentId) : null;
     }
 
+    /**
+     * Normalize a decision_outcome field value (enum instance or backed string) to TalentDecisionOutcome.
+     */
+    private static function resolveDecisionOutcome(mixed $value): ?TalentDecisionOutcome
+    {
+        if ($value instanceof TalentDecisionOutcome) {
+            return $value;
+        }
+
+        return is_string($value) && $value !== ''
+            ? TalentDecisionOutcome::tryFrom($value)
+            : null;
+    }
+
     private static function formatRejectionEmailDefaults(Talent $talent): array
     {
         $brand = (string) Setting::get('brand_name', 'فريق التوظيف');
@@ -354,35 +368,20 @@ class TalentActions
                                 ToggleButtons::make('attendance_status')
                                     ->label('حالة الحضور')
                                     ->options(InterviewAttendance::class)
-                                    ->icons(InterviewAttendance::class)
-                                    ->colors(InterviewAttendance::class)
                                     ->required()
                                     ->live()
                                     ->inline()
                                     ->afterStateUpdated(function (mixed $state, callable $set): void {
-                                            $rawValue = $state instanceof \BackedEnum ? $state->value : $state;
-                                            if ($rawValue === InterviewAttendance::NO_SHOW->value) {
-                                                $set('decision_outcome', TalentDecisionOutcome::NO_SHOW->value);
-                                                $set('decision_reason', TalentDecisionReason::NO_SHOW->value);
-                                                $status = TalentStatus::findStatusForOutcome(TalentDecisionOutcome::NO_SHOW);
-                                                if ($status) {
-                                                    $set('status_id', $status->id);
-                                                }
+                                        $rawValue = $state instanceof \BackedEnum ? $state->value : $state;
+                                        if ($rawValue === InterviewAttendance::NO_SHOW->value) {
+                                            $set('decision_outcome', TalentDecisionOutcome::NO_SHOW->value);
+                                            $set('decision_reason', TalentDecisionReason::NO_SHOW->value);
+                                            $status = TalentStatus::findStatusForOutcome(TalentDecisionOutcome::NO_SHOW);
+                                            if ($status) {
+                                                $set('status_id', $status->id);
                                             }
-                                        }),
-
-                                    Select::make('rating')
-                                        ->label('التقييم العام')
-                                        ->options([
-                                            5 => '⭐⭐⭐⭐⭐  ممتاز',
-                                            4 => '⭐⭐⭐⭐  جيد جداً',
-                                            3 => '⭐⭐⭐  جيد',
-                                            2 => '⭐⭐  مقبول',
-                                            1 => '⭐  ضعيف',
-                                        ])
-                                        ->native(false)
-                                        ->prefixIcon('heroicon-m-star'),
-                                ]),
+                                        }
+                                    }),
 
                                 Fieldset::make('الملاحظات الفنية')
                                     ->columns(2)
@@ -409,12 +408,7 @@ class TalentActions
                                 Placeholder::make('decision_warning')
                                     ->hiddenLabel()
                                     ->content(function (Get $get): ?HtmlString {
-                                        $outcome = $get('decision_outcome');
-                                        if (! $outcome) {
-                                            return null;
-                                        }
-
-                                        $enum = TalentDecisionOutcome::tryFrom($outcome);
+                                        $enum = self::resolveDecisionOutcome($get('decision_outcome'));
                                         if (! $enum || $enum === TalentDecisionOutcome::RECOMMENDED) {
                                             return null;
                                         }
@@ -464,23 +458,22 @@ class TalentActions
                                             . '</p></div>'
                                         );
                                     })
-                                    ->visible(fn (Get $get): bool => filled($get('decision_outcome'))
-                                        && $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value),
+                                    ->visible(function (Get $get): bool {
+                                        $outcome = self::resolveDecisionOutcome($get('decision_outcome'));
+
+                                        return $outcome !== null && $outcome !== TalentDecisionOutcome::RECOMMENDED;
+                                    }),
 
                                 // 🎛️ ToggleButtons for decision outcome
                                 ToggleButtons::make('decision_outcome')
                                     ->label('النتيجة / القرار')
                                     ->options(TalentDecisionOutcome::class)
-                                    ->icons(TalentDecisionOutcome::class)
-                                    ->colors(TalentDecisionOutcome::class)
-                                    ->descriptions(TalentDecisionOutcome::class)
                                     ->required()
                                     ->live()
                                     ->inline()
                                     ->columnSpanFull()
                                     ->afterStateUpdated(function (mixed $state, callable $set): void {
-                                        $rawValue = $state instanceof TalentDecisionOutcome ? $state->value : $state;
-                                        $outcome = $rawValue ? TalentDecisionOutcome::tryFrom($rawValue) : null;
+                                        $outcome = self::resolveDecisionOutcome($state);
                                         if (! $outcome) {
                                             return;
                                         }
@@ -506,13 +499,8 @@ class TalentActions
                                         ->searchable()
                                         ->native(false)
                                         ->prefixIcon('heroicon-m-chat-bubble-bottom-center-text')
-                                        ->visible(fn (Get $get): bool => $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value)
-                                        ->required(fn (Get $get): bool => in_array($get('decision_outcome'), [
-                                            TalentDecisionOutcome::NOT_SUITABLE->value,
-                                            TalentDecisionOutcome::REJECTED->value,
-                                            TalentDecisionOutcome::NO_SHOW->value,
-                                            TalentDecisionOutcome::WITHDRAWN->value,
-                                        ], true)),
+                                        ->visible(fn (Get $get): bool => self::resolveDecisionOutcome($get('decision_outcome')) !== TalentDecisionOutcome::RECOMMENDED)
+                                        ->required(fn (Get $get): bool => (bool) self::resolveDecisionOutcome($get('decision_outcome'))?->requiresReason()),
 
                                     Select::make('status_id')
                                         ->label('تحديث حالة المرشح إلى')
@@ -528,7 +516,7 @@ class TalentActions
                                         ->options(ReapplyEligibility::class)
                                         ->native(false)
                                         ->prefixIcon('heroicon-m-arrow-uturn-left')
-                                        ->visible(fn (Get $get): bool => $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value),
+                                        ->visible(fn (Get $get): bool => self::resolveDecisionOutcome($get('decision_outcome')) !== TalentDecisionOutcome::RECOMMENDED),
                                 ]),
 
                                 Textarea::make('decision_summary')
@@ -537,12 +525,7 @@ class TalentActions
                                     ->columnSpanFull()
                                     ->placeholder('اشرح الكيس كاملة بوضوح: ما دار في المقابلة، سبب عدم القبول أو عدم الملاءمة، وأي سياق يفيد الفريق مستقبلاً...')
                                     ->helperText('هذا الملخص سيظهر في ملف المرشح ويساعد الفريق في القرارات المستقبلية.')
-                                    ->required(fn (Get $get): bool => in_array($get('decision_outcome'), [
-                                        TalentDecisionOutcome::NOT_SUITABLE->value,
-                                        TalentDecisionOutcome::REJECTED->value,
-                                        TalentDecisionOutcome::NO_SHOW->value,
-                                        TalentDecisionOutcome::WITHDRAWN->value,
-                                    ], true)),
+                                    ->required(fn (Get $get): bool => (bool) self::resolveDecisionOutcome($get('decision_outcome'))?->requiresReason()),
                             ]),
 
                         // ─── Tab 3: Details & Alternatives ───
@@ -570,7 +553,7 @@ class TalentActions
                                         ->preload()
                                         ->native(false)
                                         ->prefixIcon('heroicon-m-briefcase')
-                                        ->visible(fn (Get $get): bool => $get('decision_outcome') !== TalentDecisionOutcome::RECOMMENDED->value)
+                                        ->visible(fn (Get $get): bool => self::resolveDecisionOutcome($get('decision_outcome')) !== TalentDecisionOutcome::RECOMMENDED)
                                         ->columnSpanFull(),
                                 ]),
                             ]),
@@ -585,10 +568,10 @@ class TalentActions
                                     return false;
                                 }
 
-                                return in_array($get('decision_outcome'), [
-                                    TalentDecisionOutcome::NOT_SUITABLE->value,
-                                    TalentDecisionOutcome::REJECTED->value,
-                                    TalentDecisionOutcome::NO_SHOW->value,
+                                return in_array(self::resolveDecisionOutcome($get('decision_outcome')), [
+                                    TalentDecisionOutcome::NOT_SUITABLE,
+                                    TalentDecisionOutcome::REJECTED,
+                                    TalentDecisionOutcome::NO_SHOW,
                                 ], true);
                             })
                             ->schema([

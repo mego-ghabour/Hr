@@ -31,25 +31,13 @@ class RecordInterviewCaseAction
             ?? $talent->created_by
             ?? User::query()->value('id');
 
-        $outcome = filled($data['decision_outcome'] ?? null)
-            ? TalentDecisionOutcome::tryFrom((string) $data['decision_outcome'])
-            : null;
-
-        $reason = filled($data['decision_reason'] ?? null)
-            ? TalentDecisionReason::tryFrom((string) $data['decision_reason'])
-            : null;
-
-        $stage = filled($data['interview_stage'] ?? null)
-            ? InterviewStage::tryFrom((string) $data['interview_stage'])
-            : InterviewStage::GENERAL_REVIEW;
-
-        $attendance = filled($data['attendance_status'] ?? null)
-            ? InterviewAttendance::tryFrom((string) $data['attendance_status'])
-            : InterviewAttendance::ATTENDED;
-
-        $eligibility = filled($data['reapply_eligibility'] ?? null)
-            ? ReapplyEligibility::tryFrom((string) $data['reapply_eligibility'])
-            : null;
+        $outcome = self::resolveEnum($data['decision_outcome'] ?? null, TalentDecisionOutcome::class);
+        $reason = self::resolveEnum($data['decision_reason'] ?? null, TalentDecisionReason::class);
+        $stage = self::resolveEnum($data['interview_stage'] ?? null, InterviewStage::class)
+            ?? InterviewStage::GENERAL_REVIEW;
+        $attendance = self::resolveEnum($data['attendance_status'] ?? null, InterviewAttendance::class)
+            ?? InterviewAttendance::ATTENDED;
+        $eligibility = self::resolveEnum($data['reapply_eligibility'] ?? null, ReapplyEligibility::class);
 
         $summary = trim((string) ($data['decision_summary'] ?? ''));
         $strengths = trim((string) ($data['strengths'] ?? ''));
@@ -164,5 +152,25 @@ class RecordInterviewCaseAction
         }
 
         return $review;
+    }
+
+    /**
+     * Resolve a BackedEnum instance from either an existing enum case or its backed value.
+     *
+     * @template T of \BackedEnum
+     * @param  class-string<T>  $enumClass
+     * @return T|null
+     */
+    private static function resolveEnum(mixed $value, string $enumClass): ?\BackedEnum
+    {
+        if ($value instanceof $enumClass) {
+            return $value;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $value = $value->value;
+        }
+
+        return filled($value) ? $enumClass::tryFrom((string) $value) : null;
     }
 }
