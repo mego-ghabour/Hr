@@ -3,9 +3,10 @@
 namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum InterviewAttendance: string implements HasLabel, HasColor
+enum InterviewAttendance: string implements HasLabel, HasColor, HasIcon
 {
     case ATTENDED = 'attended';
     case RESCHEDULED = 'rescheduled';
@@ -29,6 +30,16 @@ enum InterviewAttendance: string implements HasLabel, HasColor
             self::RESCHEDULED => 'warning',
             self::NO_SHOW => 'danger',
             self::CANCELLED => 'gray',
+        };
+    }
+
+    public function getIcon(): ?string
+    {
+        return match ($this) {
+            self::ATTENDED => 'heroicon-m-check-circle',
+            self::RESCHEDULED => 'heroicon-m-arrow-path',
+            self::NO_SHOW => 'heroicon-m-x-circle',
+            self::CANCELLED => 'heroicon-m-no-symbol',
         };
     }
 }

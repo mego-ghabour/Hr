@@ -3,9 +3,10 @@
 namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum InterviewStage: string implements HasLabel, HasColor
+enum InterviewStage: string implements HasLabel, HasColor, HasIcon
 {
     case HR_SCREENING = 'hr_screening';
     case TECHNICAL = 'technical';
@@ -32,6 +33,17 @@ enum InterviewStage: string implements HasLabel, HasColor
             self::MANAGER => 'warning',
             self::FINAL => 'success',
             self::GENERAL_REVIEW => 'gray',
+        };
+    }
+
+    public function getIcon(): ?string
+    {
+        return match ($this) {
+            self::HR_SCREENING => 'heroicon-m-phone',
+            self::TECHNICAL => 'heroicon-m-code-bracket',
+            self::MANAGER => 'heroicon-m-briefcase',
+            self::FINAL => 'heroicon-m-trophy',
+            self::GENERAL_REVIEW => 'heroicon-m-document-magnifying-glass',
         };
     }
 }

@@ -2,9 +2,10 @@
 
 namespace App\Enums;
 
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum TalentDecisionReason: string implements HasLabel
+enum TalentDecisionReason: string implements HasLabel, HasIcon
 {
     case TECHNICAL_GAP = 'technical_gap';
     case SALARY_MISMATCH = 'salary_mismatch';
@@ -32,6 +33,23 @@ enum TalentDecisionReason: string implements HasLabel
             self::CANDIDATE_WITHDREW => 'انسحاب المرشح أو رفض العرض',
             self::RED_FLAG => 'تحفظ إداري / عدم مصداقية / سلوك غير مناسب',
             self::OTHER => 'سبب آخر (موضح في الملخص)',
+        };
+    }
+
+    public function getIcon(): ?string
+    {
+        return match ($this) {
+            self::TECHNICAL_GAP => 'heroicon-m-wrench-screwdriver',
+            self::SALARY_MISMATCH => 'heroicon-m-banknotes',
+            self::OVERQUALIFIED => 'heroicon-m-arrow-trending-up',
+            self::UNDERQUALIFIED => 'heroicon-m-arrow-trending-down',
+            self::COMMUNICATION_CULTURE => 'heroicon-m-chat-bubble-left-right',
+            self::SCHEDULE_LOCATION => 'heroicon-m-map-pin',
+            self::BETTER_CANDIDATE => 'heroicon-m-users',
+            self::NO_SHOW => 'heroicon-m-user-minus',
+            self::CANDIDATE_WITHDREW => 'heroicon-m-arrow-right-start-on-rectangle',
+            self::RED_FLAG => 'heroicon-m-flag',
+            self::OTHER => 'heroicon-m-ellipsis-horizontal-circle',
         };
     }
 }

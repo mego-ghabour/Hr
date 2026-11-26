@@ -3,9 +3,10 @@
 namespace App\Enums;
 
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum ReapplyEligibility: string implements HasLabel, HasColor
+enum ReapplyEligibility: string implements HasLabel, HasColor, HasIcon
 {
     case ELIGIBLE_NOW = 'eligible_now';
     case AFTER_6_MONTHS = 'after_6_months';
@@ -29,6 +30,16 @@ enum ReapplyEligibility: string implements HasLabel, HasColor
             self::AFTER_6_MONTHS => 'info',
             self::AFTER_12_MONTHS => 'warning',
             self::DO_NOT_REHIRE => 'danger',
+        };
+    }
+
+    public function getIcon(): ?string
+    {
+        return match ($this) {
+            self::ELIGIBLE_NOW => 'heroicon-m-check-badge',
+            self::AFTER_6_MONTHS => 'heroicon-m-clock',
+            self::AFTER_12_MONTHS => 'heroicon-m-calendar-days',
+            self::DO_NOT_REHIRE => 'heroicon-m-no-symbol',
         };
     }
 }
