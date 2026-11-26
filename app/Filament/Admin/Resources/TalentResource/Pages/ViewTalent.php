@@ -56,60 +56,58 @@ class ViewTalent extends ViewRecord
     public function infolist(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 // ── البطاقة العلوية (Profile Header) ──
                 Section::make()
+                    ->columns(['default' => 1, 'sm' => 2, 'lg' => 4])
                     ->components([
-                        Grid::make(['default' => 1, 'md' => 2])
-                            ->components([
-                                // الجزء الأيمن: الاسم والوظيفة
-                                Grid::make(1)
-                                    ->components([
-                                        TextEntry::make('full_name')
-                                            ->label('اسم المرشح')
-                                            ->size('xl')
-                                            ->weight('bold')
-                                            ->icon('heroicon-o-user-circle'),
-                                        TextEntry::make('current_job_title')
-                                            ->label('المسمى الوظيفي')
-                                            ->icon('heroicon-o-briefcase')
-                                            ->placeholder('غير محدد')
-                                            ->color('gray'),
-                                        TextEntry::make('current_company')
-                                            ->label('الشركة الحالية')
-                                            ->icon('heroicon-o-building-office')
-                                            ->placeholder('غير محدد')
-                                            ->color('gray'),
-                                    ]),
+                        TextEntry::make('full_name')
+                            ->label('اسم المرشح')
+                            ->size('xl')
+                            ->weight('bold')
+                            ->icon('heroicon-o-user-circle')
+                            ->columnSpan(['default' => 1, 'sm' => 2, 'lg' => 2]),
+                        TextEntry::make('talent_id')
+                            ->label('رقم المرشح')
+                            ->icon('heroicon-o-hashtag')
+                            ->fontFamily('mono')
+                            ->color('gray')
+                            ->copyable()
+                            ->columnSpan(1),
+                        TextEntry::make('status.name')
+                            ->label('الحالة')
+                            ->badge()
+                            ->size('lg')
+                            ->color(fn ($record) => $record->status?->color ?? 'primary')
+                            ->columnSpan(1),
 
-                                // الجزء الأيسر: الحالة ومعلومات التواصل
-                                Grid::make(1)
-                                    ->components([
-                                        TextEntry::make('status.name')
-                                            ->label('الحالة')
-                                            ->badge()
-                                            ->size('lg')
-                                            ->color(fn ($record) => $record->status?->color ?? 'primary'),
-                                        TextEntry::make('email')
-                                            ->label('البريد الإلكتروني')
-                                            ->icon('heroicon-o-envelope')
-                                            ->copyable()
-                                            ->copyMessage('تم نسخ البريد ✅')
-                                            ->color('primary'),
-                                        TextEntry::make('phone')
-                                            ->label('رقم الهاتف')
-                                            ->icon('heroicon-o-phone')
-                                            ->copyable()
-                                            ->copyMessage('تم نسخ الرقم ✅')
-                                            ->color('primary'),
-                                        TextEntry::make('talent_id')
-                                            ->label('رقم المرشح')
-                                            ->icon('heroicon-o-hashtag')
-                                            ->fontFamily('mono')
-                                            ->color('gray')
-                                            ->copyable(),
-                                    ]),
-                            ]),
+                        TextEntry::make('current_job_title')
+                            ->label('المسمى الوظيفي')
+                            ->icon('heroicon-o-briefcase')
+                            ->placeholder('غير محدد')
+                            ->color('gray')
+                            ->columnSpan(1),
+                        TextEntry::make('current_company')
+                            ->label('الشركة الحالية')
+                            ->icon('heroicon-o-building-office')
+                            ->placeholder('غير محدد')
+                            ->color('gray')
+                            ->columnSpan(1),
+                        TextEntry::make('email')
+                            ->label('البريد الإلكتروني')
+                            ->icon('heroicon-o-envelope')
+                            ->copyable()
+                            ->copyMessage('تم نسخ البريد ✅')
+                            ->color('primary')
+                            ->columnSpan(1),
+                        TextEntry::make('phone')
+                            ->label('رقم الهاتف')
+                            ->icon('heroicon-o-phone')
+                            ->copyable()
+                            ->copyMessage('تم نسخ الرقم ✅')
+                            ->color('primary')
+                            ->columnSpan(1),
                     ]),
 
                 // ── تنبيه: سجل مقابلة/كيس سابق لنفس المرشح (عند وجود تكرار) ──
@@ -146,7 +144,7 @@ class ViewTalent extends ViewRecord
                     ->icon('heroicon-o-clipboard-document-check')
                     ->iconColor(fn (\App\Models\Talent $record) => $record->decision_outcome?->getColor() ?? 'gray')
                     ->visible(fn (\App\Models\Talent $record): bool => $record->hasCaseDecision())
-                    ->columns(3)
+                    ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
                     ->components([
                         TextEntry::make('decision_outcome')
                             ->label('القرار النهائي')
@@ -184,22 +182,23 @@ class ViewTalent extends ViewRecord
                         TextEntry::make('decision_summary')
                             ->label('توضيح الكيس بالكامل')
                             ->placeholder('لا يوجد ملخص تفصيلي مسجل.')
+                            ->prose()
                             ->columnSpanFull(),
                     ]),
 
                 // ── تفاصيل المرشح (Main Content) ──
-                Grid::make(3)
+                Grid::make(['default' => 1, 'lg' => 3])
                     ->components([
                         // ═══ العمود الرئيسي (2/3) ═══
                         Grid::make(1)
-                            ->columnSpan(['default' => 3, 'lg' => 2])
+                            ->columnSpan(['default' => 1, 'lg' => 2])
                             ->components([
 
                                 // قسم: الخبرة والمهارات
                                 Section::make('التفاصيل المهنية')
                                     ->icon('heroicon-o-academic-cap')
                                     ->collapsible()
-                                    ->columns(2)
+                                    ->columns(['default' => 1, 'sm' => 2, 'xl' => 3])
                                     ->components([
                                         TextEntry::make('seniority_level')
                                             ->label('مستوى الخبرة')
@@ -222,11 +221,6 @@ class ViewTalent extends ViewRecord
                                             ->suffix(' سنة')
                                             ->icon('heroicon-o-clock')
                                             ->placeholder('غير محدد'),
-                                        TextEntry::make('expected_salary')
-                                            ->label('الراتب المتوقع')
-                                            ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? number_format((float) $state, 2) . ' ' . \App\Models\Setting::currencySymbol() : 'غير محدد')
-                                            ->icon('heroicon-o-banknotes')
-                                            ->placeholder('غير محدد'),
                                         TextEntry::make('work_preference')
                                             ->label('طريقة العمل')
                                             ->badge()
@@ -238,11 +232,17 @@ class ViewTalent extends ViewRecord
                                                 'flexible' => 'مرن',
                                                 default    => $state ?? 'غير محدد'
                                             }),
+                                        TextEntry::make('expected_salary')
+                                            ->label('الراتب المتوقع')
+                                            ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? number_format((float) $state, 2) . ' ' . \App\Models\Setting::currencySymbol() : 'غير محدد')
+                                            ->icon('heroicon-o-banknotes')
+                                            ->placeholder('غير محدد'),
                                         TextEntry::make('availabilityOption.name')
                                             ->label('الإتاحة للبدء')
                                             ->badge()
                                             ->color('warning')
-                                            ->default('غير محدد'),
+                                            ->default('غير محدد')
+                                            ->columnSpan(['default' => 1, 'sm' => 1, 'xl' => 2]),
                                     ]),
 
                                 // قسم: الروابط الخارجية
@@ -250,7 +250,7 @@ class ViewTalent extends ViewRecord
                                     ->icon('heroicon-o-link')
                                     ->collapsible()
                                     ->collapsed(false)
-                                    ->columns(2)
+                                    ->columns(['default' => 1, 'sm' => 2])
                                     ->components([
                                         TextEntry::make('linkedin_url')
                                             ->label('لينكد إن')
@@ -279,6 +279,7 @@ class ViewTalent extends ViewRecord
                                         TextEntry::make('general_notes')
                                             ->hiddenLabel()
                                             ->placeholder('لا توجد ملاحظات مسجلة للمرشح.')
+                                            ->prose()
                                             ->columnSpanFull(),
                                     ]),
                             ]),
@@ -286,7 +287,8 @@ class ViewTalent extends ViewRecord
                         // ═══ العمود الجانبي (1/3) ═══
                         Section::make('التصنيف والمتابعة')
                             ->icon('heroicon-o-tag')
-                            ->columnSpan(['default' => 3, 'lg' => 1])
+                            ->columns(['default' => 1, 'sm' => 2])
+                            ->columnSpan(['default' => 1, 'lg' => 1])
                             ->components([
                                 TextEntry::make('department.name')
                                     ->label('القسم')
@@ -304,17 +306,13 @@ class ViewTalent extends ViewRecord
                                     ->badge()
                                     ->color('gray')
                                     ->placeholder('غير محدد'),
-                                TextEntry::make('assignedRecruiter.name')
-                                    ->label('المسؤول عن التواصل')
-                                    ->icon('heroicon-o-user-circle')
-                                    ->placeholder('لم يتم تعيينه'),
-                                TextEntry::make('tags.name')
-                                    ->label('الوسوم')
-                                    ->icon('heroicon-o-tag')
-                                    ->badge()
-                                    ->color('info')
-                                    ->separator(', ')
-                                    ->placeholder('لا توجد وسوم'),
+                                IconEntry::make('is_potential_duplicate')
+                                    ->label('ملف مكرر؟')
+                                    ->boolean()
+                                    ->trueColor('danger')
+                                    ->falseColor('success')
+                                    ->trueIcon('heroicon-o-exclamation-triangle')
+                                    ->falseIcon('heroicon-o-check-circle'),
                                 TextEntry::make('date_added')
                                     ->label('تاريخ الإضافة')
                                     ->date('d/m/Y')
@@ -327,13 +325,19 @@ class ViewTalent extends ViewRecord
                                     ->icon('heroicon-o-eye')
                                     ->since()
                                     ->placeholder('لم يتم المراجعة بعد'),
-                                IconEntry::make('is_potential_duplicate')
-                                    ->label('ملف مكرر؟')
-                                    ->boolean()
-                                    ->trueColor('danger')
-                                    ->falseColor('success')
-                                    ->trueIcon('heroicon-o-exclamation-triangle')
-                                    ->falseIcon('heroicon-o-check-circle'),
+                                TextEntry::make('assignedRecruiter.name')
+                                    ->label('المسؤول عن التواصل')
+                                    ->icon('heroicon-o-user-circle')
+                                    ->placeholder('لم يتم تعيينه')
+                                    ->columnSpanFull(),
+                                TextEntry::make('tags.name')
+                                    ->label('الوسوم')
+                                    ->icon('heroicon-o-tag')
+                                    ->badge()
+                                    ->color('info')
+                                    ->separator(', ')
+                                    ->placeholder('لا توجد وسوم')
+                                    ->columnSpanFull(),
                             ]),
                     ]),
             ]);
