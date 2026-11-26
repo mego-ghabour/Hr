@@ -65,6 +65,28 @@ class DashboardTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_announcements_widget_is_hidden_when_no_active_announcements(): void
+    {
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $user = User::factory()->create([
+            'email' => 'admin_no_announcements@test.com',
+        ]);
+        $user->assignRole($role);
+
+        Announcement::create([
+            'title' => 'تعميم غير نشط',
+            'content' => 'محتوى غير نشط',
+            'type' => 'info',
+            'is_active' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertStatus(200);
+        $response->assertDontSee('التعاميم والقرارات الإدارية');
+        $response->assertDontSee('لا توجد تعاميم إدارية جديدة حالياً');
+    }
+
     public function test_loading_section_component_safely_handles_array_props(): void
     {
         $view = $this->blade('<x-filament::loading-section :page-filters="[\'startDate\' => \'2026-01-01\']" :column-span="[\'default\' => 1]" />');
